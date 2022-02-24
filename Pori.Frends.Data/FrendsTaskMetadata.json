@@ -1,0 +1,10 @@
+﻿{
+	"Tasks": [
+		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.Load"
+		},
+		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.Filter"
+		}
+	]
+}

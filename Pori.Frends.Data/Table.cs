@@ -6,55 +6,37 @@ using System.Linq;
 namespace Pori.Frends.Data
 {
     /// <summary>
-    /// A base class for a dynamic data table.
+    /// A data table.
     /// </summary>
-    /// <typeparam name="TRow">Type of the table's rows</typeparam>
-    public class Table<TRow> : IEnumerable<TRow>
+    public class Table
     {
-        /// <summary>
-        /// The rows of the table.
-        /// </summary>
-        private readonly IEnumerable<TRow> data;
-
         /// <summary>
         /// Create a new table from a column list and a collection of rows.
         /// </summary>
         /// <param name="columns">The columns of the table, in order.</param>
         /// <param name="rows">The rows for the new table. Rows a presumed to be created using Table.Row()</param>
-        internal Table(IEnumerable<string> columns, IEnumerable<TRow> rows)
+        internal Table(IEnumerable<string> columns, IEnumerable<dynamic> rows)
         {
             // Convert the columns and rows to a list
             // to make performance more predictable.
             Columns = columns.ToList();
-            data = rows.ToList();
+            Rows    = rows.ToList();
         }
 
         /// <summary>
         /// Ordered list of the table's columns.
         /// </summary>
         public List<string> Columns { get; private set; }
+
+        /// <summary>
+        /// The rows of the table.
+        /// </summary>
+        public IEnumerable<dynamic> Rows { get; private set; }
+
         /// <summary>
         /// Number of rows in this table.
         /// </summary>
-        public int Count { get { return data.Count(); } }
-
-        /// <summary>
-        /// Returns an enumerator for enumerating the table's rows.
-        /// </summary>
-        /// <returns>Enumerator for the table's rows.</returns>
-        public IEnumerator<TRow> GetEnumerator()
-        {
-            return data.GetEnumerator();
-        }
-
-        /// <summary>
-        /// Returns an enumerator for enumerating the table's rows.
-        /// </summary>
-        /// <returns>Enumerator for the table's rows.</returns>
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return data.GetEnumerator();
-        }
+        public int Count { get { return Rows.Count(); } }
 
         /// <summary>
         /// Create a new table from the specified data.

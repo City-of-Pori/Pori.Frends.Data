@@ -9,15 +9,6 @@ namespace Pori.Frends.Data
 {
     using FilterFunc = Func<dynamic, bool>;
 
-    /// <summary>
-    /// A data table.
-    /// </summary>
-    public class Table : Table<dynamic>
-    {
-        internal Table(IEnumerable<string> columns, IEnumerable<dynamic> rows) : base(columns, rows)
-        {}
-    }
-
     public enum LoadFormat
     {
         CSV

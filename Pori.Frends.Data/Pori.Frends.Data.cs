@@ -57,13 +57,13 @@ namespace Pori.Frends.Data
 
                 // Filter the rows using the specified filter function,
                 // but give it only the column value as input.
-                rows = from   row in input.Data
+                rows = from   row in input.Data.Rows
                        let    column = (row as IDictionary<string, object>)[input.FilterColumn]
                        where  input.Filter(column)
                        select row;
             }
             else
-                rows = input.Data.Where(input.Filter);
+                rows = input.Data.Rows.Where(input.Filter);
 
             // Return the a new table with the filtered rows
             return new Table(input.Data.Columns, rows);

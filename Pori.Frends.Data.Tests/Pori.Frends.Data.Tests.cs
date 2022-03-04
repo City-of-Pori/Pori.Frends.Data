@@ -24,21 +24,7 @@ namespace Pori.Frends.Data.Tests
             new Dictionary<string, string> { { "firstName", "Barney" },   { "lastName", "Stinson" }     },
         };
 
-        [Test]
-        public void TableIsEnumerable()
-        {
-            Table table = Table.From(columns, rows);
 
-            Assert.That(table is IEnumerable<dynamic>);
-        }
-
-        [Test]
-        public void EnumeratingATableProducesTheRowsInOrder()
-        {
-            Table table = Table.From(columns, rows);
-
-            Assert.That(table, Is.EqualTo(rows));
-        }
 
         [Test]
         public void TableRowsAreEnumerable()
@@ -46,8 +32,16 @@ namespace Pori.Frends.Data.Tests
             Table table = Table.From(columns, rows);
 
             // Check that each row is a collection of key-value pairs
-            foreach(var row in table)
+            foreach(var row in table.Rows)
                 Assert.That(row is IEnumerable<KeyValuePair<string, dynamic>>);
+        }
+
+        [Test]
+        public void EnumeratingTableRowsProducesTheRowsInOrder()
+        {
+            Table table = Table.From(columns, rows);
+
+            Assert.That(table.Rows, Is.EqualTo(rows));
         }
 
         [Test]
@@ -56,7 +50,7 @@ namespace Pori.Frends.Data.Tests
             Table table = Table.From(columns, rows);
 
             // Check that each row has the columns in the table's column order
-            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in table)
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in table.Rows)
             {
                 var keys = row.Select(x => x.Key);
 
@@ -94,9 +88,9 @@ namespace Pori.Frends.Data.Tests
 
             Table result = DataTasks.Load(input, new System.Threading.CancellationToken());
 
-            var resultLetters = from row in result select row.letter;
-            var resultIndices = from row in result select row.index;
-            var resultOddity  = from row in result select row.isOdd;
+            var resultLetters = from row in result.Rows select row.letter;
+            var resultIndices = from row in result.Rows select row.index;
+            var resultOddity  = from row in result.Rows select row.isOdd;
 
             var expectedLetters = from row in CsvData.Data select row[0];
             var expectedIndices = from row in CsvData.Data select row[1];
@@ -176,7 +170,7 @@ namespace Pori.Frends.Data.Tests
 
             Table filtered = DataTasks.Filter(input, new System.Threading.CancellationToken());
 
-            Assert.That(filtered, Has.All.Matches<dynamic>(row => row.inProduction == true));
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.inProduction == true));
         }
 
         [Test]
@@ -192,7 +186,7 @@ namespace Pori.Frends.Data.Tests
 
             Table filtered = DataTasks.Filter(input, new System.Threading.CancellationToken());
 
-            Assert.That(filtered, Has.All.Matches<dynamic>(row => row.inProduction == true));
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.inProduction == true));
         }
 
         [Test]
@@ -203,13 +197,13 @@ namespace Pori.Frends.Data.Tests
             FilterParameters input = new FilterParameters
             {
                 Data       = original,
-                FilterType = ProcessingType.Row,     // Filter based on entire rows
+                FilterType = ProcessingType.Row,    // Filter based on entire rows
                 Filter     = row => true            // Accept all rows
             };
 
             Table filtered = DataTasks.Filter(input, new System.Threading.CancellationToken());
 
-            Assert.That(filtered, Is.EqualTo(original));
+            Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
 
         [Test]
@@ -227,7 +221,7 @@ namespace Pori.Frends.Data.Tests
 
             Table filtered = DataTasks.Filter(input, new System.Threading.CancellationToken());
 
-            Assert.That(filtered, Is.EqualTo(original));
+            Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
 
         [Test]

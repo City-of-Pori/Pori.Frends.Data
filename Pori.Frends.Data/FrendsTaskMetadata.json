@@ -5,6 +5,15 @@
 		},
 		{
 			"TaskMethod": "Pori.Frends.Data.DataTasks.Filter"
+		},
+		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.RenameColumns"
+		},
+		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.ReorderColumns"
+		},
+		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.SelectColumns"
 		}
 	]
 }

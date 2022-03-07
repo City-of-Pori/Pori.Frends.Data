@@ -35,6 +35,9 @@ namespace Pori.Frends.Data
         public dynamic CsvData { get; set; }
     }
 
+    /// <summary>
+    /// The type of input to provide a function processing a table's rows.
+    /// </summary>
     public enum ProcessingType
     {
         Row,
@@ -77,4 +80,120 @@ namespace Pori.Frends.Data
         [DisplayFormat(DataFormatString = "Expression")]
         public FilterFunc Filter { get; set; }
     }
+
+    /// <summary>
+    /// Parameters for the ReorderColumns task.
+    /// </summary>
+    public class ReorderColumnsParameters
+    {
+        /// <summary>
+        /// The table whose columns are to be reordered.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+
+        /// <summary>
+        /// The new order for the columns of the table. Columns that are not 
+        /// specified are not reodered (unless DiscardOtherColumns is true, 
+        /// in which case unspecified columns are not included in the 
+        /// resulting table).
+        /// </summary>
+        [DisplayName("New Column Order")]
+        public string[] ColumnOrder { get; set; }
+
+        /// <summary>
+        /// Whether to discard columns that are not specified in the column 
+        /// order from the resulting table.
+        /// </summary>
+        [DisplayName("Discard Other Columns?")]
+        [DefaultValue(true)]
+        public bool DiscardOtherColumns { get; set; }
+    }
+
+    public class ColumnRename
+    {
+        public string Column { get; set; }
+
+        [DisplayName("New Column Name")]
+        public string NewName { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for the RenameColumns task.
+    /// </summary>
+    public class RenameColumnsParameters
+    {
+        /// <summary>
+        /// The table whose columns are to be renamed.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// The columns to rename.
+        /// </summary>
+        [DisplayName("Column Names")]
+        public ColumnRename[] Renamings { get; set; }
+
+        /// <summary>
+        /// Whether to preserve the original order of the columns.
+        /// </summary>
+        [DisplayName("Preserve Column Order")]
+        [DefaultValue(true)]
+        public bool PreserveOrder { get; set; }
+
+        /// <summary>
+        /// Whether to discard columns that are not specified in the column 
+        /// name mapping.
+        /// </summary>
+        [DisplayName("Discard Other Columns?")]
+        [DefaultValue(true)]
+        public bool DiscardOtherColumns { get; set; }
+    }
+
+    /// <summary>
+    /// Specifies whether columns provided to the SelectColumns task should 
+    /// be kept or discarded.
+    /// </summary>
+    public enum SelectColumnsAction
+    {
+        Keep,
+        Discard
+    }
+
+    /// <summary>
+    /// Parameters for the SelectColumns task.
+    /// </summary>
+    public class SelectColumnsParameters
+    {
+        /// <summary>
+        /// The table whose columns are to be reordered.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// Whether to keep or discard the specified columns.
+        /// </summary>
+        public SelectColumnsAction Action { get; set; }
+
+        /// <summary>
+        /// The columns to include in / discard from the result table.
+        /// </summary>
+        public string[] Columns { get; set; }
+
+        /// <summary>
+        /// Whether to preserve the original order of the columns.
+        /// </summary>
+        [DisplayName("Preserve Column Order")]
+        [UIHint(nameof(Action), "", SelectColumnsAction.Keep)]
+        [DefaultValue(false)]
+        public bool PreserveOrder { get; set; }
+    }
+
+
 }

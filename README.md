@@ -22,6 +22,18 @@ Load data into a new table.
 
 Filter rows of a table into a new table.
 
+## RenameColumns
+
+Rename columns of a table into a new table.
+
+## ReorderColumns
+
+Reorder columns of a table into a new table.
+
+## SelectColumns
+
+Keep or discard specific columns of a table into a new table.
+
 # Building
 
 Rebuild the project

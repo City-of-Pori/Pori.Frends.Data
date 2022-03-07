@@ -242,4 +242,433 @@ namespace Pori.Frends.Data.Tests
             Assert.That(executeTask, Throws.Exception);
         }
     }
+
+    [TestFixture]
+    class RenameColumnsTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            new List<object> { 1,  2,  3,  4,  5,  6 },
+            new List<object> { 2,  4,  6,  8, 10, 12 },
+            new List<object> { 3,  6,  9, 12, 15, 18 },
+            new List<object> { 4,  8, 12, 16, 20, 24 },
+        };
+        private static readonly ColumnRename[] renamings = new ColumnRename[]
+        {
+            new ColumnRename { Column = "F", NewName = "W" },
+            new ColumnRename { Column = "D", NewName = "Z" },
+            new ColumnRename { Column = "C", NewName = "Y" },
+            new ColumnRename { Column = "A", NewName = "X" },
+        };
+
+
+        [Test]
+        public void RenameColumnsReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                = original,
+                Renamings           = renamings,
+                PreserveOrder       = true,
+                DiscardOtherColumns = false
+            };
+
+            Table result = DataTasks.RenameColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void ColumnsAreRenamed()
+        {
+            Table original = Table.From(columns, rows);
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                = original,
+                Renamings           = renamings,
+                PreserveOrder       = true,
+                DiscardOtherColumns = false
+            };
+
+            Table result = DataTasks.RenameColumns(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+        }
+
+        [Test]
+        public void ColumnsCanBeOrderedAccoringToTheColumnMapping()
+        {
+            Table original = Table.From(columns, rows);
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                = original,
+                Renamings           = renamings,
+                PreserveOrder       = false,
+                DiscardOtherColumns = false
+            };
+
+            Table result = DataTasks.RenameColumns(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "W", "B", "Z", "Y", "E", "X" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+        }
+
+        [Test]
+        public void OtherColumnsCanBeDiscardedWhilePreservingColumnOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                = original,
+                Renamings           = renamings,
+                PreserveOrder       = true,
+                DiscardOtherColumns = true // <---
+            };
+
+            Table result = DataTasks.RenameColumns(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "X", "Y", "Z", "W" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+        }
+
+        [Test]
+        public void OtherColumnsCanBeDiscardedWhileNotPreservingColumnOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                = original,
+                Renamings           = renamings,
+                PreserveOrder       = false, // <---
+                DiscardOtherColumns = true   // <---
+            };
+
+            Table result = DataTasks.RenameColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(renamings.Select(m => m.NewName)));
+        }
+    }
+
+    [TestFixture]
+    class ReorderColumnsTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            new List<object> { 1,  2,  3,  4,  5,  6 },
+            new List<object> { 2,  4,  6,  8, 10, 12 },
+            new List<object> { 3,  6,  9, 12, 15, 18 },
+            new List<object> { 4,  8, 12, 16, 20, 24 },
+        };
+
+
+        [Test]
+        public void ReorderColumnsReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = reversedColumns.ToArray(),
+                DiscardOtherColumns = false
+            };
+
+            Table reordered = DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(reordered is Table);
+            Assert.That(reordered, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void ResultHasColumnsInTheSpecifiedOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = reversedColumns.ToArray(),
+                DiscardOtherColumns = false
+            };
+
+            Table reordered = DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(reordered.Columns, Is.EqualTo(reversedColumns));
+        }
+
+        [Test]
+        public void ResultRowsAreInColumnOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = reversedColumns.ToArray(),
+                DiscardOtherColumns = false
+            };
+
+            Table reordered = DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            // Check that each row has the columns in the new column order
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(reversedColumns));
+            }
+        }
+
+        [Test]
+        public void OrderOfUnspecifiedColumnsDoesNotChange()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = new string[] { "C", "E", "B" },
+                DiscardOtherColumns = false
+            };
+
+            string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F" };
+
+            Table reordered = DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(reordered.Columns, Is.EqualTo(expectedColumnOrder));
+
+            // Check that the columns are in the correct order for each row in the result
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumnOrder));
+            }
+        }
+
+        [Test]
+        public void UnspecifiedColumnsCanBeDiscarded()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = new string[] { "C", "E", "B" },
+                DiscardOtherColumns = true
+            };
+
+            string[] expectedColumns = { "C", "E", "B" };
+
+            Table reordered = DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(reordered.Columns, Is.EqualTo(expectedColumns));
+
+            // Check that each row in the result has only the specified columns (in order)
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumns));
+            }
+        }
+
+        public void ReorderColumnsThrowsWhenColumnOrderHasDuplicates()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = new string[] { "B", "A", "B" },
+                DiscardOtherColumns = false
+            };
+
+            Action executeTask = () => DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        public void ReorderColumnsThrowsWhenColumnOrderContainsAnInvalidColumn()
+        {
+            Table original = Table.From(columns, rows);
+
+            ReorderColumnsParameters input = new ReorderColumnsParameters
+            {
+                Data                = original,
+                ColumnOrder         = new string[] { "A", "B", "X" },
+                DiscardOtherColumns = false
+            };
+
+            Action executeTask = () => DataTasks.ReorderColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
+    class SelectColumnsTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            new List<object> { 1,  2,  3,  4,  5,  6 },
+            new List<object> { 2,  4,  6,  8, 10, 12 },
+            new List<object> { 3,  6,  9, 12, 15, 18 },
+            new List<object> { 4,  8, 12, 16, 20, 24 },
+        };
+
+
+        [Test]
+        public void SelectColumnsReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Keep,
+                Columns       = new string[] { "A", "B" },
+                PreserveOrder = false
+            };
+
+            Table result = DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void SpecificColumnsCanBeSelectedInTheSpecifiedOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            string[] selectedColumns =  new string[] { "B", "A" };
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Keep,
+                Columns       = selectedColumns,
+                PreserveOrder = false
+            };
+
+            Table result = DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(selectedColumns));
+        }
+
+        [Test]
+        public void SpecificColumnsCanBeSelectedInTheirOriginalOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            string[] selectedColumns =  new string[] { "B", "A" };
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Keep,
+                Columns       = selectedColumns,
+                PreserveOrder = true
+            };
+
+            Table result = DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(original.Columns.Where(c => selectedColumns.Contains(c))));
+        }
+
+        [Test]
+        public void SpecificColumnsCanBeDiscarded()
+        {
+            Table original = Table.From(columns, rows);
+
+            string[] selectedColumns =  new string[] { "B", "A" };
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Discard,
+                Columns       = selectedColumns
+            };
+
+            Table result = DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(original.Columns.Where(c => !selectedColumns.Contains(c))));
+        }
+
+        [Test]
+        public void ResultRowsAreInColumnOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            string[] selectedColumns =  new string[] { "B", "A" };
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Keep,
+                Columns       = selectedColumns,
+                PreserveOrder = false
+            };
+
+            Table result = DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            // Check that each row has the columns in the new column order
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(selectedColumns));
+            }
+        }
+
+        public void SelectColumnsThrowsWhenColumnOrderHasDuplicates()
+        {
+            Table original = Table.From(columns, rows);
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Keep,
+                Columns       = new string[] { "B", "A", "B" },
+                PreserveOrder = false
+            };
+
+            Action executeTask = () => DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        public void SelectColumnsThrowsWhenColumnOrderContainsAnInvalidColumn()
+        {
+            Table original = Table.From(columns, rows);
+
+            SelectColumnsParameters input = new SelectColumnsParameters
+            {
+                Data          = original,
+                Action        = SelectColumnsAction.Keep,
+                Columns       = new string[] { "A", "B", "X" },
+                PreserveOrder = false
+            };
+
+            Action executeTask = () => DataTasks.SelectColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
 }

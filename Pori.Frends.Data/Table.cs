@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 
@@ -77,7 +76,7 @@ namespace Pori.Frends.Data
         /// <param name="columns">Ordered list of the columns for the row.</param>
         /// <param name="values">A dictionary-like object containing the row's values.</param>
         /// <returns>The new table row as a dynamic object.</returns>
-        private static dynamic Row<TValue>(List<string> columns, IDictionary<string, TValue> values)
+        internal static dynamic Row<TValue>(List<string> columns, IDictionary<string, TValue> values)
         {
             // Create a new object for the row
             IDictionary<string, dynamic> row = new ExpandoObject();
@@ -97,7 +96,7 @@ namespace Pori.Frends.Data
         /// <param name="columns">Ordered list of the columns for the row.</param>
         /// <param name="values">Ordered list of values for the row. Must be in the same order as the columns.</param>
         /// <returns>The new table row as a dynamic object.</returns>
-        private static dynamic Row<TValue>(List<string> columns, List<TValue> values)
+        internal static dynamic Row<TValue>(List<string> columns, List<TValue> values)
         {
             IDictionary<string, dynamic> row = new ExpandoObject();
 
@@ -106,6 +105,22 @@ namespace Pori.Frends.Data
                 row.Add(columns[i], values[i]);
 
             // Return the resulting row object
+            return row;
+        }
+
+        /// <summary>
+        /// Create a new table row from another row.
+        /// </summary>
+        /// <typeparam name="TValue"></typeparam>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        internal static dynamic Row<TValue>(dynamic source)
+        {
+            IDictionary<string, dynamic> row = new ExpandoObject();
+
+            foreach(var kvp in source as IDictionary<string, TValue>)
+                row[kvp.Key] = kvp.Value;
+
             return row;
         }
     }

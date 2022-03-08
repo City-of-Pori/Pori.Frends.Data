@@ -10,6 +10,8 @@ using Pori.Frends.Data.Linq;
 
 namespace Pori.Frends.Data
 {
+    using FilterFunc = Func<dynamic, bool>;
+
     /// <summary>
     /// Frends task for data related tasks.
     /// </summary>
@@ -47,27 +49,19 @@ namespace Pori.Frends.Data
         /// <returns>Filtered data as a Pori.Frends.Data.Table</returns>
         public static Table Filter([PropertyTab] FilterParameters input, CancellationToken cancellationToken)
         {
-            IEnumerable<dynamic> rows;
+            FilterFunc filter;
 
-            // Check whether to apply the filter to a specific column or the whole row
+            // Wrap the filter function if the filter is to be applied to
+            // values of a single column.
             if(input.FilterType == ProcessingType.Column)
-            {
-                // Check that the input table has the column to be used for filtering
-                if(!input.Data.Columns.Contains(input.FilterColumn))
-                    throw new ArgumentException($"The input table does not contain column '{input.FilterColumn}'");
-
-                // Filter the rows using the specified filter function,
-                // but give it only the column value as input.
-                rows = from   row in input.Data.Rows
-                       let    column = (row as IDictionary<string, object>)[input.FilterColumn]
-                       where  input.Filter(column)
-                       select row;
-            }
+                filter = TableBuilder.ColumnFunction(input.FilterColumn, input.Filter);
             else
-                rows = input.Data.Rows.Where(input.Filter);
+                filter = input.Filter;
 
-            // Return the a new table with the filtered rows
-            return new Table(input.Data.Columns, rows);
+            return TableBuilder
+                    .From(input.Data)   // Use the input table as the source
+                    .Filter(filter)     // Filter the rows
+                    .CreateTable();     // Create the resulting table
         }
 
         
@@ -80,14 +74,11 @@ namespace Pori.Frends.Data
         /// <returns>A new table with reordered columns as a Pori.Frends.Data.Table</returns>
         public static Table RenameColumns([PropertyTab] RenameColumnsParameters input, CancellationToken cancellationToken)
         {
-            // The list of column renamings to do
-            IEnumerable<ColumnRename> renamings = input.Renamings;
-
             // Mapping from old column names to new ones
-            Dictionary<string, string> newNameOf = renamings.ToDictionary(r => r.Column, r => r.NewName);
+            Dictionary<string, string> newNameOf = input.Renamings.ToDictionary(r => r.Column, r => r.NewName);
 
-            // List of columns to rename
-            IEnumerable<string> columnsToRename = renamings.Select(r => r.Column);
+            // List of columns to rename (in order)
+            IEnumerable<string> columnsToRename = input.Renamings.Select(r => r.Column);
 
             // Check that a column isn't specified more than once
             if(columnsToRename.Distinct().Count() != columnsToRename.Count())
@@ -96,6 +87,7 @@ namespace Pori.Frends.Data
             // Check that the input table contains all specified columns
             if(!columnsToRename.All(c => input.Data.Columns.Contains(c)))
                 throw new ArgumentException("Column list contains columns that are not in the input table.");
+
 
             // List of columns before renaming (but after possible reordering
             // and/or discarding). Initially the list of columns for the input
@@ -112,28 +104,11 @@ namespace Pori.Frends.Data
             if(input.DiscardOtherColumns)
                 columnsBeforeRename = columnsBeforeRename.Where(c => columnsToRename.Contains(c));
 
-            // Map old column names to new ones and leave others as is.
-            IEnumerable<string> columnsAfterRename = columnsBeforeRename
-                                                       .Select(c => newNameOf.ContainsKey(c) ? newNameOf[c] : c);
-
-            // Local function to select specific columns from a row and
-            // return the column values as a list.
-            List<dynamic> SelectRowColumnsAsValues(dynamic row)
-            {
-                IDictionary<string, dynamic> data = row;
-
-                return data
-                        .Where(c => columnsBeforeRename.Contains(c.Key))
-                        .Select(c => c.Value)
-                        .ToList();
-            }
-
-            // Create new rows as a list of values so that Table.From ends up
-            // doing the renaming implicitly.
-            var rows = input.Data.Rows.Select(SelectRowColumnsAsValues);
-
-            // Return a new table from the rows and columns
-            return Table.From(columnsAfterRename.ToList(), rows.ToList());
+            return TableBuilder
+                    .From(input.Data)
+                    .SelectColumns(columnsBeforeRename)
+                    .RenameColumns(newNameOf)
+                    .CreateTable();
         }
 
         /// <summary>
@@ -152,16 +127,17 @@ namespace Pori.Frends.Data
             if(!input.ColumnOrder.All(c => input.Data.Columns.Contains(c)))
                 throw new ArgumentException("Column list contains columns that are not in the input table.", "input.ColumnOrder");
 
-            var columns = input.Data.Columns.Reorder(input.ColumnOrder);
+            // Reorder the columns
+            var builder = TableBuilder
+                            .From(input.Data)
+                            .ReorderColumns(input.ColumnOrder);
 
+            // Discard other columns if so requested
             if(input.DiscardOtherColumns)
-                columns = columns.Where(c => input.ColumnOrder.Contains(c));
+                builder.SelectColumns(input.ColumnOrder);
 
-            // Cast the input table rows to IDictionary
-            var rows = input.Data.Rows.Cast<IDictionary<string, dynamic>>();
-
-            // Return the new table
-            return Table.From(columns.ToList(), rows);
+            // Create and return the resulting table.
+            return builder.CreateTable();
         }
 
         /// <summary>
@@ -172,13 +148,7 @@ namespace Pori.Frends.Data
         /// <returns>A new table with reordered columns as a Pori.Frends.Data.Table</returns>
         public static Table SelectColumns([PropertyTab] SelectColumnsParameters input, CancellationToken cancellationToken)
         {
-            // We use ReorderColumns to do the actual work.
-            // Prepare input for it.
-            var reorderParams = new ReorderColumnsParameters 
-            { 
-                Data                = input.Data,
-                DiscardOtherColumns = true
-            };
+            IEnumerable<string> columns;
 
             // Set column order based on input parameters
             switch(input.Action)
@@ -187,20 +157,26 @@ namespace Pori.Frends.Data
                 case SelectColumnsAction.Keep:
                     // Preserve the order of the columns from the input table
                     if(input.PreserveOrder)
-                        reorderParams.ColumnOrder = input.Data.Columns.Where(c => input.Columns.Contains(c)).ToArray();
+                        columns = input.Data.Columns.Where(c => input.Columns.Contains(c));
                     // Use the specified order of the columns
                     else
-                        reorderParams.ColumnOrder = input.Columns;
+                        columns = input.Columns;
                     break;
 
                 // Discard the specified columns from the result
                 case SelectColumnsAction.Discard:
-                    reorderParams.ColumnOrder = input.Data.Columns.Where(c => !input.Columns.Contains(c)).ToArray();
+                    columns = input.Data.Columns.Where(c => !input.Columns.Contains(c));
                     break;
+
+                default:
+                    throw new InvalidEnumArgumentException();
             }
 
-            // Let ReorderColumns do the work and return the result
-            return ReorderColumns(reorderParams, cancellationToken);
+            // Create the new table
+            return TableBuilder
+                    .From(input.Data)
+                    .SelectColumns(columns)
+                    .CreateTable();
         }
     }
 }

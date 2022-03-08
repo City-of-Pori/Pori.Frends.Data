@@ -5,6 +5,8 @@ using System.Linq;
 
 namespace Pori.Frends.Data.Tests
 {
+    using FilterFunc = Func<dynamic, bool>;
+
     public class CsvInputData
     {
         public List<string> Headers { get; set; }
@@ -23,8 +25,6 @@ namespace Pori.Frends.Data.Tests
             new Dictionary<string, string> { { "firstName", "Lily" },     { "lastName", "Aldrin" }      },
             new Dictionary<string, string> { { "firstName", "Barney" },   { "lastName", "Stinson" }     },
         };
-
-
 
         [Test]
         public void TableRowsAreEnumerable()
@@ -56,6 +56,202 @@ namespace Pori.Frends.Data.Tests
 
                 Assert.That(keys, Is.EqualTo(columns));
             }
+        }
+    }
+
+    [TestFixture]
+    class TableBuilderTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            new List<object> { 1,  2,  3,  4,  5,  6 },
+            new List<object> { 2,  4,  6,  8, 10, 12 },
+            new List<object> { 3,  6,  9, 12, 15, 18 },
+            new List<object> { 4,  8, 12, 16, 20, 24 },
+            new List<object> { 5, 10, 15, 20, 25, 30 },
+        };
+        private static readonly ColumnRename[] renamings = new ColumnRename[]
+        {
+            new ColumnRename { Column = "F", NewName = "W" },
+            new ColumnRename { Column = "D", NewName = "Z" },
+            new ColumnRename { Column = "C", NewName = "Y" },
+            new ColumnRename { Column = "A", NewName = "X" },
+        };
+
+        [Test]
+        public void TheResultIsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table result = TableBuilder
+                            .From(original)
+                            .CreateTable();
+
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void FilterProducesCorrectRows()
+        {
+            Table      original = Table.From(columns, rows);
+            FilterFunc filter   = (row) => row.A <= 3;
+
+            Table filtered = TableBuilder
+                                .From(original)
+                                .Filter(filter)
+                                .CreateTable();
+
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.A <= 3));
+        }
+
+        [Test]
+        public void FilterDoesNotAffectRowOrder()
+        {
+            Table      original = Table.From(columns, rows);
+            FilterFunc filter   = (row) => true;
+
+            Table filtered = TableBuilder
+                                .From(original)
+                                .Filter(filter)
+                                .CreateTable();
+
+            Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
+        }
+
+        [Test]
+        public void RenameColumnsDoesTheRename()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table result = TableBuilder
+                            .From(original)
+                            .RenameColumns(renamings.ToDictionary(r => r.Column, r => r.NewName))
+                            .CreateTable();
+
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+        }
+
+        [Test]
+        public void ReorderColumnsResultsInCorrectColumnOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table reordered = TableBuilder
+                                .From(original)
+                                .ReorderColumns(reversedColumns.ToArray())
+                                .CreateTable();
+
+            Assert.That(reordered.Columns, Is.EqualTo(reversedColumns));
+        }
+
+        [Test]
+        public void ReorderColumnsReordersRowColumnOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table reordered = TableBuilder
+                                .From(original)
+                                .ReorderColumns(reversedColumns.ToArray())
+                                .CreateTable();
+
+            // Check that each row has the columns in the new column order
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(reversedColumns));
+            }
+        }
+
+        [Test]
+        public void ReorderColumnsDoesNotAffectOrderOfUnspecifiedColumns()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table reordered = TableBuilder
+                                .From(original)
+                                .ReorderColumns(new [] { "C", "E", "B" })
+                                .CreateTable();
+
+            string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F" };
+
+            Assert.That(reordered.Columns, Is.EqualTo(expectedColumnOrder));
+
+            // Check that the columns are in the correct order for each row in the result
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumnOrder));
+            }
+        }
+
+        [Test]
+        public void SelectColumnsProducesColumnsInTheSpecifiedOrder()
+        {
+            Table original = Table.From(columns, rows);
+
+            string[] selectedColumns =  new string[] { "B", "A" };
+
+            Table result = TableBuilder
+                            .From(original)
+                            .SelectColumns(selectedColumns)
+                            .CreateTable();
+
+            Assert.That(result.Columns, Is.EqualTo(selectedColumns));
+
+            // Check that each row has the columns in the new column order
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(selectedColumns));
+            }
+        }
+
+        [Test]
+        public void AddColumnAddsTheColumnAsTheLastColumn()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table result = TableBuilder
+                            .From(original)
+                            .AddColumn("G", row => "foo")
+                            .CreateTable();
+
+            string[] expectedColumns = columns.Concat(new [] {"G"}).ToArray();
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+            // Check that each row has the correct columns
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumns));
+            }
+        }
+
+        [Test]
+        public void TransformColumnProducesCorrectValues()
+        {
+            Table original = Table.From(columns, rows);
+
+            Table result = TableBuilder
+                            .From(original)
+                            .TransformColumn("A", row => row.A * 10)
+                            .CreateTable();
+
+            // Check the values in the result are correct.
+            // Also ends up making sure that the original rows have not been modified.
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.A == orig.A * 10),
+                Has.All.EqualTo(true)
+            );
         }
     }
 

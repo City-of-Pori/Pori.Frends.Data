@@ -299,6 +299,165 @@ namespace Pori.Frends.Data.Tests
     }
 
     [TestFixture]
+    class AddColumnsTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            new List<object> { 1,  2,  3,  4,  5,  6 },
+            new List<object> { 2,  4,  6,  8, 10, 12 },
+            new List<object> { 3,  6,  9, 12, 15, 18 },
+            new List<object> { 4,  8, 12, 16, 20, 24 },
+            new List<object> { 5, 10, 15, 20, 25, 30 },
+        };
+
+        [Test]
+        public void AddColumnsReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "G", ValueSource = NewColumnValueSource.Constant, Value = 0 }
+                }
+            };
+
+            Table result = DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void AddColumnsActuallyAddsTheColumns()
+        {
+            Table original = Table.From(columns, rows);
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "G", ValueSource = NewColumnValueSource.Constant, Value = 0 },
+                    new NewColumn { Name = "H", ValueSource = NewColumnValueSource.Constant, Value = 1 },
+                }
+            };
+
+            IEnumerable<string> expectedColumns = original.Columns.Concat(input.Columns.Select(c => c.Name));
+
+            
+            Table result = DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+            // Check each row contains the correct columns
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumns));
+            }
+        }
+
+        [Test]
+        public void AddColumnsWorksWithConstantValuesForTheColumns()
+        {
+            Table original = Table.From(columns, rows);
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "G", ValueSource = NewColumnValueSource.Constant, Value = 0 },
+                    new NewColumn { Name = "H", ValueSource = NewColumnValueSource.Constant, Value = 1 },
+                }
+            };
+
+
+            Table result = DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+
+            // Check each row contains the correct columns
+            foreach(var row in result.Rows)
+            {
+                Assert.That(row.G, Is.EqualTo(0));
+                Assert.That(row.H, Is.EqualTo(1));
+            }
+        }
+
+        [Test]
+        public void AddColumnsWorksWithComputedValuesForTheColumns()
+        {
+            Table original = Table.From(columns, rows);
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "copyOfA", ValueSource = NewColumnValueSource.Computed, ValueGenerator = row => row.A },
+                    new NewColumn { Name = "copyOfB", ValueSource = NewColumnValueSource.Computed, ValueGenerator = row => row.B },
+                }
+            };
+
+
+            Table result = DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+
+            // Check each row contains the correct values in the new columns
+            foreach(var row in result.Rows)
+            {
+                Assert.That(row.copyOfA, Is.EqualTo(row.A));
+                Assert.That(row.copyOfB, Is.EqualTo(row.B));
+            }
+        }
+
+        [Test]
+        public void AddColumnsThrowsWhenAddingMultipleColumnsWithTheSameName()
+        {
+            Table original = Table.From(columns, rows);
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "X", ValueSource = NewColumnValueSource.Constant, Value = 0 },
+                    new NewColumn { Name = "X", ValueSource = NewColumnValueSource.Constant, Value = 1 },
+                }
+            };
+
+            Action executeTask = () => DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void AddColumnsThrowsWhenAddingAnExistingColumn()
+        {
+            Table original = Table.From(columns, rows);
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "A", ValueSource = NewColumnValueSource.Constant, Value = 0 },
+                }
+            };
+
+            Action executeTask = () => DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
     class FilterTaskTests
     {
         private static readonly List<string> columns = new List<string> { "id", "name", "eol", "inProduction" };

@@ -195,5 +195,66 @@ namespace Pori.Frends.Data
         public bool PreserveOrder { get; set; }
     }
 
+    /// <summary>
+    /// How the values for a new column formed (AddColumns task)
+    /// </summary>
+    public enum NewColumnValueSource
+    {
+        Constant,
+        Computed
+    }
 
+    /// <summary>
+    /// A definition for a new table column for adding new columns to a table 
+    /// using the AddColumns task.
+    /// </summary>
+    public class NewColumn
+    {
+        /// <summary>
+        /// The name of the new column.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
+        public string Name { get; set; }
+
+        /// <summary>
+        /// How the values for the new column are generated.
+        /// </summary>
+        [DefaultValue(NewColumnValueSource.Constant)]
+        public NewColumnValueSource ValueSource { get; set; }
+
+        /// <summary>
+        /// The constant value for the column.
+        /// </summary>
+        [UIHint(nameof(ValueSource), "", NewColumnValueSource.Constant)]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public dynamic Value { get; set; }
+
+
+        /// <summary>
+        /// A function for generating the value of the new column.
+        /// Receives a single row as its argument and should return the value 
+        /// for the new column.
+        /// </summary>
+        [UIHint(nameof(ValueSource), "", NewColumnValueSource.Computed)]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Func<dynamic, dynamic> ValueGenerator { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for the AddColumns task.
+    /// </summary>
+    public class AddColumnsParameters
+    {
+        /// <summary>
+        /// The table to use as the source
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// List of columns to add to the table
+        /// </summary>
+        public NewColumn[] Columns { get; set; }
+    }
 }

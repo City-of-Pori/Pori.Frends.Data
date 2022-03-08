@@ -42,6 +42,45 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Add one or more columns to a table.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>A new table with the added columns.</returns>
+        public static Table AddColumns([PropertyTab] AddColumnsParameters input, CancellationToken cancellationToken)
+        {
+            var columnNames = input.Columns.Select(c => c.Name);
+
+            // Check that the table doesn't contain columns with the same name
+            if(columnNames.Intersect(input.Data.Columns).Count() > 0)
+                throw new ArgumentException("Cannot add new column with the same name as an existing column in the table.");
+
+            // Check the new column names are unique
+            if(columnNames.Distinct().Count() != columnNames.Count())
+                throw new ArgumentException("Multiple new columns with the same specified.");
+
+            TableBuilder builder = TableBuilder.From(input.Data);
+
+            // Add the new columns one by one
+            foreach(var column in input.Columns)
+            {
+                Func<dynamic, dynamic> generator;
+
+                // If a constant value was specified as the new value for the
+                // column, wrap it as a function returning the constant value.
+                if(column.ValueSource == NewColumnValueSource.Constant)
+                    generator = row => column.Value;
+                else
+                    generator = column.ValueGenerator;
+
+                // Add the column to the result
+                builder.AddColumn(column.Name, generator);
+            }
+
+            return builder.CreateTable();
+        }
+
+        /// <summary>
         /// Filter rows from a table.
         /// </summary>
         /// <param name="input"></param>

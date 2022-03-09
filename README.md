@@ -18,6 +18,10 @@ You can install the Task via frends UI Task View by using `Import Task NuGet` bu
 
 Load data into a new table.
 
+## AddColumns
+
+Add one or more columns to a table.
+
 ## Filter
 
 Filter rows of a table into a new table.

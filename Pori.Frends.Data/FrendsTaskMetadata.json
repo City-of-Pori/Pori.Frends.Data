@@ -4,6 +4,9 @@
 			"TaskMethod": "Pori.Frends.Data.DataTasks.Load"
 		},
 		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.AddColumns"
+		},
+		{
 			"TaskMethod": "Pori.Frends.Data.DataTasks.Filter"
 		},
 		{

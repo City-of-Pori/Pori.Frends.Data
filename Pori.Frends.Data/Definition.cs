@@ -257,4 +257,46 @@ namespace Pori.Frends.Data
         /// </summary>
         public NewColumn[] Columns { get; set; }
     }
+
+    public class ColumnTransform
+    {
+        /// <summary>
+        /// The name of the column to transform.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
+        public string Column { get; set; }
+
+        /// <summary>
+        /// Whether to provide the current value of the column or the whole 
+        /// row as an argument to the transform function.
+        /// </summary>
+        [DefaultValue(ProcessingType.Column)]
+        public ProcessingType TransformType { get; set; }
+
+        /// <summary>
+        /// The transform function. Receives either the entire row or the 
+        /// current value of the column as its argument (based on the value 
+        /// of TransformType). Should return a value for the column.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Func<dynamic, dynamic> Transform { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for the TransformColumns task.
+    /// </summary>
+    public class TransformColumnsParameters
+    {
+        /// <summary>
+        /// The table to use as the source
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// The transformations to apply to the source table.
+        /// </summary>
+        public ColumnTransform[] Transforms { get; set; }
+    }
 }

@@ -34,6 +34,10 @@ Reorder columns of a table into a new table.
 
 Keep or discard specific columns of a table into a new table.
 
+## TransformColumns
+
+Transform the values of one or more columns in a table.
+
 # Building
 
 Rebuild the project

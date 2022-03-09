@@ -103,7 +103,7 @@ namespace Pori.Frends.Data
                     .CreateTable();     // Create the resulting table
         }
 
-        
+
 
         /// <summary>
         /// Rename the columns of a table.
@@ -216,6 +216,43 @@ namespace Pori.Frends.Data
                     .From(input.Data)
                     .SelectColumns(columns)
                     .CreateTable();
+        }
+
+        /// <summary>
+        /// Transform the values of one or more columns in a table.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>A new table with the specifed transforms applied to the rows.</returns>
+        public static Table TransformColumns([PropertyTab] TransformColumnsParameters input, CancellationToken cancellationToken)
+        {
+            // Get the names of the columns to be transformed
+            var columnNames = input.Transforms.Select(tr => tr.Column);
+
+            // Check that the input table has all the specified columns
+            if(columnNames.Any(c => !input.Data.Columns.Contains(c)))
+                throw new ArgumentException("Invalid column specified");
+
+            // Start creating a new table using the input table as a source.
+            TableBuilder builder = TableBuilder.From(input.Data);
+
+            // Transform the columns one at a time
+            foreach(var transform in input.Transforms)
+            {
+                Func<dynamic, dynamic> fn = transform.Transform;
+
+                // If a constant value was specified as the new value for the
+                // column, wrap it as a function returning the constant value.
+                if(transform.TransformType == ProcessingType.Column)
+                    fn = TableBuilder.ColumnFunction(transform.Column, fn);
+
+                // Transform the values of the column using the transform
+                // function.
+                builder.TransformColumn(transform.Column, fn);
+            }
+
+            // Create and return the table with the transformed rows.
+            return builder.CreateTable();
         }
     }
 }

@@ -1026,4 +1026,105 @@ namespace Pori.Frends.Data.Tests
             Assert.That(executeTask, Throws.Exception);
         }
     }
+
+    [TestFixture]
+    class TransformColumnsTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            new List<object> { 1,  2,  3,  4,  5,  6 },
+            new List<object> { 2,  4,  6,  8, 10, 12 },
+            new List<object> { 3,  6,  9, 12, 15, 18 },
+            new List<object> { 4,  8, 12, 16, 20, 24 },
+            new List<object> { 5, 10, 15, 20, 25, 30 },
+        };
+
+        [Test]
+        public void TransformColumnsReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "A", TransformType = ProcessingType.Row, Transform = row => row.A * 10 },
+                }
+            };
+
+            Table result = DataTasks.TransformColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void TransformCanBeDoneUsingRows()
+        {
+            Table original = Table.From(columns, rows);
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "A", TransformType = ProcessingType.Row, Transform = row => row.A * 10 },
+                }
+            };
+
+            Table result = DataTasks.TransformColumns(input, new System.Threading.CancellationToken());
+
+            // Check the values in the result are correct.
+            // Also ends up making sure that the original rows have not been modified.
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.A == orig.A * 10),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void TransformCanBeDoneUsingColumnValues()
+        {
+            Table original = Table.From(columns, rows);
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "A", TransformType = ProcessingType.Column, Transform = A => A * 10 },
+                }
+            };
+
+            Table result = DataTasks.TransformColumns(input, new System.Threading.CancellationToken());
+
+            // Check the values in the result are correct.
+            // Also ends up making sure that the original rows have not been modified.
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.A == orig.A * 10),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void TransformColumnsThrowsWhenSpecifyingAnInvalidColumnName()
+        {
+            Table original = Table.From(columns, rows);
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "X", TransformType = ProcessingType.Row, Transform = row => null },
+                }
+            };
+
+            Action executeTask = () => DataTasks.TransformColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
 }

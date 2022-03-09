@@ -11,6 +11,7 @@ using Pori.Frends.Data.Linq;
 namespace Pori.Frends.Data
 {
     using FilterFunc = Func<dynamic, bool>;
+    using TableFunc = Func<dynamic, dynamic>;
 
     /// <summary>
     /// Frends task for data related tasks.
@@ -79,6 +80,76 @@ namespace Pori.Frends.Data
 
             return builder.CreateTable();
         }
+
+        /// <summary>
+        /// Convert the values of one or more columns in a table to specific type.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>A new table with the specifed transforms applied to the rows.</returns>
+        public static Table ConvertColumns([PropertyTab] ConvertColumnsParameters input, CancellationToken cancellationToken)
+        {
+            // Get the names of the columns to be transformed
+            var columnNames = input.Conversions.Select(tr => tr.Column);
+
+            // Check that the input table has all the specified columns
+            if(columnNames.Any(c => !input.Data.Columns.Contains(c)))
+                throw new ArgumentException("Invalid column specified");
+
+            // Start creating a new table using the input table as a source.
+            TableBuilder builder = TableBuilder.From(input.Data);
+
+            // Perform the conversions one column at a time
+            foreach(var conv in input.Conversions)
+                builder.TransformColumn(conv.Column, ConverterFor(conv));
+
+            // Create and return the table with the transformed rows.
+            return builder.CreateTable();
+        }
+
+        /// <summary>
+        /// Select a conversion function for a given column type.
+        /// </summary>
+        /// <param name="conv">
+        /// The column conversion specification for which a converter is returned.
+        /// </param>
+        /// <returns>
+        /// The conversion function matching the provided column conversion.
+        /// </returns>
+        private static TableFunc ConverterFor(ColumnConversion conv)
+        {
+            TableFunc converter;
+
+            switch(conv.Type)
+            {
+                case ColumnType.Custom:
+                    converter = conv.Converter;
+                    break;
+
+                case ColumnType.DateTime:
+                    converter = x => DateTime.ParseExact(x as string, conv.DateTimeFormat, null);
+                    break;
+
+                default:
+                    columnConverters.TryGetValue(conv.Type, out converter);
+                    break;
+            }
+
+            return TableBuilder.ColumnFunction(conv.Column, converter);
+        }
+
+        /// <summary>
+        /// Predefined conversion functions for different column types.
+        /// </summary>
+        private static readonly Dictionary<ColumnType, TableFunc> columnConverters = new Dictionary<ColumnType, TableFunc>
+        {
+            { ColumnType.Boolean,  x => Convert.ToBoolean(x) },
+            { ColumnType.Decimal,  x => Convert.ToDecimal(x) },
+            { ColumnType.Double,   x => Convert.ToDouble(x)  },
+            { ColumnType.Float,    x => Convert.ToSingle(x)  },
+            { ColumnType.Long,     x => Convert.ToInt64(x)   },
+            { ColumnType.Int,      x => Convert.ToInt32(x)   },
+        };
 
         /// <summary>
         /// Filter rows from a table.

@@ -299,4 +299,72 @@ namespace Pori.Frends.Data
         /// </summary>
         public ColumnTransform[] Transforms { get; set; }
     }
+
+    /// <summary>
+    /// Possible column types for the ConvertColumns task.
+    /// </summary>
+    public enum ColumnType
+    {
+        // Use explicit values to allow adding new ones while keeping the
+        // list of values in alphabetical order (for UI purposes).
+        Boolean  = 0,
+        DateTime = 100,
+        Decimal  = 200,
+        Double   = 300,
+        Float    = 400,
+        Int      = 500,
+        Long     = 600,
+
+        // Always have 'Custom' as last
+        Custom   = 9999,
+    }
+
+    public class ColumnConversion
+    {
+        /// <summary>
+        /// The name of the column to convert.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
+        public string Column { get; set; }
+
+        /// <summary>
+        /// The data type to convert the column values to
+        /// </summary>
+        public ColumnType Type { get; set; }
+
+        /// <summary>
+        /// The format to use when converting values to DateTime.
+        /// See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings 
+        /// for possible format specifiers.
+        /// </summary>
+        [UIHint(nameof(Type), "", ColumnType.DateTime)]
+        [DisplayFormat(DataFormatString = "Text")]
+        [DefaultValue("yyyy-MM-ddThh:mm:ss.fffZ")]
+        public string DateTimeFormat { get; set; }
+
+        /// <summary>
+        /// The function to use as a custom converter.
+        /// </summary>
+        [UIHint(nameof(Type), "", ColumnType.Custom)]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Func<dynamic, dynamic> Converter { get; set; } 
+    }
+
+    /// <summary>
+    /// Parameters for the ConvertColumns task.
+    /// </summary>
+    public class ConvertColumnsParameters
+    {
+        /// <summary>
+        /// The table to use as the source.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// The column type conversions to perform.
+        /// </summary>
+        public ColumnConversion[] Conversions { get; set; }
+    }
 }

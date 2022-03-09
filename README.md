@@ -22,6 +22,10 @@ Load data into a new table.
 
 Add one or more columns to a table.
 
+## ConvertColumns
+
+Convert values of a table column to a specific data type.
+
 ## Filter
 
 Filter rows of a table into a new table.

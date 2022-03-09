@@ -458,6 +458,259 @@ namespace Pori.Frends.Data.Tests
     }
 
     [TestFixture]
+    class ConvertColumnsTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            //                  A     B       C              D               E          F
+            new List<object> {  0, "false",  682, "12.03.2027 09:32:28", "4821503",  "63.34" },
+            new List<object> {  1,  "true", -974, "12.12.2023 07:25:27", "7116123",   "69.6" },
+            new List<object> {  2, "false", -626, "05.09.2025 09:23:42", "2360915",   "3.68" },
+            new List<object> {  3, "false", -635, "28.02.2020 02:07:36", "4804015",   "7.44" },
+            new List<object> {  4, "false", -532, "08.10.2009 05:36:31", "9959168",  "39.21" },
+            new List<object> {  5, "false", -874, "11.03.2003 04:07:12", "8845181", "-51.42" },
+            new List<object> {  6, "false",    0, "09.04.2002 07:21:49", "4003331", "-91.24" },
+            new List<object> {  7,  "true", -251, "12.12.2012 08:49:06", "9437750",  "28.63" },
+            new List<object> {  8,  "true",  719, "19.03.2002 06:28:28", "3619804", "-69.55" },
+            new List<object> {  9, "false", -103, "01.08.2004 11:42:11", "3605879", "-81.51" },
+            new List<object> { 10,  "true",    0, "09.08.2015 08:00:10", "9825135",     "13" },
+            new List<object> { 11,  "true", -678, "12.06.2022 01:28:56", "6606703",  "-12.8" },
+            new List<object> { 12, "false",    0, "03.12.2018 01:19:55", "6037166",  "56.05" },
+            new List<object> { 13, "false",  526, "08.04.2011 09:20:46", "8132910", "-51.63" },
+            new List<object> { 14, "false", -630, "25.02.2009 06:43:52", "8239276", "-34.54" },
+            new List<object> { 15, "false",  802, "26.11.2027 05:00:20", "1828554", "-43.64" },
+        };
+
+        [Test]
+        public void ConvertColumnsReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "B", Type = ColumnType.Boolean },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void ConvertColumnsToBooleanWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "B", Type = ColumnType.Boolean },
+                    new ColumnConversion { Column = "C", Type = ColumnType.Boolean },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.B is bool));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.C == (orig.C != 0)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsUsingCustomConverterWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "C", Type = ColumnType.Custom, Converter = x => x > 0 },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.C is bool));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.C == (orig.C > 0)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToDateTimeWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "D", Type = ColumnType.DateTime, DateTimeFormat = "dd.MM.yyyy hh:mm:ss" },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.D is DateTime));
+            Assert.That(
+                original.Rows.Zip(
+                    result.Rows, 
+                    (orig, res) => res.D == DateTime.ParseExact(orig.D, "dd.MM.yyyy hh:mm:ss", null)
+                ),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToDecimalWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "F", Type = ColumnType.Decimal },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is decimal));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.F == decimal.Parse(orig.F)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToDoubleWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "F", Type = ColumnType.Double },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is double));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.F == double.Parse(orig.F)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToFloatWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "F", Type = ColumnType.Float },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is float));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.F == float.Parse(orig.F)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToIntWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "E", Type = ColumnType.Int },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.E is int));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.E == int.Parse(orig.E)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToLongWorks()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "E", Type = ColumnType.Long },
+                }
+            };
+
+            Table result = DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.E is long));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.E == long.Parse(orig.E)),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsThrowsWhenSpecifyingAnInvalidColumnName()
+        {
+            Table original = Table.From(columns, rows);
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "X", Type = ColumnType.Int }
+                }
+            };
+
+            Action executeTask = () => DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
     class FilterTaskTests
     {
         private static readonly List<string> columns = new List<string> { "id", "name", "eol", "inProduction" };

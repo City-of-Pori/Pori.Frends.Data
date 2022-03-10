@@ -30,6 +30,10 @@ Convert values of a table column to a specific data type.
 
 Filter rows of a table into a new table.
 
+## GroupBy
+
+Group rows of a table based on the values of one or more columns.
+
 ## RenameColumns
 
 Rename columns of a table into a new table.

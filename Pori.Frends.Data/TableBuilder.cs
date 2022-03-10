@@ -84,7 +84,25 @@ namespace Pori.Frends.Data
             return this; // Enable method chaining
         }
 
-        
+        /// <summary>
+        /// Group rows based on the value of a given column.
+        /// </summary>
+        /// <param name="keyColumns"></param>
+        /// <param name="elementSelector"></param>
+        /// <param name="resultColumn"></param>
+        /// <param name="resultSelector"></param>
+        /// <returns></returns>
+        public TableBuilder GroupBy(IEnumerable<string> keyColumns, Func<dynamic, dynamic> elementSelector,
+                            string resultColumn, Func<IEnumerable<dynamic>, dynamic> resultSelector)
+        {
+            // Calculate the column list for the result
+            columns = keyColumns.Concat(new string[] { resultColumn }).ToList();
+
+            // Perform the grouping
+            rows.GroupBy(keyColumns, elementSelector, resultColumn, resultSelector);
+
+            return this; // Enable method chaining
+        }
 
         /// <summary>
         /// Rename columns in the result.
@@ -244,6 +262,49 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Group rows by one or more columns.
+        /// </summary>
+        /// <param name="keyColumns">The columns to group the rows by.</param>
+        /// <param name="elementSelector">Function to select a value based on each grouped row.</param>
+        /// <param name="resultColumn">Name of the column to store the grouped rows in.</param>
+        /// <param name="resultSelector">Function to produce a value for each group.</param>
+        public void GroupBy(IEnumerable<string> keyColumns, Func<dynamic, dynamic> elementSelector,
+                            string resultColumn, Func<IEnumerable<dynamic>, dynamic> resultSelector)
+        {
+            // Calculate the list of columns to include in the result
+            List<string> columns = keyColumns.Concat(new string[] { resultColumn }).ToList();
+
+            // Function to extract the values of the key columns as a list.
+            List<dynamic> ExtractKey(dynamic row)
+            {
+                return keyColumns
+                        .Select(column => (row as RowDict)[column])
+                        .ToList();
+            }
+
+            // Function to create a single row in the result
+            dynamic BuildResultRow(List<dynamic> key, IEnumerable<dynamic> groupedRows)
+            {
+                // Create the group value using the provided function
+                dynamic group  = resultSelector(groupedRows);
+
+                // The row's values are the values of the key columns plus
+                // the group column.
+                var values = key.Concat(new dynamic[] { group }).ToList();
+
+                // Return the new table row
+                return Table.Row(columns, values);
+            };
+
+            // Perform the grouping on the rows
+            rows = rows.GroupBy(ExtractKey, elementSelector, BuildResultRow, new RowEquality());
+
+            // As we have create new rows, mark that rows can be modified
+            // in-place.
+            copied = true;
+        }
+
+        /// <summary>
         /// Rename all columns of the rows
         /// </summary>
         /// <param name="columns">The new column names, in order.</param>
@@ -319,6 +380,30 @@ namespace Pori.Frends.Data
         private static List<dynamic> ValuesOf(RowDict row)
         {
             return row.Select(c => c.Value).ToList();
+        }
+
+        /// <summary>
+        /// A class comparing to lists of (row) values for equality.
+        /// Used by Rows.GroupBy.
+        /// </summary>
+        internal class RowEquality : EqualityComparer<List<dynamic>>
+        {
+            public override bool Equals(List<dynamic> Xs, List<dynamic> Ys)
+            {
+                // Compare elements of each list in order
+                return Xs.SequenceEqual(Ys);
+            }
+
+            public override int GetHashCode(List<dynamic> Xs)
+            {
+                // If only we had HashCode.Add available... :(
+                // DJB2 hash variant
+                // Algorithm source: http://www.cse.yorku.ca/~oz/hash.html
+                return Xs
+                        .Select(x => x.GetHashCode())
+                        .Aggregate(5381, (hash, xhash) => ((hash << 5) + hash) ^ xhash);
+
+            }
         }
     }
 }

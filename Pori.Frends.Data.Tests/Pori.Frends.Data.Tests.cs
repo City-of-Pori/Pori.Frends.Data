@@ -5,7 +5,9 @@ using System.Linq;
 
 namespace Pori.Frends.Data.Tests
 {
+    using TableFunc  = Func<dynamic, dynamic>;
     using FilterFunc = Func<dynamic, bool>;
+    using RowDict    = IDictionary<string, dynamic>;
 
     public class CsvInputData
     {
@@ -66,11 +68,11 @@ namespace Pori.Frends.Data.Tests
         private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
         private static readonly List<List<object>> rows = new List<List<object>>
         {
-            new List<object> { 1,  2,  3,  4,  5,  6 },
-            new List<object> { 2,  4,  6,  8, 10, 12 },
-            new List<object> { 3,  6,  9, 12, 15, 18 },
-            new List<object> { 4,  8, 12, 16, 20, 24 },
-            new List<object> { 5, 10, 15, 20, 25, 30 },
+            new List<object> { 1,  2,  3,  4,  5, 1 },
+            new List<object> { 2,  4,  6,  8, 10, 0 },
+            new List<object> { 3,  6,  9, 12, 15, 1 },
+            new List<object> { 4,  8, 12, 16, 20, 0 },
+            new List<object> { 5, 10, 15, 20, 25, 1 },
         };
         private static readonly ColumnRename[] renamings = new ColumnRename[]
         {
@@ -118,6 +120,45 @@ namespace Pori.Frends.Data.Tests
                                 .CreateTable();
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
+        }
+
+        [Test]
+        public void GroupByCorrectlyGroupsRows()
+        {
+            Table    original        = Table.From(columns, rows);
+            string[] keyColumns      = { "F" };
+            string[] expectedColumns = { "F", "G" };
+            var      keys            = original.Rows
+                                        .Select(row => row.F)
+                                        .Distinct();
+
+            Table grouped = TableBuilder
+                                .From(original)
+                                .GroupBy(keyColumns, x => x, "G", rows => rows)
+                                .CreateTable();
+
+            // Check that the result has only the key column and the group column
+            Assert.That(grouped.Columns, Is.EqualTo(expectedColumns));
+
+            // Check that the result has the correct number of rows
+            Assert.That(grouped.Count, Is.EqualTo(keys.Count()));
+
+            // Check that the result contains all the keys
+            // (not necessarily in the same order)
+            Assert.That(
+                grouped.Rows.Select(row => row.F), 
+                Is.EquivalentTo(keys)
+            );
+
+            // Check that each group's elements has the correct key
+            foreach(var row in grouped.Rows)
+                Assert.That(row.G, Has.All.Matches<dynamic>(elem => elem.F == row.F));
+
+            // Check that the result contains all the rows of the original table
+            Assert.That(
+                grouped.Rows.SelectMany(row => row.G as IEnumerable<dynamic>),
+                Is.EquivalentTo(original.Rows)
+            );
         }
 
         [Test]
@@ -705,6 +746,308 @@ namespace Pori.Frends.Data.Tests
             };
 
             Action executeTask = () => DataTasks.ConvertColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
+    class GroupByTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A","B","C","D","E","F","I","M","N","U" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            //                  A    B     C         D           E           F       I    M        N                  U
+            new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
+            new List<object> {  1,  true, "W", "07.12.2004",   "Tango",    -43.5,   244,  1,       "Teal", "2004-11-20T03:02:28Z" },
+            new List<object> {  2,  true, "L", "19.07.2023",    "Echo",   -10.11,  -869,  0,         null, "2015-01-14T00:51:16Z" },
+            new List<object> {  3, false, "S", "27.05.2027",    "Alfa",   -66.06,  -761,  1,         null, "2028-03-25T21:49:37Z" },
+            new List<object> {  4, false, "Z", "13.10.2014", "Uniform",   -14.72,  -275,  0,  "Goldenrod", "2028-03-16T08:08:43Z" },
+            new List<object> {  5,  true, "Y", "05.09.2013",   "Oscar",   -29.71,  -896,  1,      "Green", "2027-08-11T12:32:56Z" },
+            new List<object> {  6,  true, "T", "21.07.2003",   "Bravo",     7.05,  -706,  0,      "Khaki", "2013-12-19T14:24:42Z" },
+            new List<object> {  7, false, "X", "23.12.2004",   "Bravo",    74.45,   424,  1,       "Mauv", "2013-10-20T18:21:19Z" },
+            new List<object> {  8,  true, "P", "23.09.2023","November",    49.35,  -417,  0,         null, "1999-07-27T23:16:03Z" },
+            new List<object> {  9,  true, "G", "06.04.2007",   "Tango",    -54.5,    -8,  1,         null, "2017-05-23T19:01:35Z" },
+            new List<object> { 10,  true, "Q", "13.03.2025",    "Papa",   -87.98,   594,  0,         null, "2015-07-17T18:30:11Z" },
+            new List<object> { 11,  true, "T", "26.02.2017", "Foxtrot",       75,   745,  1,     "Fuscia", "2013-09-27T23:27:52Z" },
+            new List<object> { 12, false, "U", "24.06.2002",    "Kilo",   -97.89,  -678,  0,         null, "2028-05-17T04:10:04Z" },
+            new List<object> { 13,  true, "X", "10.02.2020",    "Mike",    63.58,   363,  1,     "Maroon", "2024-04-17T07:16:37Z" },
+            new List<object> { 14, false, "S", "03.05.2023",   "Delta",   -60.48,   979,  0,  "Goldenrod", "2000-06-10T03:15:18Z" },
+            new List<object> { 15, false, "I", "14.09.2029", "Whiskey",    72.45,  -406,  1,       "Pink", "1999-01-19T00:29:17Z" },
+            new List<object> { 16,  true, "Q", "24.02.2009",    "Papa",   -80.44,     9,  0,         null, "2013-10-27T06:43:15Z" },
+            new List<object> { 17,  true, "R", "11.08.2015", "Uniform",    -26.4,  -293,  1, "Aquamarine", "2022-02-03T08:57:37Z" },
+            new List<object> { 18,  true, "T", "07.06.2026",   "Oscar",     27.6,  -592,  0,         null, "2007-10-25T23:44:31Z" },
+            new List<object> { 19,  true, "W", "18.03.2000", "Uniform",   -60.79,  -130,  1,         null, "2001-03-09T11:05:58Z" },
+        };
+
+        [Test]
+        public void GroupByReturnsANewTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data         = original,
+                KeyColumns   = new string[] { "B" },
+                ResultColumn = "G",
+                Grouping     = GroupingType.EntireRows
+            };
+
+            Table result = DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void GroupByIncludesAllKeyColumnsInTheResult()
+        {
+            Table original = Table.From(columns, rows);
+            string[] keyColumns = { "B", "M" };
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data         = original,
+                KeyColumns   = keyColumns,
+                ResultColumn = "G",
+                Grouping     = GroupingType.EntireRows
+            };
+
+            Table result = DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+
+            string[] expectedColumns = { "B", "M", "G" };
+
+            // Check that the table has correct columns
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+            // Check that each row has the right columns
+            foreach(RowDict row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumns));
+            }
+        }
+
+        [Test]
+        public void GroupByCanProduceEntireGroupedRowsAsATable()
+        {
+            Table original = Table.From(columns, rows);
+            string[] keyColumns = { "B" };
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data         = original,
+                KeyColumns   = keyColumns,
+                ResultColumn = "G",
+                Grouping     = GroupingType.EntireRows
+            };
+
+            Table result = DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            // Check that each group is a table
+            foreach(var row in result.Rows)
+                Assert.That(row.G is Table);
+
+            // Check that each group's elements has the correct key
+            foreach(var row in result.Rows)
+                Assert.That((row.G as Table).Rows, Has.All.Matches<dynamic>(elem => elem.B == row.B));
+
+            // Check that the result contains all the rows of the original table
+            Assert.That(
+                result.Rows.SelectMany(row => row.G.Rows as IEnumerable<dynamic>),
+                Is.EquivalentTo(original.Rows)
+            );
+        }
+
+        [Test]
+        public void GroupByCanProduceSelectedColumnsOfGroupedRowsAsATable()
+        {
+            Table original = Table.From(columns, rows);
+            string[] keyColumns = { "B" };
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data         = original,
+                KeyColumns   = keyColumns,
+                ResultColumn = "G",
+                Grouping     = GroupingType.SelectedColumns,
+                Columns      = new[] { "A", "B", "C" }
+            };
+
+            Table result = DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "A", "B", "C" };
+
+            // Check that each group's elements has the correct key
+            foreach(var row in result.Rows)
+                Assert.That((row.G as Table).Rows, Has.All.Matches<dynamic>(elem => elem.B == row.B));
+
+            Table expectedGroupedRows = TableBuilder
+                                            .From(original)
+                                            .SelectColumns(expectedColumns)
+                                            .CreateTable();
+
+            // Check that the result contains all the rows of the original table
+            Assert.That(
+                result.Rows.SelectMany(row => row.G.Rows as IEnumerable<dynamic>),
+                Is.EquivalentTo(expectedGroupedRows.Rows)
+            );
+        }
+
+        [Test]
+        public void GroupByCanProduceValuesOfASingleColumnAsAnEnumerable()
+        {
+            Table original = Table.From(columns, rows);
+            string[] keyColumns = { "B" };
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data         = original,
+                KeyColumns   = keyColumns,
+                ResultColumn = "G",
+                Grouping     = GroupingType.SingleColumn,
+                Column       = "A"
+            };
+
+            Table result = DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            // Check that each group consists of the values of the selected
+            // column.
+            foreach(var row in result.Rows)
+            {
+                Table expectedGroupedRows = TableBuilder
+                                                .From(original)
+                                                .Filter(origRow => origRow.B == row.B)
+                                                .CreateTable();
+
+                Assert.That(
+                    row.G,
+                    Is.EquivalentTo(expectedGroupedRows.Rows.Select(r => r.A))
+                );
+            }
+
+            // Check that the result contains values matching all the rows
+            // of the original table.
+            Assert.That(
+                result.Rows.SelectMany(row => row.G as IEnumerable<dynamic>),
+                Is.EquivalentTo(original.Rows.Select(r => r.A))
+            );
+        }
+
+        [Test]
+        public void GroupByCanProduceComputedValuesAsAnEnumerable()
+        {
+            Table original = Table.From(columns, rows);
+            string[] keyColumns = { "B" };
+            TableFunc selectElement = row => row.A * 2;
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data            = original,
+                KeyColumns      = keyColumns,
+                ResultColumn    = "G",
+                Grouping        = GroupingType.Computed,
+                ComputeValue    = selectElement
+            };
+
+            Table result = DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            // Check that each group consists of the values of the selected
+            // column.
+            foreach(var row in result.Rows)
+            {
+                Table expectedGroupedRows = TableBuilder
+                                                .From(original)
+                                                .Filter(origRow => origRow.B == row.B)
+                                                .CreateTable();
+
+                Assert.That(
+                    row.G,
+                    Is.EquivalentTo(expectedGroupedRows.Rows.Select(selectElement))
+                );
+            }
+
+            // Check that the result contains all values matching the rows
+            // of the original table.
+            Assert.That(
+                result.Rows.SelectMany(row => row.G as IEnumerable<dynamic>),
+                Is.EquivalentTo(original.Rows.Select(selectElement))
+            );
+        }
+
+        [Test]
+        public void GroupByThrowsWhenKeyColumnDoesNotExistInTheTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data            = original,
+                KeyColumns      = new[] { "X" },  // <---
+                ResultColumn    = "G",
+                Grouping        = GroupingType.EntireRows
+            };
+
+            Action executeTask = () => DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void GroupByThrowsWhenASelectedColumnDoesNotExistInTheTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data            = original,
+                KeyColumns      = new[] { "B" },
+                ResultColumn    = "G",
+                Grouping        = GroupingType.SelectedColumns,
+                Columns         = new[] { "A", "X" }  // <---
+            };
+
+            Action executeTask = () => DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void GroupByThrowsWhenTheSelectedSingleColumnDoesNotExistInTheTable()
+        {
+            Table original = Table.From(columns, rows);
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data            = original,
+                KeyColumns      = new[] { "B" },
+                ResultColumn    = "G",
+                Grouping        = GroupingType.SingleColumn,
+                Column          = "X" // <---
+            };
+
+            Action executeTask = () => DataTasks.GroupBy(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void GroupByThrowsWhenResultColumnIsOneOfTheKeyColums()
+        {
+            Table original = Table.From(columns, rows);
+            string[] keyColumns = { "B", "M" };
+
+            GroupByParameters input = new GroupByParameters
+            {
+                Data            = original,
+                KeyColumns      = keyColumns,
+                ResultColumn    = "M",  // <---
+                Grouping        = GroupingType.EntireRows
+            };
+
+            Action executeTask = () => DataTasks.GroupBy(input, new System.Threading.CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }

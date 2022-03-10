@@ -10,6 +10,7 @@ using Pori.Frends.Data.Linq;
 
 namespace Pori.Frends.Data
 {
+    using RowDict = IDictionary<string, dynamic>;
     using FilterFunc = Func<dynamic, bool>;
     using TableFunc = Func<dynamic, dynamic>;
 
@@ -172,6 +173,87 @@ namespace Pori.Frends.Data
                     .From(input.Data)   // Use the input table as the source
                     .Filter(filter)     // Filter the rows
                     .CreateTable();     // Create the resulting table
+        }
+
+        /// <summary>
+        /// Group rows of a table based on the values of one or more columns.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>
+        /// A new table with the rows of the input table grouped by the 
+        /// specified columns.
+        /// </returns>
+        public static Table GroupBy([PropertyTab] GroupByParameters input, CancellationToken cancellationToken)
+        {
+            TableFunc elementSelector;
+            Func<IEnumerable<dynamic>, dynamic> resultSelector;
+
+            // Check that the input table has all the specified columns
+            if(input.KeyColumns.Contains(input.ResultColumn))
+                throw new ArgumentException("The result column name cannot be one of the key columns");
+
+            // Check that the input table has all the specified columns
+            if(input.KeyColumns.Any(c => !input.Data.Columns.Contains(c)))
+                throw new ArgumentException("Invalid key column specified");
+
+            // Check that all columns to include in the grouped rows exist
+            // in the table.
+            if(input.Grouping == GroupingType.SelectedColumns
+               && input.Columns.Any(c => !input.Data.Columns.Contains(c)))
+                throw new ArgumentException("Invalid column specified to be selected into grouped rows");
+
+            // Check that the column specified to be used as the values for
+            // each group exists in the table.
+            if(input.Grouping == GroupingType.SingleColumn
+               && !input.Data.Columns.Contains(input.Column))
+                throw new ArgumentException("Invalid column specified to be selected as the group element");
+
+            // Select the format of the grouped rows
+            switch(input.Grouping)
+            {
+                // Take grouped rows as is and create a table from them.
+                case GroupingType.EntireRows:
+                    elementSelector = x => x;
+                    resultSelector  = rows => Table.From(input.Data.Columns,
+                                                         rows.Cast<RowDict>());
+                    break;
+
+                // Take grouped rows as is, and create a table from them but
+                // only select certain columns.
+                case GroupingType.SelectedColumns:
+                    elementSelector = x => x;
+                    resultSelector  = rows => Table.From(input.Columns.ToList(),
+                                                         rows.Cast<RowDict>());
+                    break;
+
+                // Take only the value of the specified column and create
+                // a list from them.
+                case GroupingType.SingleColumn:
+                    elementSelector = TableBuilder.ColumnFunction(input.Column, x => x);
+                    resultSelector  = rows => rows;
+                    break;
+
+                // Create the result elements from the grouped rows using
+                // the provided function and a create a list from them.
+                case GroupingType.Computed:
+                    elementSelector = input.ComputeValue;
+                    resultSelector  = rows => rows;
+                    break;
+
+                // Should not happen. This is here to silence the compiler.
+                default:
+                    throw new InvalidEnumArgumentException();
+            }
+
+            // By default use the provided result column
+            string resultColumn = input.ResultColumn;
+
+            // Create and return the result table.
+            return TableBuilder
+                    .From(input.Data)
+                    .GroupBy(input.KeyColumns, elementSelector, resultColumn, resultSelector)
+                    .CreateTable();
         }
 
 

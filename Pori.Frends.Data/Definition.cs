@@ -367,4 +367,82 @@ namespace Pori.Frends.Data
         /// </summary>
         public ColumnConversion[] Conversions { get; set; }
     }
+    
+    /// <summary>
+    /// Specifies how the grouped rows are included in the result of a 
+    /// GroupBy task.
+    /// </summary>
+    public enum GroupingType
+    {
+        /// <summary>
+        /// Produce grouped rows as is in a table.
+        /// </summary>
+        EntireRows,
+
+        /// <summary>
+        /// Produce selected columns of grouped rows in a table.
+        /// </summary>
+        SelectedColumns,
+
+        /// <summary>
+        /// Produce the values of a single column of grouped rows as an 
+        /// enumerable collection.
+        /// </summary>
+        SingleColumn,
+
+        /// <summary>
+        /// Produce computed values for grouped rows as an enumerable
+        /// collection.
+        /// </summary>
+        Computed
+    }
+
+    public class GroupByParameters
+    {
+        /// <summary>
+        /// The table to use as the source.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// Names of columns to group rows by.
+        /// </summary>
+        [DefaultValue(new string[] {""})]
+        public string[] KeyColumns { get; set; }
+
+        /// <summary>
+        /// Name of the column for the the grouped rows.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
+        public string ResultColumn { get; set; }
+
+        /// <summary>
+        /// How the grouped rows should be returned in the resulting table.
+        /// </summary>
+        [DefaultValue(GroupingType.EntireRows)]
+        public GroupingType Grouping { get; set; }
+
+        /// <summary>
+        /// The single column to include for grouped rows.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
+        [UIHint(nameof(Grouping), "", GroupingType.SingleColumn)]
+        public string Column { get; set; }
+
+        /// <summary>
+        /// The columns to include in the grouped rows.
+        /// </summary>
+        [UIHint(nameof(Grouping), "", GroupingType.SelectedColumns)]
+        [DefaultValue(new string[] {""})]
+        public string[] Columns { get; set; }
+
+        /// <summary>
+        /// Function to compute a value for each grouped row.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
+        [UIHint(nameof(Grouping), "", GroupingType.Computed)]
+        public Func<dynamic, dynamic> ComputeValue { get; set; }
+    }
 }

@@ -95,6 +95,26 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void ConcatenateWorks()
+        {
+            Table fullTable = Table.From(columns, rows);
+
+            Table[] tables =
+            {
+                Table.From(columns, rows.Skip(0).Take(2).ToList()),
+                Table.From(columns, rows.Skip(2).Take(2).ToList()),
+                Table.From(columns, rows.Skip(4).Take(2).ToList())
+            };
+
+            Table result = TableBuilder
+                            .From(tables[0])
+                            .Concatenate(tables.Skip(1))
+                            .CreateTable();
+
+            Assert.That(result.Rows, Is.EqualTo(fullTable.Rows));
+        }
+
+        [Test]
         public void FilterProducesCorrectRows()
         {
             Table      original = Table.From(columns, rows);
@@ -540,6 +560,124 @@ namespace Pori.Frends.Data.Tests
             };
 
             Action executeTask = () => DataTasks.AddColumns(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
+    class ConcatenateTaskTests
+    {
+        private static readonly List<string> columns = new List<string> { "A","B","C","D","E","F","I","M","N","U" };
+        private static readonly List<List<object>> rows = new List<List<object>>
+        {
+            //                  A    B     C         D           E           F       I    M        N                  U
+            new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
+            new List<object> {  1,  true, "W", "07.12.2004",   "Tango",    -43.5,   244,  1,       "Teal", "2004-11-20T03:02:28Z" },
+            new List<object> {  2,  true, "L", "19.07.2023",    "Echo",   -10.11,  -869,  0,         null, "2015-01-14T00:51:16Z" },
+            new List<object> {  3, false, "S", "27.05.2027",    "Alfa",   -66.06,  -761,  1,         null, "2028-03-25T21:49:37Z" },
+            new List<object> {  4, false, "Z", "13.10.2014", "Uniform",   -14.72,  -275,  0,  "Goldenrod", "2028-03-16T08:08:43Z" },
+            new List<object> {  5,  true, "Y", "05.09.2013",   "Oscar",   -29.71,  -896,  1,      "Green", "2027-08-11T12:32:56Z" },
+            new List<object> {  6,  true, "T", "21.07.2003",   "Bravo",     7.05,  -706,  0,      "Khaki", "2013-12-19T14:24:42Z" },
+            new List<object> {  7, false, "X", "23.12.2004",   "Bravo",    74.45,   424,  1,       "Mauv", "2013-10-20T18:21:19Z" },
+            new List<object> {  8,  true, "P", "23.09.2023","November",    49.35,  -417,  0,         null, "1999-07-27T23:16:03Z" },
+            new List<object> {  9,  true, "G", "06.04.2007",   "Tango",    -54.5,    -8,  1,         null, "2017-05-23T19:01:35Z" },
+            new List<object> { 10,  true, "Q", "13.03.2025",    "Papa",   -87.98,   594,  0,         null, "2015-07-17T18:30:11Z" },
+            new List<object> { 11,  true, "T", "26.02.2017", "Foxtrot",       75,   745,  1,     "Fuscia", "2013-09-27T23:27:52Z" },
+            new List<object> { 12, false, "U", "24.06.2002",    "Kilo",   -97.89,  -678,  0,         null, "2028-05-17T04:10:04Z" },
+            new List<object> { 13,  true, "X", "10.02.2020",    "Mike",    63.58,   363,  1,     "Maroon", "2024-04-17T07:16:37Z" },
+            new List<object> { 14, false, "S", "03.05.2023",   "Delta",   -60.48,   979,  0,  "Goldenrod", "2000-06-10T03:15:18Z" },
+            new List<object> { 15, false, "I", "14.09.2029", "Whiskey",    72.45,  -406,  1,       "Pink", "1999-01-19T00:29:17Z" },
+            new List<object> { 16,  true, "Q", "24.02.2009",    "Papa",   -80.44,     9,  0,         null, "2013-10-27T06:43:15Z" },
+            new List<object> { 17,  true, "R", "11.08.2015", "Uniform",    -26.4,  -293,  1, "Aquamarine", "2022-02-03T08:57:37Z" },
+            new List<object> { 18,  true, "T", "07.06.2026",   "Oscar",     27.6,  -592,  0,         null, "2007-10-25T23:44:31Z" },
+            new List<object> { 19,  true, "W", "18.03.2000", "Uniform",   -60.79,  -130,  1,         null, "2001-03-09T11:05:58Z" },
+        };
+
+        [Test]
+        public void ConcatenateReturnsANewTable()
+        {
+            Table fullTable = Table.From(columns, rows);
+
+            int chunkSize  = 6;
+            int chunkCount = (int) Math.Ceiling((double) fullTable.Count / chunkSize);
+
+            IEnumerable<Table> chunks = Enumerable
+                                            .Range(0, chunkCount)
+                                            .Select(i => rows.Skip(i * chunkSize).Take(chunkSize))
+                                            .Select(chunkRows => Table.From(columns, chunkRows.ToList()));
+
+            ConcatenateParameters input = new ConcatenateParameters
+            {
+                Tables = chunks.ToArray()
+            };
+
+            Table result = DataTasks.Concatenate(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(fullTable));
+        }
+
+        [Test]
+        public void ConcatenateReturnsTheCorrectResultWithASingleTable()
+        {
+            Table fullTable = Table.From(columns, rows);
+
+            ConcatenateParameters input = new ConcatenateParameters
+            {
+                Tables = new Table[] { fullTable }
+            };
+
+            Table result = DataTasks.Concatenate(input, new System.Threading.CancellationToken());
+
+            Assert.That(result, Is.Not.SameAs(fullTable));
+            Assert.That(result.Columns, Is.EqualTo(fullTable.Columns));
+            Assert.That(result.Rows, Is.EqualTo(fullTable.Rows));
+        }
+
+        [Test]
+        public void ConcatenateReturnsTheCorrectResultWithMultipleTables()
+        {
+            Table fullTable = Table.From(columns, rows);
+
+            int chunkSize  = 6;
+            int chunkCount = (int) Math.Ceiling((double) fullTable.Count / chunkSize);
+
+            IEnumerable<Table> chunks = Enumerable
+                                            .Range(0, chunkCount)
+                                            .Select(i => rows.Skip(i * chunkSize).Take(chunkSize))
+                                            .Select(chunkRows => Table.From(columns, chunkRows.ToList()));
+
+            ConcatenateParameters input = new ConcatenateParameters
+            {
+                Tables = chunks.ToArray()
+            };
+
+            Table result = DataTasks.Concatenate(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(fullTable.Columns));
+            Assert.That(result.Rows, Is.EqualTo(fullTable.Rows));
+        }
+
+        [Test]
+        public void ConcatenateThrowsWhenTableColumnsDoNotMatch()
+        {
+            Table fullTable = Table.From(columns, rows);
+
+            Table first  = Table.From(columns, rows.Skip(0).Take(10).ToList());
+            Table second = Table.From(columns, rows.Skip(1).Take(10).ToList());
+
+            Table incompatible = TableBuilder
+                                    .From(second)
+                                    .RenameColumns(new Dictionary<string, string> { { "A", "X" } })
+                                    .CreateTable();
+
+            ConcatenateParameters input = new ConcatenateParameters
+            {
+                Tables = new [] { first, incompatible }
+            };
+
+            Action executeTask = () => DataTasks.Concatenate(input, new System.Threading.CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }

@@ -83,6 +83,30 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Concatenate one or more tables together. All tables must have
+        /// exactly the same columns in the same order.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>A new table with all the input tables' rows concatenated.</returns>
+        public static Table Concatenate([PropertyTab] ConcatenateParameters input, CancellationToken cancellationToken)
+        {
+            // Separate the first table from the input tables
+            var first = input.Tables.First();
+            var rest  = input.Tables.Skip(1);
+
+            // Check that all tables have the same columns in the same order.
+            if(rest.Any(table => !table.Columns.SequenceEqual(first.Columns)))
+                throw new ArgumentException("All tables have to have exactly the same columns");
+
+            // Create the result table
+            return TableBuilder
+                    .From(first)
+                    .Concatenate(rest)
+                    .CreateTable();
+        }
+
+        /// <summary>
         /// Convert the values of one or more columns in a table to specific type.
         /// </summary>
         /// <param name="input"></param>

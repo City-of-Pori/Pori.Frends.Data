@@ -22,6 +22,10 @@ Load data into a new table.
 
 Add one or more columns to a table.
 
+## Concatenate
+
+Concatenate the rows of multiple tables into a new table.
+
 ## ConvertColumns
 
 Convert values of a table column to a specific data type.

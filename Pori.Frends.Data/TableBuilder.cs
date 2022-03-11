@@ -71,6 +71,18 @@ namespace Pori.Frends.Data
             return this; // Enable method chaining
         }
 
+        /// <summary>
+        /// Add the rows of one or more tables in to the result table.
+        /// </summary>
+        /// <param name="tables">The tables whose rows are to be added to the result table.</param>
+        /// <returns>The table builder itself(for method chaining).</returns>
+        public TableBuilder Concatenate(IEnumerable<Table> tables)
+        {
+            rows.Concatenate(tables);
+
+            return this; // Enable method chaining
+        }
+
 
         /// <summary>
         /// Filter the rows using the given filter function.
@@ -269,6 +281,19 @@ namespace Pori.Frends.Data
             }
 
             rows = rows.Select(StoreColumnValue);
+        }
+
+        /// <summary>
+        /// Concatenate the rows of one or more tables to the current rows.
+        /// </summary>
+        /// <param name="tables">
+        /// The table whose rows are to be added to the current rows.
+        /// </param>
+        public void Concatenate(IEnumerable<Table> tables)
+        {
+            // Concatenate the rows of each table in turn.
+            foreach(var table in tables)
+                rows = rows.Concat(table.Rows);
         }
 
         /// <summary>

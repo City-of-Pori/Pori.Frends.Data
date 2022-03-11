@@ -498,4 +498,15 @@ namespace Pori.Frends.Data
         [DefaultValue(new[] {""})]
         public SortingCriterion[] SortingCriteria { get; set; }
     }
+
+    /// <summary>
+    /// Parameters for the Concatenate task.
+    /// </summary>
+    public class ConcatenateParameters
+    {
+        /// <summary>
+        /// The table to use as the source.
+        /// </summary>
+        public Table[] Tables { get; set; }
+    }
 }

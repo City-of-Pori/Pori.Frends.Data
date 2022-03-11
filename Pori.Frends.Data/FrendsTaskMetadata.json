@@ -25,6 +25,9 @@
 			"TaskMethod": "Pori.Frends.Data.DataTasks.SelectColumns"
 		},
 		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.Sort"
+		},
+		{
 			"TaskMethod": "Pori.Frends.Data.DataTasks.TransformColumns"
 		}
 	]

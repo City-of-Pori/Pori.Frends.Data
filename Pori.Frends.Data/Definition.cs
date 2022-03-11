@@ -367,7 +367,7 @@ namespace Pori.Frends.Data
         /// </summary>
         public ColumnConversion[] Conversions { get; set; }
     }
-    
+
     /// <summary>
     /// Specifies how the grouped rows are included in the result of a 
     /// GroupBy task.
@@ -444,5 +444,58 @@ namespace Pori.Frends.Data
         [DisplayFormat(DataFormatString = "Expression")]
         [UIHint(nameof(Grouping), "", GroupingType.Computed)]
         public Func<dynamic, dynamic> ComputeValue { get; set; }
+    }
+
+    /// <summary>
+    /// Whether to sort table rows in an ascending or descending order.
+    /// </summary>
+    public enum Order
+    {
+        /// <summary>
+        /// Sort table rows in ascending order.
+        /// </summary>
+        Ascending,
+
+        /// <summary>
+        /// Sort table rows in descending order.
+        /// </summary>
+        Descending
+    }
+
+    /// <summary>
+    /// A single sorting criterion.
+    /// </summary>
+    public class SortingCriterion
+    {
+        /// <summary>
+        /// The name of the column to use for sorting rows.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
+        public string Column { get; set; }
+
+        /// <summary>
+        /// Whether to sort the rows ascending or descending.
+        /// </summary>
+        [DefaultValue(Order.Ascending)]
+        public Order Order { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for the Sort task.
+    /// </summary>
+    public class SortParameters
+    {
+        /// <summary>
+        /// The table to use as the source.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// The sorting criteria (column and order) to use.
+        /// </summary>
+        [DefaultValue(new[] {""})]
+        public SortingCriterion[] SortingCriteria { get; set; }
     }
 }

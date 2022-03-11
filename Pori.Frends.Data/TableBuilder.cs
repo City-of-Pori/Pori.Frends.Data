@@ -156,6 +156,18 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Sort rows according to the specified sorting criteria
+        /// </summary>
+        /// <param name="criteria">The sorting criteria to use.</param>
+        /// <returns></returns>
+        public TableBuilder Sort(IEnumerable<SortingCriterion> criteria)
+        {
+            rows.Sort(criteria);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
         /// Transform the values of a given column using a transformation function.
         /// </summary>
         /// <param name="column">The column whose values are transformed.</param>
@@ -192,7 +204,24 @@ namespace Pori.Frends.Data
         /// <param name="source">The table to use as the source for the new table</param>
         /// <returns></returns>
         public static TableBuilder From(Table source) => new TableBuilder(source);
+
+        /// <summary>
+        /// A single sorting criterion for sorting the rows of a table.
+        /// </summary>
+        public class SortingCriterion
+        {
+            /// <summary>
+            /// Function to extract the key for the sorting operations.
+            /// </summary>
+            public Func<dynamic, dynamic> KeySelector { get; set; }
+
+            /// <summary>
+            /// The order of the sorting for this criterion.
+            /// </summary>
+            public Order Order { get; set; }
+        }
     }
+
 
     /// <summary>
     /// A class for applying TableBuilder operations to table rows.
@@ -339,6 +368,38 @@ namespace Pori.Frends.Data
             // We produce new row objects, so no need to make a copy for
             // in-place operations
             copied = true;
+        }
+
+        /// <summary>
+        /// Sort the rows according to provided sorting criteria.
+        /// </summary>
+        /// <param name="criteria">List of sorting criteria to apply.</param>
+        public void Sort(IEnumerable<TableBuilder.SortingCriterion> criteria)
+        {
+            IOrderedEnumerable<dynamic> sorted;
+
+            // We need to separate the first criterion from the rest
+            // because how multi-step sorting works with LINQ
+            var initial = criteria.First();
+            var rest    = criteria.Skip(1);
+            
+            // Sort the rows according to the first criterion
+            if(initial.Order == Order.Ascending)
+                sorted = rows.OrderBy(initial.KeySelector);
+            else
+                sorted = rows.OrderByDescending(initial.KeySelector);
+
+            // Sort the rows according to the rest of the criteria
+            foreach(var criterion in rest)
+            {
+                if(criterion.Order == Order.Ascending)
+                    sorted = sorted.ThenBy(criterion.KeySelector);
+                else
+                    sorted = sorted.ThenByDescending(criterion.KeySelector);
+            }
+
+            // Store the sorted rows
+            rows = sorted;
         }
 
         /// <summary>

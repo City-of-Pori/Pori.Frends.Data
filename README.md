@@ -46,6 +46,10 @@ Reorder columns of a table into a new table.
 
 Keep or discard specific columns of a table into a new table.
 
+## Sort
+
+Sort the rows of a table by one or more columns.
+
 ## TransformColumns
 
 Transform the values of one or more columns in a table.

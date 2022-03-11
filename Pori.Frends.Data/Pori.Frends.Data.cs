@@ -372,6 +372,44 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Sort the rows of a table by one or more columns.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>A new table with sorted rows.</returns>
+        /// <exception cref="ArgumentException"></exception>
+        public static Table Sort([PropertyTab] SortParameters input, CancellationToken cancellationToken)
+        {
+            // Get the names of the columns to be transformed
+            var columnNames = input.SortingCriteria.Select(column => column.Column);
+
+            // Check that the input table has all the specified columns
+            if(columnNames.Any(c => !input.Data.Columns.Contains(c)))
+                throw new ArgumentException("Invalid column specified");
+
+            // Function for converting the input criterion (column name and order) to
+            // the TableBuilder equivalent (key selector function and order)
+            TableBuilder.SortingCriterion ConvertSortingCriterion(SortingCriterion inputCriterion)
+            {
+                return new TableBuilder.SortingCriterion
+                {
+                    // Key is a function that extracts the value of the specific column
+                    KeySelector = TableBuilder.ColumnFunction(inputCriterion.Column, x => x),
+                    // Order or the sort for this criterion
+                    Order = inputCriterion.Order
+                };
+            }
+
+            // Convert the input sorting criteria to the ones accepted by TableBuilder
+            var criteria = input.SortingCriteria.Select(ConvertSortingCriterion);
+
+            return TableBuilder
+                    .From(input.Data)   // Create the table from the input table
+                    .Sort(criteria)     // Sort using the criteria
+                    .CreateTable();
+        }
+
+        /// <summary>
         /// Transform the values of one or more columns in a table.
         /// </summary>
         /// <param name="input"></param>

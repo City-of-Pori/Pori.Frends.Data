@@ -19,6 +19,9 @@
 			"TaskMethod": "Pori.Frends.Data.DataTasks.GroupBy"
 		},
 		{
+			"TaskMethod": "Pori.Frends.Data.DataTasks.Join"
+		},
+		{
 			"TaskMethod": "Pori.Frends.Data.DataTasks.RenameColumns"
 		},
 		{

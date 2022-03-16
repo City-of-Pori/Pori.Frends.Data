@@ -38,6 +38,10 @@ Filter rows of a table into a new table.
 
 Group rows of a table based on the values of one or more columns.
 
+## Join
+
+Join the rows of two tables on the values of one or more columns.
+
 ## RenameColumns
 
 Rename columns of a table into a new table.

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using Pori.Frends.Data.Linq;
 
@@ -83,6 +84,26 @@ namespace Pori.Frends.Data
             return this; // Enable method chaining
         }
 
+        /// <summary>
+        /// Expand the nested values of a column into new columns.
+        /// </summary>
+        /// <param name="column">The column to expand</param>
+        /// <param name="nestedColumns">The nested columns to include in the result table.</param>
+        /// <returns>The table builder itself(for method chaining).</returns>
+        public TableBuilder ExpandColumn(string column, IEnumerable<string> nestedColumns)
+        {
+            // Calculate the new columns for the result table.
+            // Expanded columns are placed at the end of the row
+            columns = columns
+                        .Where(c => c != column)
+                        .Concat(nestedColumns)
+                        .ToList();
+
+            // Actually expand the column for each row
+            rows.ExpandColumn(column, nestedColumns);
+
+            return this; // Enable method chaining
+        }
 
         /// <summary>
         /// Filter the rows using the given filter function.
@@ -112,6 +133,48 @@ namespace Pori.Frends.Data
 
             // Perform the grouping
             rows.GroupBy(keyColumns, elementSelector, resultColumn, resultSelector);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
+        /// Perform an inner join on the source table and another table.
+        /// </summary>
+        /// <param name="leftKeyColumns">The columns to use as the key for the source (left side) table.</param>
+        /// <param name="leftResultColumn">The column name to use in the result table for the rows of the left table.</param>
+        /// <param name="right">The right side table to join to the source (left side) table.</param>
+        /// <param name="rightKeyColumns">The columns to as the key for the right side table.</param>
+        /// <param name="rightResultColumn">The column name to use in the result table for the rows of the right side table.</param>
+        /// <returns>The table builder itself (for method chaining).</returns>
+        public TableBuilder InnerJoin(IEnumerable<string> leftKeyColumns, string leftResultColumn,
+                                      Table right, IEnumerable<string> rightKeyColumns, string rightResultColumn)
+        {
+            // The columns of the result table
+            columns = (new[] { leftResultColumn, rightResultColumn }).ToList();
+
+            // Perform the inner join on the rows.
+            rows.InnerJoin(leftKeyColumns, right, rightKeyColumns, columns);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
+        /// Perform a left outer join on the source table and another table.
+        /// </summary>
+        /// <param name="leftKeyColumns">The columns to use as the key for the source (left side) table.</param>
+        /// <param name="leftResultColumn">The column name to use in the result table for the rows of the left side table.</param>
+        /// <param name="right">The right side table to join to the source (left side) table.</param>
+        /// <param name="rightKeyColumns">The columns to as the key for the right side table.</param>
+        /// <param name="rightResultColumn">The column name to use in the result table for the rows of the right side table.</param>
+        /// <returns>The table builder itself (for method chaining).</returns>
+        public TableBuilder LeftOuterJoin(IEnumerable<string> leftKeyColumns, string leftResultColumn,
+                                      Table right, IEnumerable<string> rightKeyColumns, string rightResultColumn)
+        {
+            // The columns of the result table
+            columns = (new[] { leftResultColumn, rightResultColumn }).ToList();
+
+            // Perform the left outer join on the rows.
+            rows.LeftOuterJoin(leftKeyColumns, right, rightKeyColumns, columns);
 
             return this; // Enable method chaining
         }
@@ -307,6 +370,59 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Expand the values of a given column as new columns.
+        /// </summary>
+        /// <param name="column">The column whose values are expanded.</param>
+        /// <param name="nestedColumns">The nested columns to select as new columns.</param>
+        public void ExpandColumn(string column, IEnumerable<string> nestedColumns)
+        {
+            // Make sure we can modify rows in-place
+            if(!copied)
+                Copy();
+
+            // Function to expand the column for a single row
+            dynamic DoExpandColumn(RowDict row)
+            {
+                // Get the value of the column
+                RowDict valueToExpand = row[column];
+
+                // Remove the expanded column from the row
+                row.Remove(column);
+
+                // Store all values from the expanded column to the row
+                foreach(var nested in nestedColumns)
+                    row[nested] = valueToExpand[nested];
+
+                // Return the modified row
+                return row;
+            }
+
+            // Apply the expansion to all the rows
+            rows = rows
+                    .Cast<RowDict>()
+                    .Select(DoExpandColumn);
+        }
+
+        /// <summary>
+        /// Returns a function for extracting from a row the values of the
+        /// specified columns (to be used as a key for the row).
+        /// </summary>
+        /// <param name="keyColumns">The names of the columns to use as the key.</param>
+        /// <returns></returns>
+        private static Func<dynamic, List<dynamic>> ExtractKey(IEnumerable<string> keyColumns)
+        {
+            // Function to extract the values of the key columns as a list.
+            List<dynamic> ExtractKey(dynamic row)
+            {
+                return keyColumns
+                        .Select(column => (row as RowDict)[column])
+                        .ToList();
+            }
+
+            return ExtractKey;
+        }
+
+        /// <summary>
         /// Filter the rows using the given filter function.
         /// </summary>
         /// <param name="filter">The function to use to filter the rows</param>
@@ -357,6 +473,61 @@ namespace Pori.Frends.Data
             // in-place.
             copied = true;
         }
+
+        /// <summary>
+        /// Perform an inner join on the current rows with the rows of a table.
+        /// </summary>
+        /// <param name="leftKeyColumns">The columns to use as the key of for each row.</param>
+        /// <param name="right">The table whose rows are joined to the current rows.</param>
+        /// <param name="rightKeyColumns">The columns to use as the key for the other table.</param>
+        /// <param name="resultColumns">The names of the columns for the result rows.</param>
+        public void InnerJoin(IEnumerable<string> leftKeyColumns,
+                              Table right, IEnumerable<string> rightKeyColumns, List<string> resultColumns)
+        {
+            // Perform the join and get the result rows.
+            rows = rows.Join(right.Rows, ExtractKey(leftKeyColumns), ExtractKey(rightKeyColumns),
+                             (leftRow, rightRow) => Table.Row(resultColumns, (new[] {leftRow, rightRow}).ToList()),
+                             new RowEquality());
+
+            // Mark that the rows can be modified in-place.
+            copied = true;
+        }
+
+        /// <summary>
+        /// Perform an outer join on the current rows with the rows of a table.
+        /// </summary>
+        /// <param name="leftKeyColumns">The columns to use as the key of for each row.</param>
+        /// <param name="right">The table whose rows are joined to the current rows.</param>
+        /// <param name="rightKeyColumns">The columns to use as the key for the other table.</param>
+        /// <param name="resultColumns">The names of the columns for the result rows.</param>
+        public void LeftOuterJoin(IEnumerable<string> leftKeyColumns,
+                              Table right, IEnumerable<string> rightKeyColumns, List<string> resultColumns)
+        {
+            // Construct a null row to use when no match is found
+            RowDict nullRightRow = new ExpandoObject();
+
+            foreach(var c in right.Columns)
+                nullRightRow[c] = null;
+
+            // Function for creating a table row for each pair of joined rows.
+            IEnumerable<dynamic> SelectResult(dynamic leftRow, IEnumerable<dynamic> rightRows)
+            {
+                return rightRows
+                        .DefaultIfEmpty(Table.Row<dynamic>(nullRightRow) as RowDict)
+                        .Select(rightRow => Table.Row(resultColumns, (new[] { leftRow, rightRow }).ToList()));
+            }
+
+            // Perform the join and get the result rows.
+            rows = rows
+                    .GroupJoin(right.Rows,
+                               ExtractKey(leftKeyColumns), ExtractKey(rightKeyColumns),
+                               SelectResult, new RowEquality())
+                    .SelectMany(rows => rows);
+
+            // Mark that the rows can be modified in-place.
+            copied = true;
+        }
+
 
         /// <summary>
         /// Rename all columns of the rows

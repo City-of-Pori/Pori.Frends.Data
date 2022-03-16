@@ -509,4 +509,104 @@ namespace Pori.Frends.Data
         /// </summary>
         public Table[] Tables { get; set; }
     }
+
+    /// <summary>
+    /// How the original table should be included in the result of a join.
+    /// </summary>
+    public enum JoinResult
+    {
+        /// <summary>
+        /// Include the entire matching row as a
+        /// value of a single column in the result.
+        /// </summary>
+        Row,
+
+        /// <summary>
+        /// Include all columns of the original table
+        /// as columns of the result table.
+        /// </summary>
+        AllColumns,
+
+        /// <summary>
+        /// Include one or more columns of the original
+        /// table as columns of the result table.
+        /// </summary>
+        SelectColumns,
+
+        /// <summary>
+        /// Include all columns of the original table in the result, except
+        /// for columns which were used as the key of the join.
+        /// </summary>
+        DiscardKey
+    }
+
+    public enum JoinType
+    {
+        /// <summary>
+        /// Perform an inner join (only matching rows).
+        /// </summary>
+        Inner,
+
+        /// <summary>
+        /// Perform a left outer join (all rows from the left side table and
+        /// only matching rows from the right side table).
+        /// </summary>
+        LeftOuter
+    }
+
+
+    public class JoinTable
+    {
+        /// <summary>
+        /// The table to use as a source for the join operation.
+        /// </summary>
+        [DisplayName("Table")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Table Data { get; set; }
+
+        /// <summary>
+        /// The names columns to use as the key for the join.
+        /// </summary>
+        public string[] KeyColumns { get; set; }
+
+        /// <summary>
+        /// How the matching rows should be included in the result.
+        /// </summary>
+        public JoinResult ResultType { get; set; }
+
+        /// <summary>
+        /// Name of the column in the result table to contain the matching
+        /// rows from the original table.
+        /// </summary>
+        [UIHint(nameof(ResultType),"", JoinResult.Row)]
+        public string ResultColumn { get; set; }
+
+        /// <summary>
+        /// List of the names of the columns from
+        /// the original table to include in the result.
+        /// </summary>
+        [UIHint(nameof(ResultType),"", JoinResult.SelectColumns)]
+        public string[] ResultColumns { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for the Join task.
+    /// </summary>
+    public class JoinParameters
+    {
+        /// <summary>
+        /// The type of join to perform.
+        /// </summary>
+        public JoinType JoinType { get; set; }
+
+        /// <summary>
+        /// The left side for the join.
+        /// </summary>
+        public JoinTable Left { get; set; }
+
+        /// <summary>
+        /// The right side for the join.
+        /// </summary>
+        public JoinTable Right { get; set; }
+    }
 }

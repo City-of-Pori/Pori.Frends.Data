@@ -1380,6 +1380,625 @@ namespace Pori.Frends.Data.Tests
     }
 
     [TestFixture]
+    public class JoinTaskTests
+    {
+        private class JoinRows
+        {
+            public List<string>       columns;
+            public string[]           key;
+            public List<List<object>> matched;
+            public List<List<object>> duplicateMatches;
+            public List<List<object>> unmatched;
+        };
+
+        private static readonly JoinRows left = new JoinRows
+        {
+            columns = new List<string> { "A", "B", "V1", "V2", "V3" },
+            key     = new [] { "A", "B" },
+            matched = new List<List<object>>
+            {
+                new List<object> {    "India",   "Delta", false, 85,    "Yellow" },
+                new List<object> {   "Quebec",    "Lima", false,  5, "Turquoise" },
+                new List<object> {  "Foxtrot",    "Zulu", false, 16,    "Fuscia" },
+                new List<object> {  "Foxtrot", "Juliett", false, 99, "Turquoise" },
+                new List<object> {    "India",    "Mike",  true, 72,      "Blue" },
+                new List<object> {  "Charlie", "Juliett", false, 83,     "Khaki" },
+                new List<object> {    "Romeo",    "Golf",  true, 93,    "Yellow" },
+                new List<object> {     "Mike",   "Delta", false, 55,    "Fuscia" },
+                new List<object> {    "Delta",   "Bravo",  true, 31,    "Violet" },
+                new List<object> { "November",  "Victor",  true,  3,    "Maroon" },
+            },
+            unmatched = new List<List<object>> 
+            {
+                new List<object> {    "Kilo", "Oscar",  true,  7, "Mauv" },
+                new List<object> { "Juliett",  "Echo",  true, 57,  "Red" },
+                new List<object> {   "Hotel", "Bravo", false, 16, "Mauv" },
+            }
+        };
+
+        private static readonly JoinRows right = new JoinRows
+        {
+            columns = new List<string> { "X", "Y", "V4", "V5" },
+            key     = new [] { "X", "Y" },
+            matched = new List<List<object>>
+            {
+                new List<object> {    "India",   "Delta", 0.85, "#ff8387" },
+                new List<object> {   "Quebec",    "Lima", 0.35, "#d1e48e" },
+                new List<object> {  "Foxtrot",    "Zulu", 0.14, "#23d265" },
+                new List<object> {  "Foxtrot", "Juliett", 0.87, "#83870b" },
+                new List<object> {    "India",    "Mike", 0.23, "#25c28f" },
+                new List<object> {  "Charlie", "Juliett",  0.2, "#88f146" },
+                new List<object> {    "Romeo",    "Golf", 0.24, "#5dc8c6" },
+                new List<object> {     "Mike",   "Delta", 0.65, "#7caca6" },
+                new List<object> {    "Delta",   "Bravo", 0.34, "#781c91" },
+                new List<object> { "November",  "Victor", 0.12, "#2b0113" }
+            },
+            duplicateMatches = new List<List<object>>
+            {
+                new List<object> {    "Mike",   "Delta", 0.48, "#b93587" },
+                new List<object> {  "Quebec",    "Lima",  0.3, "#4bf785" },
+                new List<object> { "Foxtrot", "Juliett", 0.18, "#ae3c3c" }
+            },
+            unmatched = new List<List<object>>
+            {
+                new List<object> { "Hotel", "Victor", 0.23, "#f1a51e" },
+                new List<object> { "Romeo",   "Alfa", 0.47, "#808a8f" },
+                new List<object> {  "Zulu",   "Papa", 0.42, "#5b528f" }
+            }
+        };
+
+        [Test]
+        public void JoinReturnsANewTable()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(leftTable));
+            Assert.That(result, Is.Not.SameAs(rightTable));
+        }
+
+        [Test]
+        public void JoinWorksWhenAllLeftRowsHaveASingleMatch()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter };
+
+            foreach(var joinType in joins)
+            {
+                JoinParameters input = new JoinParameters
+                {
+                    JoinType = joinType,
+                    Left = new JoinTable
+                    {
+                        Data         = leftTable,
+                        KeyColumns   = left.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "left"
+                    },
+                    Right = new JoinTable
+                    {
+                        Data         = rightTable,
+                        KeyColumns   = right.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "right"
+                    }
+                };
+
+                Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+                string[] expectedColumns = { "left", "right" };
+
+                Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+                // Check that each row has the columns in the new column order
+                foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+                {
+                    var keys = row.Select(x => x.Key);
+
+                    Assert.That(keys, Is.EqualTo(expectedColumns));
+                }
+
+                Assert.That(result.Rows.Select(row => row.left), Is.EquivalentTo(leftTable.Rows));
+                Assert.That(result.Rows.Select(row => row.right), Is.EquivalentTo(rightTable.Rows));
+            }
+        }
+
+        [Test]
+        public void JoinWorksWhenAllLeftRowsHaveMatches()
+        {
+            var rightRows = right.matched.Concat(right.duplicateMatches).ToList();
+
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, rightRows);
+
+            JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter };
+
+            foreach(var joinType in joins)
+            {
+                JoinParameters input = new JoinParameters
+                {
+                    JoinType = joinType,
+                    Left = new JoinTable
+                    {
+                        Data         = leftTable,
+                        KeyColumns   = left.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "left"
+                    },
+                    Right = new JoinTable
+                    {
+                        Data         = rightTable,
+                        KeyColumns   = right.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "right"
+                    }
+                };
+
+                Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+                string[] expectedColumns = { "left", "right" };
+
+                Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+                // Check that each row has the columns in the new column order
+                foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+                {
+                    var keys = row.Select(x => x.Key);
+
+                    Assert.That(keys, Is.EqualTo(expectedColumns));
+                }
+
+                var resultLeftRows = result.Rows.Select(row => row.left);
+                var resultRightRows = result.Rows.Select(row => row.right);
+
+                foreach(var row in leftTable.Rows)
+                    Assert.That(resultLeftRows, Contains.Item(row));
+
+                foreach(var row in rightTable.Rows)
+                    Assert.That(resultRightRows, Contains.Item(row));
+            }
+        }
+
+        [Test]
+        public void InnerJoinDoesNotProduceLeftRowsThatHaveNoMatch()
+        {
+            Table leftMatched    = Table.From(left.columns, left.matched);
+            Table rightUnmatched = Table.From(left.columns, left.unmatched);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ rightUnmatched })
+                                .CreateTable();
+
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            Assert.That(result.Rows.Select(row => row.left), Is.EquivalentTo(leftMatched.Rows));
+        }
+
+        [Test]
+        public void OuterJoinHasAllTheRowsFromTheLeftTable()
+        {
+            Table leftMatched   = Table.From(left.columns, left.matched);
+            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched })
+                                .CreateTable();
+
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.LeftOuter,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "left", "right" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+            // Check that each row has the columns in the new column order
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumns));
+            }
+
+            var resultMatchedRows = result.Rows.Where(row => Enumerable.Contains(rightTable.Rows, row.right));
+
+            Assert.That(result.Rows.Select(row => row.left), Is.EquivalentTo(leftTable.Rows));
+            Assert.That(resultMatchedRows.Select(row => row.right), Is.EquivalentTo(rightTable.Rows));
+        }
+
+        [Test]
+        public void OuterJoinHasOnlyMatchingRowsFromTheRightTable()
+        {
+            Table leftMatched   = Table.From(left.columns, left.matched);
+            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched })
+                                .CreateTable();
+
+            Table rightMatched   = Table.From(right.columns, right.matched);
+            Table rightUnmatched = Table.From(right.columns, right.unmatched);
+
+            Table rightTable = TableBuilder
+                                .From(rightMatched)
+                                .Concatenate(new []{ rightUnmatched })
+                                .CreateTable();
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.LeftOuter,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            var resultMatchedRows = result.Rows.Where(row => row.right.X != null);
+
+            Assert.That(resultMatchedRows.Select(row => row.right), Is.EquivalentTo(rightMatched.Rows));
+        }
+
+        [Test]
+        public void LeftRowColumnsCanBeExpanded()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            var testCases = new [] {
+                new 
+                {
+                    ResultType      = JoinResult.AllColumns,
+                    ResultColumns   = new string[] {},
+                    ExpectedColumns = new [] { "A", "B", "V1", "V2", "V3", "right" }
+                },
+                new
+                {
+                    ResultType      = JoinResult.DiscardKey,
+                    ResultColumns   = new string[] {},
+                    ExpectedColumns = new [] { "V1", "V2", "V3", "right" }
+                },
+                new
+                {
+                    ResultType      = JoinResult.SelectColumns,
+                    ResultColumns   = new [] { "A", "B", "V2" },
+                    ExpectedColumns = new [] { "A", "B", "V2", "right" }
+                },
+            };
+
+            foreach(var testCase in testCases)
+            {
+                JoinParameters input = new JoinParameters
+                {
+                    JoinType = JoinType.Inner,
+                    Left = new JoinTable
+                    {
+                        Data          = leftTable,
+                        KeyColumns    = left.key,
+                        ResultType    = testCase.ResultType,
+                        ResultColumns = testCase.ResultColumns
+                    },
+                    Right = new JoinTable
+                    {
+                        Data         = rightTable,
+                        KeyColumns   = right.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "right"
+                    }
+                };
+
+                Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+                Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
+
+                // Check that each row has the columns in the new column order
+                foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+                {
+                    var keys = row.Select(x => x.Key);
+
+                    Assert.That(keys, Is.EqualTo(testCase.ExpectedColumns));
+                }
+            }
+        }
+
+        [Test]
+        public void RightRowColumnsCanBeExpanded()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            var testCases = new [] {
+                new
+                {
+                    ResultType      = JoinResult.AllColumns,
+                    ResultColumns   = new string[] {},
+                    ExpectedColumns = new [] { "left", "X", "Y", "V4", "V5" }
+                },
+                new
+                {
+                    ResultType      = JoinResult.DiscardKey,
+                    ResultColumns   = new string[] {},
+                    ExpectedColumns = new [] { "left", "V4", "V5" }
+                },
+                new
+                {
+                    ResultType      = JoinResult.SelectColumns,
+                    ResultColumns   = new [] { "X", "Y", "V5" },
+                    ExpectedColumns = new [] { "left", "X", "Y", "V5" }
+                },
+            };
+
+            foreach(var testCase in testCases)
+            {
+                JoinParameters input = new JoinParameters
+                {
+                    JoinType = JoinType.Inner,
+                    Left = new JoinTable
+                    {
+                        Data          = leftTable,
+                        KeyColumns    = left.key,
+                        ResultType    = JoinResult.Row,
+                        ResultColumn  = "left"
+                    },
+                    Right = new JoinTable
+                    {
+                        Data          = rightTable,
+                        KeyColumns    = right.key,
+                        ResultType    = testCase.ResultType,
+                        ResultColumns = testCase.ResultColumns
+                    }
+                };
+
+                Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+                Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
+
+                // Check that each row has the columns in the new column order
+                foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+                {
+                    var keys = row.Select(x => x.Key);
+
+                    Assert.That(keys, Is.EqualTo(testCase.ExpectedColumns));
+                }
+            }
+        }
+
+        [Test]
+        public void BothLeftAndRightRowsCanBeExpandedAtTheSameTime()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data          = leftTable,
+                    KeyColumns    = left.key,
+                    ResultType    = JoinResult.AllColumns
+                },
+                Right = new JoinTable
+                {
+                    Data          = rightTable,
+                    KeyColumns    = right.key,
+                    ResultType    = JoinResult.DiscardKey
+                }
+            };
+
+            Table result = DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "A", "B", "V1", "V2", "V3", "V4", "V5" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+            // Check that each row has the columns in the new column order
+            foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+            {
+                var keys = row.Select(x => x.Key);
+
+                Assert.That(keys, Is.EqualTo(expectedColumns));
+            }
+        }
+
+        [Test]
+        public void JoinThrowsWhenResultColumnIsMissing()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data          = leftTable,
+                    KeyColumns    = left.key,
+                    ResultType    = JoinResult.Row
+                },
+                Right = new JoinTable
+                {
+                    Data          = rightTable,
+                    KeyColumns    = right.key,
+                    ResultType    = JoinResult.DiscardKey
+                }
+            };
+
+            Action executeTask = () => DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void JoinThrowsWhenResultColumnsIsEmpty()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data          = leftTable,
+                    KeyColumns    = left.key,
+                    ResultType    = JoinResult.SelectColumns,
+                    ResultColumns = new string[] { }
+                },
+                Right = new JoinTable
+                {
+                    Data          = rightTable,
+                    KeyColumns    = right.key,
+                    ResultType    = JoinResult.DiscardKey
+                }
+            };
+
+            Action executeTask = () => DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void JoinThrowsWhenResultColumnsContainsAnInvalidColumnName()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data          = leftTable,
+                    KeyColumns    = left.key,
+                    ResultType    = JoinResult.SelectColumns,
+                    ResultColumns = new string[] { "A", "B", "I" }
+                },
+                Right = new JoinTable
+                {
+                    Data          = rightTable,
+                    KeyColumns    = right.key,
+                    ResultType    = JoinResult.DiscardKey
+                }
+            };
+
+            Action executeTask = () => DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void JoinThrowsWhenExpandingAColumnWithTheSameNameFromBothTables()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+
+            Table rightTable = TableBuilder
+                                .From(Table.From(right.columns, right.matched))
+                                .RenameColumns(new Dictionary<string, string> { { "V4", "V1" } })
+                                .CreateTable();
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.Inner,
+                Left = new JoinTable
+                {
+                    Data          = leftTable,
+                    KeyColumns    = left.key,
+                    ResultType    = JoinResult.AllColumns,
+                },
+                Right = new JoinTable
+                {
+                    Data          = rightTable,
+                    KeyColumns    = right.key,
+                    ResultType    = JoinResult.DiscardKey
+                }
+            };
+
+            Action executeTask = () => DataTasks.Join(input, new System.Threading.CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
     class RenameColumnsTaskTests
     {
         private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };

@@ -44,7 +44,7 @@ namespace Pori.Frends.Data
         /// <param name="columns">Ordered list of the columns for the table</param>
         /// <param name="data">The table's data (rows) as a collection of dictionary-like objects.</param>
         /// <returns>The created table.</returns>
-        public static Table From<TValue>(List<string> columns, IEnumerable<IDictionary<string, TValue>> data)
+        public static Table From<TValue>(IEnumerable<string> columns, IEnumerable<IDictionary<string, TValue>> data)
         {
             // Create column ordered rows for the table
             var rows = data.Select(row => Table.Row(columns, row));
@@ -56,11 +56,12 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Create a new table from the specified data.
         /// </summary>
-        /// <typeparam name="TValue">Value type of the input data.</typeparam>
+        /// <typeparam name="TCollection">The data type for each row's values</typeparam>
         /// <param name="columns">Ordered list of the columns for the table</param>
         /// <param name="data">The table's data (rows) as a list of row values.</param>
         /// <returns>The created table.</returns>
-        public static Table From<TValue>(List<string> columns, List<List<TValue>> data)
+        public static Table From<TCollection>(IEnumerable<string> columns, IEnumerable<TCollection> data)
+            where TCollection : IEnumerable<object>
         {
             // Create column ordered rows for the table
             var rows = data.Select(row => Table.Row(columns, row));
@@ -76,14 +77,14 @@ namespace Pori.Frends.Data
         /// <param name="columns">Ordered list of the columns for the row.</param>
         /// <param name="values">A dictionary-like object containing the row's values.</param>
         /// <returns>The new table row as a dynamic object.</returns>
-        internal static dynamic Row<TValue>(List<string> columns, IDictionary<string, TValue> values)
+        internal static dynamic Row<TValue>(IEnumerable<string> columns, IDictionary<string, TValue> values)
         {
             // Create a new object for the row
             IDictionary<string, dynamic> row = new ExpandoObject();
 
             // Store the values in the column order
-            for(int i = 0; i < columns.Count(); i++)
-                row[columns[i]] = values[columns[i]];
+            foreach(var col in columns)
+                row[col] = values[col];
 
             // Return the resulting row object
             return row;
@@ -96,13 +97,13 @@ namespace Pori.Frends.Data
         /// <param name="columns">Ordered list of the columns for the row.</param>
         /// <param name="values">Ordered list of values for the row. Must be in the same order as the columns.</param>
         /// <returns>The new table row as a dynamic object.</returns>
-        internal static dynamic Row<TValue>(List<string> columns, List<TValue> values)
+        internal static dynamic Row<TValue>(IEnumerable<string> columns, IEnumerable<TValue> values)
         {
             IDictionary<string, dynamic> row = new ExpandoObject();
 
             // Store the values in the column order
-            for(int i = 0; i < columns.Count(); i++)
-                row.Add(columns[i], values[i]);
+            foreach(var (column, value) in columns.Zip(values, (c, v) => (c, v)))
+                row[column] = value;
 
             // Return the resulting row object
             return row;

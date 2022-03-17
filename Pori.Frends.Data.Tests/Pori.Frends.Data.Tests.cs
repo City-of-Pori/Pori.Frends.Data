@@ -18,7 +18,7 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class TableTests
     {
-        private static readonly List<string> columns = new List<string> { "firstName", "lastName" };
+        private static readonly string[] columns = { "firstName", "lastName" };
         private static readonly List<Dictionary<string, string>> rows = new List<Dictionary<string, string>> 
         {
             new Dictionary<string, string> { { "firstName", "Ted" },      { "lastName", "Mosby" }       },
@@ -64,9 +64,9 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class TableBuilderTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
         private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly List<object>[] rows =
         {
             new List<object> { 1,  2,  3,  4,  5, 1 },
             new List<object> { 2,  4,  6,  8, 10, 0 },
@@ -101,9 +101,9 @@ namespace Pori.Frends.Data.Tests
 
             Table[] tables =
             {
-                Table.From(columns, rows.Skip(0).Take(2).ToList()),
-                Table.From(columns, rows.Skip(2).Take(2).ToList()),
-                Table.From(columns, rows.Skip(4).Take(2).ToList())
+                Table.From(columns, rows.Skip(0).Take(2)),
+                Table.From(columns, rows.Skip(2).Take(2)),
+                Table.From(columns, rows.Skip(4).Take(2))
             };
 
             Table result = TableBuilder
@@ -409,8 +409,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class AddColumnsTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<object>[] rows =
         {
             new List<object> { 1,  2,  3,  4,  5,  6 },
             new List<object> { 2,  4,  6,  8, 10, 12 },
@@ -568,8 +568,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class ConcatenateTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A","B","C","D","E","F","I","M","N","U" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A","B","C","D","E","F","I","M","N","U" };
+        private static readonly List<object>[] rows =
         {
             //                  A    B     C         D           E           F       I    M        N                  U
             new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
@@ -605,7 +605,7 @@ namespace Pori.Frends.Data.Tests
             IEnumerable<Table> chunks = Enumerable
                                             .Range(0, chunkCount)
                                             .Select(i => rows.Skip(i * chunkSize).Take(chunkSize))
-                                            .Select(chunkRows => Table.From(columns, chunkRows.ToList()));
+                                            .Select(chunkRows => Table.From(columns, chunkRows));
 
             ConcatenateParameters input = new ConcatenateParameters
             {
@@ -646,7 +646,7 @@ namespace Pori.Frends.Data.Tests
             IEnumerable<Table> chunks = Enumerable
                                             .Range(0, chunkCount)
                                             .Select(i => rows.Skip(i * chunkSize).Take(chunkSize))
-                                            .Select(chunkRows => Table.From(columns, chunkRows.ToList()));
+                                            .Select(chunkRows => Table.From(columns, chunkRows));
 
             ConcatenateParameters input = new ConcatenateParameters
             {
@@ -664,8 +664,8 @@ namespace Pori.Frends.Data.Tests
         {
             Table fullTable = Table.From(columns, rows);
 
-            Table first  = Table.From(columns, rows.Skip(0).Take(10).ToList());
-            Table second = Table.From(columns, rows.Skip(1).Take(10).ToList());
+            Table first  = Table.From(columns, rows.Skip(0).Take(10));
+            Table second = Table.From(columns, rows.Skip(1).Take(10));
 
             Table incompatible = TableBuilder
                                     .From(second)
@@ -686,8 +686,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class ConvertColumnsTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<object>[] rows =
         {
             //                  A     B       C              D               E          F
             new List<object> {  0, "false",  682, "12.03.2027 09:32:28", "4821503",  "63.34" },
@@ -939,8 +939,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class GroupByTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A","B","C","D","E","F","I","M","N","U" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A","B","C","D","E","F","I","M","N","U" };
+        private static readonly List<object>[] rows =
         {
             //                  A    B     C         D           E           F       I    M        N                  U
             new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
@@ -1241,8 +1241,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class FilterTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "id", "name", "eol", "inProduction" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "id", "name", "eol", "inProduction" };
+        private static readonly List<object>[] rows =
         {
             new List<object> {  1, "Veribet",  "2020-08-07T07:11:05Z", false },
             new List<object> {  2, "Lotlux",   "2021-10-08T15:56:39Z", false },
@@ -1386,16 +1386,16 @@ namespace Pori.Frends.Data.Tests
         {
             public List<string>       columns;
             public string[]           key;
-            public List<List<object>> matched;
-            public List<List<object>> duplicateMatches;
-            public List<List<object>> unmatched;
+            public List<object>[] matched;
+            public List<object>[] duplicateMatches;
+            public List<object>[] unmatched;
         };
 
         private static readonly JoinRows left = new JoinRows
         {
             columns = new List<string> { "A", "B", "V1", "V2", "V3" },
             key     = new [] { "A", "B" },
-            matched = new List<List<object>>
+            matched = new []
             {
                 new List<object> {    "India",   "Delta", false, 85,    "Yellow" },
                 new List<object> {   "Quebec",    "Lima", false,  5, "Turquoise" },
@@ -1408,7 +1408,7 @@ namespace Pori.Frends.Data.Tests
                 new List<object> {    "Delta",   "Bravo",  true, 31,    "Violet" },
                 new List<object> { "November",  "Victor",  true,  3,    "Maroon" },
             },
-            unmatched = new List<List<object>> 
+            unmatched = new []
             {
                 new List<object> {    "Kilo", "Oscar",  true,  7, "Mauv" },
                 new List<object> { "Juliett",  "Echo",  true, 57,  "Red" },
@@ -1420,7 +1420,7 @@ namespace Pori.Frends.Data.Tests
         {
             columns = new List<string> { "X", "Y", "V4", "V5" },
             key     = new [] { "X", "Y" },
-            matched = new List<List<object>>
+            matched = new []
             {
                 new List<object> {    "India",   "Delta", 0.85, "#ff8387" },
                 new List<object> {   "Quebec",    "Lima", 0.35, "#d1e48e" },
@@ -1433,13 +1433,13 @@ namespace Pori.Frends.Data.Tests
                 new List<object> {    "Delta",   "Bravo", 0.34, "#781c91" },
                 new List<object> { "November",  "Victor", 0.12, "#2b0113" }
             },
-            duplicateMatches = new List<List<object>>
+            duplicateMatches = new []
             {
                 new List<object> {    "Mike",   "Delta", 0.48, "#b93587" },
                 new List<object> {  "Quebec",    "Lima",  0.3, "#4bf785" },
                 new List<object> { "Foxtrot", "Juliett", 0.18, "#ae3c3c" }
             },
-            unmatched = new List<List<object>>
+            unmatched = new []
             {
                 new List<object> { "Hotel", "Victor", 0.23, "#f1a51e" },
                 new List<object> { "Romeo",   "Alfa", 0.47, "#808a8f" },
@@ -1530,7 +1530,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinWorksWhenAllLeftRowsHaveMatches()
         {
-            var rightRows = right.matched.Concat(right.duplicateMatches).ToList();
+            var rightRows = right.matched.Concat(right.duplicateMatches);
 
             Table leftTable = Table.From(left.columns, left.matched);
             Table rightTable = Table.From(right.columns, rightRows);
@@ -2001,15 +2001,15 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class RenameColumnsTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<object>[] rows =
         {
             new List<object> { 1,  2,  3,  4,  5,  6 },
             new List<object> { 2,  4,  6,  8, 10, 12 },
             new List<object> { 3,  6,  9, 12, 15, 18 },
             new List<object> { 4,  8, 12, 16, 20, 24 },
         };
-        private static readonly ColumnRename[] renamings = new ColumnRename[]
+        private static readonly ColumnRename[] renamings =
         {
             new ColumnRename { Column = "F", NewName = "W" },
             new ColumnRename { Column = "D", NewName = "Z" },
@@ -2119,9 +2119,9 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class ReorderColumnsTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
         private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly List<object>[] rows =
         {
             new List<object> { 1,  2,  3,  4,  5,  6 },
             new List<object> { 2,  4,  6,  8, 10, 12 },
@@ -2278,8 +2278,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class SelectColumnsTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<object>[] rows =
         {
             new List<object> { 1,  2,  3,  4,  5,  6 },
             new List<object> { 2,  4,  6,  8, 10, 12 },
@@ -2430,8 +2430,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class SortTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A","B","C","D","E","F","I","M","N","U" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A","B","C","D","E","F","I","M","N","U" };
+        private static readonly List<object>[] rows =
         {
             //                  A    B     C         D           E           F       I    M        N                  U
             new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
@@ -2562,8 +2562,8 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class TransformColumnsTaskTests
     {
-        private static readonly List<string> columns = new List<string> { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<List<object>> rows = new List<List<object>>
+        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
+        private static readonly List<object>[] rows =
         {
             new List<object> { 1,  2,  3,  4,  5,  6 },
             new List<object> { 2,  4,  6,  8, 10, 12 },

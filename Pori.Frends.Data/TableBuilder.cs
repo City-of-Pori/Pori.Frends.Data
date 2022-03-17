@@ -460,7 +460,7 @@ namespace Pori.Frends.Data
 
                 // The row's values are the values of the key columns plus
                 // the group column.
-                var values = key.Concat(new dynamic[] { group }).ToList();
+                var values = key.Concat(new dynamic[] { group });
 
                 // Return the new table row
                 return Table.Row(columns, values);
@@ -486,7 +486,7 @@ namespace Pori.Frends.Data
         {
             // Perform the join and get the result rows.
             rows = rows.Join(right.Rows, ExtractKey(leftKeyColumns), ExtractKey(rightKeyColumns),
-                             (leftRow, rightRow) => Table.Row(resultColumns, (new[] {leftRow, rightRow}).ToList()),
+                             (leftRow, rightRow) => Table.Row(resultColumns, (new[] {leftRow, rightRow})),
                              new RowEquality());
 
             // Mark that the rows can be modified in-place.
@@ -514,7 +514,7 @@ namespace Pori.Frends.Data
             {
                 return rightRows
                         .DefaultIfEmpty(Table.Row<dynamic>(nullRightRow) as RowDict)
-                        .Select(rightRow => Table.Row(resultColumns, (new[] { leftRow, rightRow }).ToList()));
+                        .Select(rightRow => Table.Row(resultColumns, (new[] { leftRow, rightRow })));
             }
 
             // Perform the join and get the result rows.
@@ -533,7 +533,7 @@ namespace Pori.Frends.Data
         /// Rename all columns of the rows
         /// </summary>
         /// <param name="columns">The new column names, in order.</param>
-        public void RenameColumns(List<string> columns)
+        public void RenameColumns(IEnumerable<string> columns)
         {
             rows = rows
                     .Cast<RowDict>()
@@ -548,7 +548,7 @@ namespace Pori.Frends.Data
         /// Change the order of the columns for each row.
         /// </summary>
         /// <param name="columnOrder">The new column order.</param>
-        public void ReorderColumns(List<string> columnOrder)
+        public void ReorderColumns(IEnumerable<string> columnOrder)
         {
             SelectColumns(columnOrder);
         }
@@ -557,7 +557,7 @@ namespace Pori.Frends.Data
         /// Select a subset of the columns for each row.
         /// </summary>
         /// <param name="columns"></param>
-        public void SelectColumns(List<string> columns)
+        public void SelectColumns(IEnumerable<string> columns)
         {
             rows = rows.Select(row => Table.Row(columns, row as RowDict));
 

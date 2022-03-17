@@ -247,7 +247,7 @@ namespace Pori.Frends.Data
                 // only select certain columns.
                 case GroupingType.SelectedColumns:
                     elementSelector = x => x;
-                    resultSelector  = rows => Table.From(input.Columns.ToList(),
+                    resultSelector  = rows => Table.From(input.Columns,
                                                          rows.Cast<RowDict>());
                     break;
 

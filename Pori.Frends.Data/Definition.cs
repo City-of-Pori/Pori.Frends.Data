@@ -40,7 +40,14 @@ namespace Pori.Frends.Data
     /// </summary>
     public enum ProcessingType
     {
+        /// <summary>
+        /// Process rows using the entire row.
+        /// </summary>
         Row,
+
+        /// <summary>
+        /// Process rows using the value of single column.
+        /// </summary>
         Column
     }
 
@@ -114,9 +121,17 @@ namespace Pori.Frends.Data
 
     public class ColumnRename
     {
+        /// <summary>
+        /// Name of the column to rename.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Text")]
         public string Column { get; set; }
 
+        /// <summary>
+        /// The new name for the column.
+        /// </summary>
         [DisplayName("New Column Name")]
+        [DisplayFormat(DataFormatString = "Text")]
         public string NewName { get; set; }
     }
 
@@ -160,7 +175,14 @@ namespace Pori.Frends.Data
     /// </summary>
     public enum SelectColumnsAction
     {
+        /// <summary>
+        /// Keep the specified columns in the result.
+        /// </summary>
         Keep,
+
+        /// <summary>
+        /// Discard the specified columns from the result.
+        /// </summary>
         Discard
     }
 
@@ -187,7 +209,8 @@ namespace Pori.Frends.Data
         public string[] Columns { get; set; }
 
         /// <summary>
-        /// Whether to preserve the original order of the columns.
+        /// Whether to preserve the original order of the columns or use
+        /// the order the columns to keep are specified in.
         /// </summary>
         [DisplayName("Preserve Column Order")]
         [UIHint(nameof(Action), "", SelectColumnsAction.Keep)]
@@ -200,7 +223,15 @@ namespace Pori.Frends.Data
     /// </summary>
     public enum NewColumnValueSource
     {
+        /// <summary>
+        /// Use a single constant value for every row.
+        /// </summary>
         Constant,
+
+        /// <summary>
+        /// Compute a value for each row using a function that receives
+        /// the row as its input.
+        /// </summary>
         Computed
     }
 
@@ -232,8 +263,8 @@ namespace Pori.Frends.Data
 
         /// <summary>
         /// A function for generating the value of the new column.
-        /// Receives a single row as its argument and should return the value 
-        /// for the new column.
+        /// Receives a single row as its argument and should return
+        /// the value for the new column.
         /// </summary>
         [UIHint(nameof(ValueSource), "", NewColumnValueSource.Computed)]
         [DisplayFormat(DataFormatString = "Expression")]
@@ -253,7 +284,7 @@ namespace Pori.Frends.Data
         public Table Data { get; set; }
 
         /// <summary>
-        /// List of columns to add to the table
+        /// List of columns to add to the table.
         /// </summary>
         public NewColumn[] Columns { get; set; }
     }
@@ -319,6 +350,9 @@ namespace Pori.Frends.Data
         Custom   = 9999,
     }
 
+    /// <summary>
+    /// Type conversion specification for a table column.
+    /// </summary>
     public class ColumnConversion
     {
         /// <summary>
@@ -328,7 +362,7 @@ namespace Pori.Frends.Data
         public string Column { get; set; }
 
         /// <summary>
-        /// The data type to convert the column values to
+        /// The data type to convert the column values to.
         /// </summary>
         public ColumnType Type { get; set; }
 
@@ -397,6 +431,9 @@ namespace Pori.Frends.Data
         Computed
     }
 
+    /// <summary>
+    /// Parameters for the task GroupBy.
+    /// </summary>
     public class GroupByParameters
     {
         /// <summary>
@@ -409,7 +446,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Names of columns to group rows by.
         /// </summary>
-        [DefaultValue(new string[] {""})]
         public string[] KeyColumns { get; set; }
 
         /// <summary>
@@ -435,7 +471,6 @@ namespace Pori.Frends.Data
         /// The columns to include in the grouped rows.
         /// </summary>
         [UIHint(nameof(Grouping), "", GroupingType.SelectedColumns)]
-        [DefaultValue(new string[] {""})]
         public string[] Columns { get; set; }
 
         /// <summary>
@@ -495,7 +530,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The sorting criteria (column and order) to use.
         /// </summary>
-        [DefaultValue(new[] {""})]
         public SortingCriterion[] SortingCriteria { get; set; }
     }
 
@@ -505,9 +539,9 @@ namespace Pori.Frends.Data
     public class ConcatenateParameters
     {
         /// <summary>
-        /// The table to use as the source.
+        /// The tables to concatenate.
         /// </summary>
-        public Table[] Tables { get; set; }
+        public dynamic[] Tables { get; set; }
     }
 
     /// <summary>
@@ -540,6 +574,9 @@ namespace Pori.Frends.Data
         DiscardKey
     }
 
+    /// <summary>
+    /// Specifies the kind of join to perform between two tables.
+    /// </summary>
     public enum JoinType
     {
         /// <summary>
@@ -554,7 +591,9 @@ namespace Pori.Frends.Data
         LeftOuter
     }
 
-
+    /// <summary>
+    /// Define how a table should be treated in a join operation.
+    /// </summary>
     public class JoinTable
     {
         /// <summary>
@@ -572,6 +611,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// How the matching rows should be included in the result.
         /// </summary>
+        [DefaultValue(JoinResult.Row)]
         public JoinResult ResultType { get; set; }
 
         /// <summary>
@@ -597,6 +637,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The type of join to perform.
         /// </summary>
+        [DefaultValue(JoinType.Inner)]
         public JoinType JoinType { get; set; }
 
         /// <summary>

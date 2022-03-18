@@ -92,8 +92,8 @@ namespace Pori.Frends.Data
         public static Table Concatenate([PropertyTab] ConcatenateParameters input, CancellationToken cancellationToken)
         {
             // Separate the first table from the input tables
-            var first = input.Tables.First();
-            var rest  = input.Tables.Skip(1);
+            var first = input.Tables.Cast<Table>().First();
+            var rest  = input.Tables.Cast<Table>().Skip(1);
 
             // Check that all tables have the same columns in the same order.
             if(rest.Any(table => !table.Columns.SequenceEqual(first.Columns)))

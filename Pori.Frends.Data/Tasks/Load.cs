@@ -1,0 +1,73 @@
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.Threading;
+using Microsoft.CSharp; // For dynamic in .NET Standard Frends Tasks
+
+#pragma warning disable 1591
+
+namespace Pori.Frends.Data
+{
+    /// <summary>
+    /// The format of the data to be loaded as a table.
+    /// </summary>
+    public enum LoadFormat
+    {
+        /// <summary>
+        /// Load data from the result of the Frends.Csv.Parse task.
+        /// </summary>
+        CSV
+    }
+
+    /// <summary>
+    /// Parameters for loading data into a Pori.Frends.Data.Table.
+    /// </summary>
+    [DisplayName("Input")]
+    public class LoadParameters
+    {
+        /// <summary>
+        /// The format of the input data.
+        /// </summary>
+        [DefaultValue(LoadFormat.CSV)]
+        public LoadFormat Format { get; set; }
+
+        /// <summary>
+        /// CSV data to be loaded into a table. Must be in the format returned by Frends.Csv.Parse.
+        /// </summary>
+        [DisplayName("CSV Data")]
+        [DisplayFormat(DataFormatString = "Expression")]
+        [UIHint(nameof(Format), "", LoadFormat.CSV)]
+        public dynamic CsvData { get; set; }
+    }
+    
+
+    /// <summary>
+    /// Frends task for loading data into a table.
+    /// </summary>
+    public static class LoadTask
+    {
+        /// <summary>
+        /// Load data into a table structure for further processing.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns>The data as a Pori.Frends.Data.Table</returns>
+        public static Table Load([PropertyTab] LoadParameters input, CancellationToken cancellationToken)
+        {
+            // Load data based on the input format
+            switch(input.Format)
+            {
+                case LoadFormat.CSV:
+                    // Extract the headers and data from the input
+                    var headers = input.CsvData.Headers as List<string>;
+                    var data    = input.CsvData.Data as List<List<object>>;
+
+                    // Create a table using the data
+                    return Table.From(headers, data);
+
+                default:
+                    throw new InvalidEnumArgumentException();
+            }
+        }
+    }
+}

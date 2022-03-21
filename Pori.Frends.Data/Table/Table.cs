@@ -124,5 +124,19 @@ namespace Pori.Frends.Data
 
             return row;
         }
+
+        /// <summary>
+        /// Create a table row with all column values set to null.
+        /// </summary>
+        /// <param name="columns">The columns for the row.</param>
+        /// <returns>The new table row with all values set to null.</returns>
+        internal static dynamic NullRow(IEnumerable<string> columns)
+        {
+            // Create an enumerable with null values.
+            IEnumerable<dynamic> values = columns.Select(c => null as dynamic);
+
+            // Create a new row using the columns and the null values.
+            return Table.Row(columns, values);
+        }
     }
 }

@@ -503,17 +503,11 @@ namespace Pori.Frends.Data
         public void LeftOuterJoin(IEnumerable<string> leftKeyColumns,
                               Table right, IEnumerable<string> rightKeyColumns, List<string> resultColumns)
         {
-            // Construct a null row to use when no match is found
-            RowDict nullRightRow = new ExpandoObject();
-
-            foreach(var c in right.Columns)
-                nullRightRow[c] = null;
-
             // Function for creating a table row for each pair of joined rows.
             IEnumerable<dynamic> SelectResult(dynamic leftRow, IEnumerable<dynamic> rightRows)
             {
                 return rightRows
-                        .DefaultIfEmpty(Table.Row<dynamic>(nullRightRow) as RowDict)
+                        .DefaultIfEmpty(Table.NullRow(right.Columns) as RowDict)
                         .Select(rightRow => Table.Row(resultColumns, (new[] { leftRow, rightRow })));
             }
 

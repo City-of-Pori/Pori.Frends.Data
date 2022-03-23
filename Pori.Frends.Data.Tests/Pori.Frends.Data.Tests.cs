@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data.Tests
@@ -9,6 +10,61 @@ namespace Pori.Frends.Data.Tests
     using TableFunc  = Func<dynamic, dynamic>;
     using FilterFunc = Func<dynamic, bool>;
     using RowDict    = IDictionary<string, dynamic>;
+
+    public class TestData
+    {
+        public static readonly InlineTable Typed = new InlineTable
+        {
+            { "A",  "B", "C",     "D",         "E",        "F",    "I", "M",     "N",               "U"          },
+            /****************************************************************************************************/
+            {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
+            {  1,  true, "W", "07.12.2004",   "Tango",    -43.5,   244,  1,       "Teal", "2004-11-20T03:02:28Z" },
+            {  2,  true, "L", "19.07.2023",    "Echo",   -10.11,  -869,  0,         null, "2015-01-14T00:51:16Z" },
+            {  3, false, "S", "27.05.2027",    "Alfa",   -66.06,  -761,  1,         null, "2028-03-25T21:49:37Z" },
+            {  4, false, "Z", "13.10.2014", "Uniform",   -14.72,  -275,  0,  "Goldenrod", "2028-03-16T08:08:43Z" },
+            {  5,  true, "Y", "05.09.2013",   "Oscar",   -29.71,  -896,  1,      "Green", "2027-08-11T12:32:56Z" },
+            {  6,  true, "T", "21.07.2003",   "Bravo",     7.05,  -706,  0,      "Khaki", "2013-12-19T14:24:42Z" },
+            {  7, false, "X", "23.12.2004",   "Bravo",    74.45,   424,  1,       "Mauv", "2013-10-20T18:21:19Z" },
+            {  8,  true, "P", "23.09.2023","November",    49.35,  -417,  0,         null, "1999-07-27T23:16:03Z" },
+            {  9,  true, "G", "06.04.2007",   "Tango",    -54.5,    -8,  1,         null, "2017-05-23T19:01:35Z" },
+            { 10,  true, "Q", "13.03.2025",    "Papa",   -87.98,   594,  0,         null, "2015-07-17T18:30:11Z" },
+            { 11,  true, "T", "26.02.2017", "Foxtrot",     75.0,   745,  1,     "Fuscia", "2013-09-27T23:27:52Z" },
+            { 12, false, "U", "24.06.2002",    "Kilo",   -97.89,  -678,  0,         null, "2028-05-17T04:10:04Z" },
+            { 13,  true, "X", "10.02.2020",    "Mike",    63.58,   363,  1,     "Maroon", "2024-04-17T07:16:37Z" },
+            { 14, false, "S", "03.05.2023",   "Delta",   -60.48,   979,  0,  "Goldenrod", "2000-06-10T03:15:18Z" },
+            { 15, false, "I", "14.09.2029", "Whiskey",    72.45,  -406,  1,       "Pink", "1999-01-19T00:29:17Z" },
+            { 16,  true, "Q", "24.02.2009",    "Papa",   -80.44,     9,  0,         null, "2013-10-27T06:43:15Z" },
+            { 17,  true, "R", "11.08.2015", "Uniform",    -26.4,  -293,  1, "Aquamarine", "2022-02-03T08:57:37Z" },
+            { 18,  true, "T", "07.06.2026",   "Oscar",     27.6,  -592,  0,         null, "2007-10-25T23:44:31Z" },
+            { 19,  true, "W", "18.03.2000", "Uniform",   -60.79,  -130,  1,         null, "2001-03-09T11:05:58Z" },
+        };
+
+        public static readonly InlineTable Untyped = new InlineTable
+        {
+            {  "A",   "B",   "C",      "D",        "E",        "F",       "I",   "M",     "N",                "U"          },
+            /***************************************************************************************************************/
+            {  "0",  "true", "T", "04.08.2015", "Foxtrot",     "-8.6",   "541",  "0",       "Puce", "2027-11-15T06:56:47Z" },
+            {  "1",  "true", "W", "07.12.2004",   "Tango",    "-43.5",   "244",  "1",       "Teal", "2004-11-20T03:02:28Z" },
+            {  "2",  "true", "L", "19.07.2023",    "Echo",   "-10.11",  "-869",  "0",         null, "2015-01-14T00:51:16Z" },
+            {  "3", "false", "S", "27.05.2027",    "Alfa",   "-66.06",  "-761",  "1",         null, "2028-03-25T21:49:37Z" },
+            {  "4", "false", "Z", "13.10.2014", "Uniform",   "-14.72",  "-275",  "0",  "Goldenrod", "2028-03-16T08:08:43Z" },
+            {  "5",  "true", "Y", "05.09.2013",   "Oscar",   "-29.71",  "-896",  "1",      "Green", "2027-08-11T12:32:56Z" },
+            {  "6",  "true", "T", "21.07.2003",   "Bravo",     "7.05",  "-706",  "0",      "Khaki", "2013-12-19T14:24:42Z" },
+            {  "7", "false", "X", "23.12.2004",   "Bravo",    "74.45",   "424",  "1",       "Mauv", "2013-10-20T18:21:19Z" },
+            {  "8",  "true", "P", "23.09.2023","November",    "49.35",  "-417",  "0",         null, "1999-07-27T23:16:03Z" },
+            {  "9",  "true", "G", "06.04.2007",   "Tango",    "-54.5",    "-8",  "1",         null, "2017-05-23T19:01:35Z" },
+            { "10",  "true", "Q", "13.03.2025",    "Papa",   "-87.98",   "594",  "0",         null, "2015-07-17T18:30:11Z" },
+            { "11",  "true", "T", "26.02.2017", "Foxtrot",       "75",   "745",  "1",     "Fuscia", "2013-09-27T23:27:52Z" },
+            { "12", "false", "U", "24.06.2002",    "Kilo",   "-97.89",  "-678",  "0",         null, "2028-05-17T04:10:04Z" },
+            { "13",  "true", "X", "10.02.2020",    "Mike",    "63.58",   "363",  "1",     "Maroon", "2024-04-17T07:16:37Z" },
+            { "14", "false", "S", "03.05.2023",   "Delta",   "-60.48",   "979",  "0",  "Goldenrod", "2000-06-10T03:15:18Z" },
+            { "15", "false", "I", "14.09.2029", "Whiskey",    "72.45",  "-406",  "1",       "Pink", "1999-01-19T00:29:17Z" },
+            { "16",  "true", "Q", "24.02.2009",    "Papa",   "-80.44",     "9",  "0",         null, "2013-10-27T06:43:15Z" },
+            { "17",  "true", "R", "11.08.2015", "Uniform",    "-26.4",  "-293",  "1", "Aquamarine", "2022-02-03T08:57:37Z" },
+            { "18",  "true", "T", "07.06.2026",   "Oscar",     "27.6",  "-592",  "0",         null, "2007-10-25T23:44:31Z" },
+            { "19",  "true", "W", "18.03.2000", "Uniform",   "-60.79",  "-130",  "1",         null, "2001-03-09T11:05:58Z" },
+        };
+    }
 
     public class CsvInputData
     {
@@ -19,20 +75,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class TableTests
     {
-        private static readonly string[] columns = { "firstName", "lastName" };
-        private static readonly List<Dictionary<string, string>> rows = new List<Dictionary<string, string>> 
-        {
-            new Dictionary<string, string> { { "firstName", "Ted" },      { "lastName", "Mosby" }       },
-            new Dictionary<string, string> { { "firstName", "Robin" },    { "lastName", "Scherbatsky" } },
-            new Dictionary<string, string> { { "firstName", "Marshall" }, { "lastName", "Eriksen" }     },
-            new Dictionary<string, string> { { "firstName", "Lily" },     { "lastName", "Aldrin" }      },
-            new Dictionary<string, string> { { "firstName", "Barney" },   { "lastName", "Stinson" }     },
-        };
-
         [Test]
         public void TableRowsAreEnumerable()
         {
-            Table table = Table.From(columns, rows);
+            Table table = TestData.Typed;
 
             // Check that each row is a collection of key-value pairs
             foreach(var row in table.Rows)
@@ -42,22 +88,22 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void EnumeratingTableRowsProducesTheRowsInOrder()
         {
-            Table table = Table.From(columns, rows);
+            Table table = TestData.Typed;
 
-            Assert.That(table.Rows, Is.EqualTo(rows));
+            Assert.That(table.Rows.Cast<RowDict>().Select(row => row.Values), Is.EqualTo(TestData.Typed.Rows));
         }
 
         [Test]
         public void TableRowsAreInColumnOrder()
         {
-            Table table = Table.From(columns, rows);
+            Table table = TestData.Typed;
 
             // Check that each row has the columns in the table's column order
             foreach(IEnumerable<KeyValuePair<string, dynamic>> row in table.Rows)
             {
                 var keys = row.Select(x => x.Key);
 
-                Assert.That(keys, Is.EqualTo(columns));
+                Assert.That(keys, Is.EqualTo(TestData.Typed.Columns));
             }
         }
 
@@ -80,7 +126,7 @@ namespace Pori.Frends.Data.Tests
                 JsonData    = data
             };
 
-            Table table = LoadTask.Load(input, new System.Threading.CancellationToken());
+            Table table = LoadTask.Load(input, new CancellationToken());
 
             JToken result = table.ToJson();
 
@@ -91,16 +137,6 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class TableBuilderTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
-        private static readonly List<object>[] rows =
-        {
-            new List<object> { 1,  2,  3,  4,  5, 1 },
-            new List<object> { 2,  4,  6,  8, 10, 0 },
-            new List<object> { 3,  6,  9, 12, 15, 1 },
-            new List<object> { 4,  8, 12, 16, 20, 0 },
-            new List<object> { 5, 10, 15, 20, 25, 1 },
-        };
         private static readonly ColumnRename[] renamings = new ColumnRename[]
         {
             new ColumnRename { Column = "F", NewName = "W" },
@@ -112,7 +148,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void TheResultIsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             Table result = TableBuilder
                             .From(original)
@@ -124,13 +160,15 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConcatenateWorks()
         {
-            Table fullTable = Table.From(columns, rows);
+            Table fullTable = TestData.Typed;
+            var rows        = TestData.Typed.Rows;
+            var columns     = TestData.Typed.Columns;
 
             Table[] tables =
             {
-                Table.From(columns, rows.Skip(0).Take(2)),
-                Table.From(columns, rows.Skip(2).Take(2)),
-                Table.From(columns, rows.Skip(4).Take(2))
+                Table.From(columns, rows.Skip(0).Take(8)),
+                Table.From(columns, rows.Skip(8).Take(8)),
+                Table.From(columns, rows.Skip(16).Take(8))
             };
 
             Table result = TableBuilder
@@ -144,7 +182,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FilterProducesCorrectRows()
         {
-            Table      original = Table.From(columns, rows);
+            Table      original = TestData.Typed;
             FilterFunc filter   = (row) => row.A <= 3;
 
             Table filtered = TableBuilder
@@ -158,7 +196,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FilterDoesNotAffectRowOrder()
         {
-            Table      original = Table.From(columns, rows);
+            Table      original = TestData.Typed;
             FilterFunc filter   = (row) => true;
 
             Table filtered = TableBuilder
@@ -172,11 +210,11 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByCorrectlyGroupsRows()
         {
-            Table    original        = Table.From(columns, rows);
-            string[] keyColumns      = { "F" };
-            string[] expectedColumns = { "F", "G" };
+            Table    original        = TestData.Typed;
+            string[] keyColumns      = { "E" };
+            string[] expectedColumns = { "E", "G" };
             var      keys            = original.Rows
-                                        .Select(row => row.F)
+                                        .Select(row => row.E)
                                         .Distinct();
 
             Table grouped = TableBuilder
@@ -193,13 +231,13 @@ namespace Pori.Frends.Data.Tests
             // Check that the result contains all the keys
             // (not necessarily in the same order)
             Assert.That(
-                grouped.Rows.Select(row => row.F), 
+                grouped.Rows.Select(row => row.E),
                 Is.EquivalentTo(keys)
             );
 
             // Check that each group's elements has the correct key
             foreach(var row in grouped.Rows)
-                Assert.That(row.G, Has.All.Matches<dynamic>(elem => elem.F == row.F));
+                Assert.That(row.G, Has.All.Matches<dynamic>(elem => elem.E == row.E));
 
             // Check that the result contains all the rows of the original table
             Assert.That(
@@ -211,14 +249,14 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void RenameColumnsDoesTheRename()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             Table result = TableBuilder
                             .From(original)
                             .RenameColumns(renamings.ToDictionary(r => r.Column, r => r.NewName))
                             .CreateTable();
 
-            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W" };
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
         }
@@ -226,7 +264,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ReorderColumnsResultsInCorrectColumnOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
+            var   reversedColumns = TestData.Typed.Columns.Reverse();
 
             Table reordered = TableBuilder
                                 .From(original)
@@ -239,7 +278,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ReorderColumnsReordersRowColumnOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
+            var   reversedColumns = TestData.Typed.Columns.Reverse();
 
             Table reordered = TableBuilder
                                 .From(original)
@@ -258,14 +298,14 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ReorderColumnsDoesNotAffectOrderOfUnspecifiedColumns()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             Table reordered = TableBuilder
                                 .From(original)
                                 .ReorderColumns(new [] { "C", "E", "B" })
                                 .CreateTable();
 
-            string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F" };
+            string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F", "I", "M", "N", "U" };
 
             Assert.That(reordered.Columns, Is.EqualTo(expectedColumnOrder));
 
@@ -281,7 +321,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SelectColumnsProducesColumnsInTheSpecifiedOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             string[] selectedColumns =  new string[] { "B", "A" };
 
@@ -304,14 +344,14 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void AddColumnAddsTheColumnAsTheLastColumn()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             Table result = TableBuilder
                             .From(original)
                             .AddColumn("G", row => "foo")
                             .CreateTable();
 
-            string[] expectedColumns = columns.Concat(new [] {"G"}).ToArray();
+            string[] expectedColumns = TestData.Typed.Columns.Concat(new [] {"G"}).ToArray();
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
 
@@ -327,7 +367,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SortProducesCorrectResultsWithASingleCriterion()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             TableBuilder.SortingCriterion[] criteria = new TableBuilder.SortingCriterion[]
             {
@@ -350,7 +390,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SortProducesCorrectResultsWithMultipleCriteria()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             TableBuilder.SortingCriterion[] criteria = new TableBuilder.SortingCriterion[]
             {
@@ -374,7 +414,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void TransformColumnProducesCorrectValues()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             Table result = TableBuilder
                             .From(original)
@@ -417,7 +457,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = LoadTask.Load(input, new System.Threading.CancellationToken());
+            Table result = LoadTask.Load(input, new CancellationToken());
 
             var resultLetters = from row in result.Rows select row.letter;
             var resultIndices = from row in result.Rows select row.index;
@@ -451,7 +491,7 @@ namespace Pori.Frends.Data.Tests
                 JsonData    = data
             };
 
-            Table result = LoadTask.Load(input, new System.Threading.CancellationToken());
+            Table result = LoadTask.Load(input, new CancellationToken());
 
             string[] expectedColumns = { "A", "B" };
 
@@ -471,20 +511,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class AddColumnsTaskTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<object>[] rows =
-        {
-            new List<object> { 1,  2,  3,  4,  5,  6 },
-            new List<object> { 2,  4,  6,  8, 10, 12 },
-            new List<object> { 3,  6,  9, 12, 15, 18 },
-            new List<object> { 4,  8, 12, 16, 20, 24 },
-            new List<object> { 5, 10, 15, 20, 25, 30 },
-        };
-
         [Test]
         public void AddColumnsReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             AddColumnsParameters input = new AddColumnsParameters
             {
@@ -495,7 +525,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = AddColumnsTask.AddColumns(input, new System.Threading.CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -504,7 +534,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void AddColumnsActuallyAddsTheColumns()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             AddColumnsParameters input = new AddColumnsParameters
             {
@@ -519,7 +549,7 @@ namespace Pori.Frends.Data.Tests
             IEnumerable<string> expectedColumns = original.Columns.Concat(input.Columns.Select(c => c.Name));
 
             
-            Table result = AddColumnsTask.AddColumns(input, new System.Threading.CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
 
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
@@ -536,7 +566,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void AddColumnsWorksWithConstantValuesForTheColumns()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             AddColumnsParameters input = new AddColumnsParameters
             {
@@ -549,7 +579,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = AddColumnsTask.AddColumns(input, new System.Threading.CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
 
 
             // Check each row contains the correct columns
@@ -563,7 +593,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void AddColumnsWorksWithComputedValuesForTheColumns()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             AddColumnsParameters input = new AddColumnsParameters
             {
@@ -576,7 +606,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = AddColumnsTask.AddColumns(input, new System.Threading.CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
 
 
             // Check each row contains the correct values in the new columns
@@ -590,7 +620,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void AddColumnsThrowsWhenAddingMultipleColumnsWithTheSameName()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             AddColumnsParameters input = new AddColumnsParameters
             {
@@ -602,7 +632,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => AddColumnsTask.AddColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -610,7 +640,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void AddColumnsThrowsWhenAddingAnExistingColumn()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             AddColumnsParameters input = new AddColumnsParameters
             {
@@ -621,7 +651,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => AddColumnsTask.AddColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -630,51 +660,25 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class ConcatenateTaskTests
     {
-        private static readonly string[] columns = { "A","B","C","D","E","F","I","M","N","U" };
-        private static readonly List<object>[] rows =
-        {
-            //                  A    B     C         D           E           F       I    M        N                  U
-            new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
-            new List<object> {  1,  true, "W", "07.12.2004",   "Tango",    -43.5,   244,  1,       "Teal", "2004-11-20T03:02:28Z" },
-            new List<object> {  2,  true, "L", "19.07.2023",    "Echo",   -10.11,  -869,  0,         null, "2015-01-14T00:51:16Z" },
-            new List<object> {  3, false, "S", "27.05.2027",    "Alfa",   -66.06,  -761,  1,         null, "2028-03-25T21:49:37Z" },
-            new List<object> {  4, false, "Z", "13.10.2014", "Uniform",   -14.72,  -275,  0,  "Goldenrod", "2028-03-16T08:08:43Z" },
-            new List<object> {  5,  true, "Y", "05.09.2013",   "Oscar",   -29.71,  -896,  1,      "Green", "2027-08-11T12:32:56Z" },
-            new List<object> {  6,  true, "T", "21.07.2003",   "Bravo",     7.05,  -706,  0,      "Khaki", "2013-12-19T14:24:42Z" },
-            new List<object> {  7, false, "X", "23.12.2004",   "Bravo",    74.45,   424,  1,       "Mauv", "2013-10-20T18:21:19Z" },
-            new List<object> {  8,  true, "P", "23.09.2023","November",    49.35,  -417,  0,         null, "1999-07-27T23:16:03Z" },
-            new List<object> {  9,  true, "G", "06.04.2007",   "Tango",    -54.5,    -8,  1,         null, "2017-05-23T19:01:35Z" },
-            new List<object> { 10,  true, "Q", "13.03.2025",    "Papa",   -87.98,   594,  0,         null, "2015-07-17T18:30:11Z" },
-            new List<object> { 11,  true, "T", "26.02.2017", "Foxtrot",       75,   745,  1,     "Fuscia", "2013-09-27T23:27:52Z" },
-            new List<object> { 12, false, "U", "24.06.2002",    "Kilo",   -97.89,  -678,  0,         null, "2028-05-17T04:10:04Z" },
-            new List<object> { 13,  true, "X", "10.02.2020",    "Mike",    63.58,   363,  1,     "Maroon", "2024-04-17T07:16:37Z" },
-            new List<object> { 14, false, "S", "03.05.2023",   "Delta",   -60.48,   979,  0,  "Goldenrod", "2000-06-10T03:15:18Z" },
-            new List<object> { 15, false, "I", "14.09.2029", "Whiskey",    72.45,  -406,  1,       "Pink", "1999-01-19T00:29:17Z" },
-            new List<object> { 16,  true, "Q", "24.02.2009",    "Papa",   -80.44,     9,  0,         null, "2013-10-27T06:43:15Z" },
-            new List<object> { 17,  true, "R", "11.08.2015", "Uniform",    -26.4,  -293,  1, "Aquamarine", "2022-02-03T08:57:37Z" },
-            new List<object> { 18,  true, "T", "07.06.2026",   "Oscar",     27.6,  -592,  0,         null, "2007-10-25T23:44:31Z" },
-            new List<object> { 19,  true, "W", "18.03.2000", "Uniform",   -60.79,  -130,  1,         null, "2001-03-09T11:05:58Z" },
-        };
-
         [Test]
         public void ConcatenateReturnsANewTable()
         {
-            Table fullTable = Table.From(columns, rows);
+            Table fullTable = TestData.Typed;
 
-            int chunkSize  = 6;
-            int chunkCount = (int) Math.Ceiling((double) fullTable.Count / chunkSize);
-
-            IEnumerable<Table> chunks = Enumerable
-                                            .Range(0, chunkCount)
-                                            .Select(i => rows.Skip(i * chunkSize).Take(chunkSize))
-                                            .Select(chunkRows => Table.From(columns, chunkRows));
+            var rows    = TestData.Typed.Rows;
+            var columns = TestData.Typed.Columns;
 
             ConcatenateParameters input = new ConcatenateParameters
             {
-                Tables = chunks.ToArray()
+                Tables = new dynamic []
+                {
+                    Table.From(columns, rows.Skip(0).Take(8)),
+                    Table.From(columns, rows.Skip(8).Take(8)),
+                    Table.From(columns, rows.Skip(16).Take(8)),
+                }
             };
 
-            Table result = ConcatenateTask.Concatenate(input, new System.Threading.CancellationToken());
+            Table result = ConcatenateTask.Concatenate(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(fullTable));
@@ -683,14 +687,14 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConcatenateReturnsTheCorrectResultWithASingleTable()
         {
-            Table fullTable = Table.From(columns, rows);
+            Table fullTable = TestData.Typed;
 
             ConcatenateParameters input = new ConcatenateParameters
             {
                 Tables = new Table[] { fullTable }
             };
 
-            Table result = ConcatenateTask.Concatenate(input, new System.Threading.CancellationToken());
+            Table result = ConcatenateTask.Concatenate(input, new CancellationToken());
 
             Assert.That(result, Is.Not.SameAs(fullTable));
             Assert.That(result.Columns, Is.EqualTo(fullTable.Columns));
@@ -700,22 +704,22 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConcatenateReturnsTheCorrectResultWithMultipleTables()
         {
-            Table fullTable = Table.From(columns, rows);
+            Table fullTable = TestData.Typed;
 
-            int chunkSize  = 6;
-            int chunkCount = (int) Math.Ceiling((double) fullTable.Count / chunkSize);
-
-            IEnumerable<Table> chunks = Enumerable
-                                            .Range(0, chunkCount)
-                                            .Select(i => rows.Skip(i * chunkSize).Take(chunkSize))
-                                            .Select(chunkRows => Table.From(columns, chunkRows));
+            var rows    = TestData.Typed.Rows;
+            var columns = TestData.Typed.Columns;
 
             ConcatenateParameters input = new ConcatenateParameters
             {
-                Tables = chunks.ToArray()
+                Tables = new dynamic []
+                {
+                    Table.From(columns, rows.Skip(0).Take(8)),
+                    Table.From(columns, rows.Skip(8).Take(8)),
+                    Table.From(columns, rows.Skip(16).Take(8)),
+                }
             };
 
-            Table result = ConcatenateTask.Concatenate(input, new System.Threading.CancellationToken());
+            Table result = ConcatenateTask.Concatenate(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(fullTable.Columns));
             Assert.That(result.Rows, Is.EqualTo(fullTable.Rows));
@@ -724,10 +728,11 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConcatenateThrowsWhenTableColumnsDoNotMatch()
         {
-            Table fullTable = Table.From(columns, rows);
+            var rows    = TestData.Typed.Rows;
+            var columns = TestData.Typed.Columns;
 
             Table first  = Table.From(columns, rows.Skip(0).Take(10));
-            Table second = Table.From(columns, rows.Skip(1).Take(10));
+            Table second = Table.From(columns, rows.Skip(10).Take(10));
 
             Table incompatible = TableBuilder
                                     .From(second)
@@ -739,7 +744,7 @@ namespace Pori.Frends.Data.Tests
                 Tables = new [] { first, incompatible }
             };
 
-            Action executeTask = () => ConcatenateTask.Concatenate(input, new System.Threading.CancellationToken());
+            Action executeTask = () => ConcatenateTask.Concatenate(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -748,32 +753,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class ConvertColumnsTaskTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<object>[] rows =
-        {
-            //                  A     B       C              D               E          F
-            new List<object> {  0, "false",  682, "12.03.2027 09:32:28", "4821503",  "63.34" },
-            new List<object> {  1,  "true", -974, "12.12.2023 07:25:27", "7116123",   "69.6" },
-            new List<object> {  2, "false", -626, "05.09.2025 09:23:42", "2360915",   "3.68" },
-            new List<object> {  3, "false", -635, "28.02.2020 02:07:36", "4804015",   "7.44" },
-            new List<object> {  4, "false", -532, "08.10.2009 05:36:31", "9959168",  "39.21" },
-            new List<object> {  5, "false", -874, "11.03.2003 04:07:12", "8845181", "-51.42" },
-            new List<object> {  6, "false",    0, "09.04.2002 07:21:49", "4003331", "-91.24" },
-            new List<object> {  7,  "true", -251, "12.12.2012 08:49:06", "9437750",  "28.63" },
-            new List<object> {  8,  "true",  719, "19.03.2002 06:28:28", "3619804", "-69.55" },
-            new List<object> {  9, "false", -103, "01.08.2004 11:42:11", "3605879", "-81.51" },
-            new List<object> { 10,  "true",    0, "09.08.2015 08:00:10", "9825135",     "13" },
-            new List<object> { 11,  "true", -678, "12.06.2022 01:28:56", "6606703",  "-12.8" },
-            new List<object> { 12, "false",    0, "03.12.2018 01:19:55", "6037166",  "56.05" },
-            new List<object> { 13, "false",  526, "08.04.2011 09:20:46", "8132910", "-51.63" },
-            new List<object> { 14, "false", -630, "25.02.2009 06:43:52", "8239276", "-34.54" },
-            new List<object> { 15, "false",  802, "26.11.2027 05:00:20", "1828554", "-43.64" },
-        };
-
         [Test]
         public void ConvertColumnsReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
@@ -784,7 +767,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -793,7 +776,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToBooleanWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
@@ -801,38 +784,33 @@ namespace Pori.Frends.Data.Tests
                 Conversions = new ColumnConversion[]
                 {
                     new ColumnConversion { Column = "B", Type = ColumnType.Boolean },
-                    new ColumnConversion { Column = "C", Type = ColumnType.Boolean },
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.B is bool));
-            Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.C == (orig.C != 0)),
-                Has.All.EqualTo(true)
-            );
         }
 
         [Test]
         public void ConvertColumnsUsingCustomConverterWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
                 Data        = original,
                 Conversions = new ColumnConversion[]
                 {
-                    new ColumnConversion { Column = "C", Type = ColumnType.Custom, Converter = x => x > 0 },
+                    new ColumnConversion { Column = "I", Type = ColumnType.Custom, Converter = x => x > 0 },
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
-            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.C is bool));
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is bool));
             Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.C == (orig.C > 0)),
+                original.Rows.Zip(result.Rows, (orig, res) => res.I == (orig.I > 0)),
                 Has.All.EqualTo(true)
             );
         }
@@ -840,24 +818,24 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToDateTimeWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
                 Data        = original,
                 Conversions = new ColumnConversion[]
                 {
-                    new ColumnConversion { Column = "D", Type = ColumnType.DateTime, DateTimeFormat = "dd.MM.yyyy hh:mm:ss" },
+                    new ColumnConversion { Column = "D", Type = ColumnType.DateTime, DateTimeFormat = "dd.MM.yyyy" },
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.D is DateTime));
             Assert.That(
                 original.Rows.Zip(
-                    result.Rows, 
-                    (orig, res) => res.D == DateTime.ParseExact(orig.D, "dd.MM.yyyy hh:mm:ss", null)
+                    result.Rows,
+                    (orig, res) => res.D == DateTime.ParseExact(orig.D, "dd.MM.yyyy", null)
                 ),
                 Has.All.EqualTo(true)
             );
@@ -866,7 +844,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToDecimalWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
@@ -877,7 +855,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is decimal));
             Assert.That(
@@ -889,7 +867,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToDoubleWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
@@ -900,7 +878,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is double));
             Assert.That(
@@ -912,7 +890,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToFloatWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
@@ -923,7 +901,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is float));
             Assert.That(
@@ -935,22 +913,22 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToIntWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
                 Data        = original,
                 Conversions = new ColumnConversion[]
                 {
-                    new ColumnConversion { Column = "E", Type = ColumnType.Int },
+                    new ColumnConversion { Column = "I", Type = ColumnType.Int },
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
-            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.E is int));
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is int));
             Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.E == int.Parse(orig.E)),
+                original.Rows.Zip(result.Rows, (orig, res) => res.I == int.Parse(orig.I)),
                 Has.All.EqualTo(true)
             );
         }
@@ -958,22 +936,22 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsToLongWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
                 Data        = original,
                 Conversions = new ColumnConversion[]
                 {
-                    new ColumnConversion { Column = "E", Type = ColumnType.Long },
+                    new ColumnConversion { Column = "I", Type = ColumnType.Long },
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
-            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.E is long));
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is long));
             Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.E == long.Parse(orig.E)),
+                original.Rows.Zip(result.Rows, (orig, res) => res.I == long.Parse(orig.I)),
                 Has.All.EqualTo(true)
             );
         }
@@ -981,7 +959,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConvertColumnsThrowsWhenSpecifyingAnInvalidColumnName()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Untyped;
 
             ConvertColumnsParameters input = new ConvertColumnsParameters
             {
@@ -992,7 +970,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1001,36 +979,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class GroupByTaskTests
     {
-        private static readonly string[] columns = { "A","B","C","D","E","F","I","M","N","U" };
-        private static readonly List<object>[] rows =
-        {
-            //                  A    B     C         D           E           F       I    M        N                  U
-            new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
-            new List<object> {  1,  true, "W", "07.12.2004",   "Tango",    -43.5,   244,  1,       "Teal", "2004-11-20T03:02:28Z" },
-            new List<object> {  2,  true, "L", "19.07.2023",    "Echo",   -10.11,  -869,  0,         null, "2015-01-14T00:51:16Z" },
-            new List<object> {  3, false, "S", "27.05.2027",    "Alfa",   -66.06,  -761,  1,         null, "2028-03-25T21:49:37Z" },
-            new List<object> {  4, false, "Z", "13.10.2014", "Uniform",   -14.72,  -275,  0,  "Goldenrod", "2028-03-16T08:08:43Z" },
-            new List<object> {  5,  true, "Y", "05.09.2013",   "Oscar",   -29.71,  -896,  1,      "Green", "2027-08-11T12:32:56Z" },
-            new List<object> {  6,  true, "T", "21.07.2003",   "Bravo",     7.05,  -706,  0,      "Khaki", "2013-12-19T14:24:42Z" },
-            new List<object> {  7, false, "X", "23.12.2004",   "Bravo",    74.45,   424,  1,       "Mauv", "2013-10-20T18:21:19Z" },
-            new List<object> {  8,  true, "P", "23.09.2023","November",    49.35,  -417,  0,         null, "1999-07-27T23:16:03Z" },
-            new List<object> {  9,  true, "G", "06.04.2007",   "Tango",    -54.5,    -8,  1,         null, "2017-05-23T19:01:35Z" },
-            new List<object> { 10,  true, "Q", "13.03.2025",    "Papa",   -87.98,   594,  0,         null, "2015-07-17T18:30:11Z" },
-            new List<object> { 11,  true, "T", "26.02.2017", "Foxtrot",       75,   745,  1,     "Fuscia", "2013-09-27T23:27:52Z" },
-            new List<object> { 12, false, "U", "24.06.2002",    "Kilo",   -97.89,  -678,  0,         null, "2028-05-17T04:10:04Z" },
-            new List<object> { 13,  true, "X", "10.02.2020",    "Mike",    63.58,   363,  1,     "Maroon", "2024-04-17T07:16:37Z" },
-            new List<object> { 14, false, "S", "03.05.2023",   "Delta",   -60.48,   979,  0,  "Goldenrod", "2000-06-10T03:15:18Z" },
-            new List<object> { 15, false, "I", "14.09.2029", "Whiskey",    72.45,  -406,  1,       "Pink", "1999-01-19T00:29:17Z" },
-            new List<object> { 16,  true, "Q", "24.02.2009",    "Papa",   -80.44,     9,  0,         null, "2013-10-27T06:43:15Z" },
-            new List<object> { 17,  true, "R", "11.08.2015", "Uniform",    -26.4,  -293,  1, "Aquamarine", "2022-02-03T08:57:37Z" },
-            new List<object> { 18,  true, "T", "07.06.2026",   "Oscar",     27.6,  -592,  0,         null, "2007-10-25T23:44:31Z" },
-            new List<object> { 19,  true, "W", "18.03.2000", "Uniform",   -60.79,  -130,  1,         null, "2001-03-09T11:05:58Z" },
-        };
-
         [Test]
         public void GroupByReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             GroupByParameters input = new GroupByParameters
             {
@@ -1040,7 +992,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping     = GroupingType.EntireRows
             };
 
-            Table result = GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Table result = GroupByTask.GroupBy(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -1049,7 +1001,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByIncludesAllKeyColumnsInTheResult()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
             string[] keyColumns = { "B", "M" };
 
             GroupByParameters input = new GroupByParameters
@@ -1060,7 +1012,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping     = GroupingType.EntireRows
             };
 
-            Table result = GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Table result = GroupByTask.GroupBy(input, new CancellationToken());
 
 
             string[] expectedColumns = { "B", "M", "G" };
@@ -1080,7 +1032,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByCanProduceEntireGroupedRowsAsATable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
             string[] keyColumns = { "B" };
 
             GroupByParameters input = new GroupByParameters
@@ -1091,7 +1043,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping     = GroupingType.EntireRows
             };
 
-            Table result = GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Table result = GroupByTask.GroupBy(input, new CancellationToken());
 
             // Check that each group is a table
             foreach(var row in result.Rows)
@@ -1111,7 +1063,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByCanProduceSelectedColumnsOfGroupedRowsAsATable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
             string[] keyColumns = { "B" };
 
             GroupByParameters input = new GroupByParameters
@@ -1123,7 +1075,7 @@ namespace Pori.Frends.Data.Tests
                 Columns      = new[] { "A", "B", "C" }
             };
 
-            Table result = GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Table result = GroupByTask.GroupBy(input, new CancellationToken());
 
             string[] expectedColumns = { "A", "B", "C" };
 
@@ -1146,7 +1098,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByCanProduceValuesOfASingleColumnAsAnEnumerable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
             string[] keyColumns = { "B" };
 
             GroupByParameters input = new GroupByParameters
@@ -1158,7 +1110,7 @@ namespace Pori.Frends.Data.Tests
                 Column       = "A"
             };
 
-            Table result = GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Table result = GroupByTask.GroupBy(input, new CancellationToken());
 
             // Check that each group consists of the values of the selected
             // column.
@@ -1186,7 +1138,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByCanProduceComputedValuesAsAnEnumerable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
             string[] keyColumns = { "B" };
             TableFunc selectElement = row => row.A * 2;
 
@@ -1199,7 +1151,7 @@ namespace Pori.Frends.Data.Tests
                 ComputeValue    = selectElement
             };
 
-            Table result = GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Table result = GroupByTask.GroupBy(input, new CancellationToken());
 
             // Check that each group consists of the values of the selected
             // column.
@@ -1227,7 +1179,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByThrowsWhenKeyColumnDoesNotExistInTheTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             GroupByParameters input = new GroupByParameters
             {
@@ -1237,7 +1189,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping        = GroupingType.EntireRows
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1245,7 +1197,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByThrowsWhenASelectedColumnDoesNotExistInTheTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             GroupByParameters input = new GroupByParameters
             {
@@ -1256,7 +1208,7 @@ namespace Pori.Frends.Data.Tests
                 Columns         = new[] { "A", "X" }  // <---
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1264,7 +1216,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByThrowsWhenTheSelectedSingleColumnDoesNotExistInTheTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             GroupByParameters input = new GroupByParameters
             {
@@ -1275,7 +1227,7 @@ namespace Pori.Frends.Data.Tests
                 Column          = "X" // <---
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1283,7 +1235,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void GroupByThrowsWhenResultColumnIsOneOfTheKeyColums()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
             string[] keyColumns = { "B", "M" };
 
             GroupByParameters input = new GroupByParameters
@@ -1294,7 +1246,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping        = GroupingType.EntireRows
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new System.Threading.CancellationToken());
+            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1303,35 +1255,19 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class FilterTaskTests
     {
-        private static readonly string[] columns = { "id", "name", "eol", "inProduction" };
-        private static readonly List<object>[] rows =
-        {
-            new List<object> {  1, "Veribet",  "2020-08-07T07:11:05Z", false },
-            new List<object> {  2, "Lotlux",   "2021-10-08T15:56:39Z", false },
-            new List<object> {  3, "Tempsoft", "2022-12-13T23:21:06Z", true  },
-            new List<object> {  4, "Opela",    "2022-02-03T07:52:34Z", false },
-            new List<object> {  5, "Span",     "2022-02-22T07:56:15Z", false },
-            new List<object> {  6, "Sonair",   "2019-05-21T19:22:41Z", true  },
-            new List<object> {  7, "Cardify",  "2022-10-10T17:37:46Z", false },
-            new List<object> {  8, "Hatity",   "2020-11-06T10:04:53Z", true  },
-            new List<object> {  9, "Duobam",   "2020-02-08T16:17:19Z", false },
-            new List<object> { 10, "Tresom",   "2020-08-18T23:47:29Z", false }
-        };
-
-
         [Test]
         public void FilterUsingRowFilterReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
-            FilterParameters input = new FilterParameters 
-            { 
-                Data       = original, 
+            FilterParameters input = new FilterParameters
+            {
+                Data       = original,
                 FilterType = ProcessingType.Row,
-                Filter     = row => row.inProduction == true
+                Filter     = row => row.B == true
             };
             
-            Table filtered = FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Table filtered = FilterTask.Filter(input, new CancellationToken());
 
             Assert.That(filtered is Table);
             Assert.That(filtered, Is.Not.SameAs(original));
@@ -1340,17 +1276,17 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FilterUsingColumnFilterReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             FilterParameters input = new FilterParameters
             {
                 Data         = original,
                 FilterType   = ProcessingType.Column,
-                FilterColumn = "inProduction",
-                Filter       = inProduction => inProduction == true
+                FilterColumn = "B",
+                Filter       = B => B == true
             };
 
-            Table filtered = FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Table filtered = FilterTask.Filter(input, new CancellationToken());
 
             Assert.That(filtered is Table);
             Assert.That(filtered, Is.Not.SameAs(original));
@@ -1361,14 +1297,14 @@ namespace Pori.Frends.Data.Tests
         {
             FilterParameters input = new FilterParameters
             {
-                Data       = Table.From(columns, rows),
+                Data       = TestData.Typed,
                 FilterType = ProcessingType.Row,
-                Filter     = row => row.inProduction == true
+                Filter     = row => row.B == true
             };
 
-            Table filtered = FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Table filtered = FilterTask.Filter(input, new CancellationToken());
 
-            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.inProduction == true));
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
         }
 
         [Test]
@@ -1376,21 +1312,21 @@ namespace Pori.Frends.Data.Tests
         {
             FilterParameters input = new FilterParameters
             {
-                Data         = Table.From(columns, rows),
+                Data         = TestData.Typed,
                 FilterType   = ProcessingType.Column,
-                FilterColumn = "inProduction",
-                Filter       = inProduction => inProduction == true
+                FilterColumn = "B",
+                Filter       = B => B == true
             };
 
-            Table filtered = FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Table filtered = FilterTask.Filter(input, new CancellationToken());
 
-            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.inProduction == true));
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
         }
 
         [Test]
         public void FilterUsingRowFilterDoesNotAffectRowOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             FilterParameters input = new FilterParameters
             {
@@ -1399,7 +1335,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => true            // Accept all rows
             };
 
-            Table filtered = FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Table filtered = FilterTask.Filter(input, new CancellationToken());
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
@@ -1407,17 +1343,17 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FilterUsingColumnFilterDoesNotAffectRowOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             FilterParameters input = new FilterParameters
             {
                 Data         = original,
                 FilterType   = ProcessingType.Column,
-                FilterColumn = "inProduction",
-                Filter       = inProduction => true
+                FilterColumn = "B",
+                Filter       = B => true
             };
 
-            Table filtered = FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Table filtered = FilterTask.Filter(input, new CancellationToken());
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
@@ -1425,7 +1361,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FilterFailsWhenFilterColumnDoesNotExist()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             FilterParameters input = new FilterParameters
             {
@@ -1435,7 +1371,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = doesNotExist => true
             };
 
-            Action executeTask = () => FilterTask.Filter(input, new System.Threading.CancellationToken());
+            Action executeTask = () => FilterTask.Filter(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1534,7 +1470,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+            Table result = JoinTask.Join(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(leftTable));
@@ -1570,7 +1506,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+                Table result = JoinTask.Join(input, new CancellationToken());
 
                 string[] expectedColumns = { "left", "right" };
 
@@ -1620,7 +1556,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+                Table result = JoinTask.Join(input, new CancellationToken());
 
                 string[] expectedColumns = { "left", "right" };
 
@@ -1677,7 +1613,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+            Table result = JoinTask.Join(input, new CancellationToken());
 
             Assert.That(result.Rows.Select(row => row.left), Is.EquivalentTo(leftMatched.Rows));
         }
@@ -1714,7 +1650,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+            Table result = JoinTask.Join(input, new CancellationToken());
 
             string[] expectedColumns = { "left", "right" };
 
@@ -1772,7 +1708,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+            Table result = JoinTask.Join(input, new CancellationToken());
 
             var resultMatchedRows = result.Rows.Where(row => row.right.X != null);
 
@@ -1786,7 +1722,7 @@ namespace Pori.Frends.Data.Tests
             Table rightTable = Table.From(right.columns, right.matched);
 
             var testCases = new [] {
-                new 
+                new
                 {
                     ResultType      = JoinResult.AllColumns,
                     ResultColumns   = new string[] {},
@@ -1827,7 +1763,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+                Table result = JoinTask.Join(input, new CancellationToken());
 
                 Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
 
@@ -1889,7 +1825,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+                Table result = JoinTask.Join(input, new CancellationToken());
 
                 Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
 
@@ -1926,7 +1862,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new System.Threading.CancellationToken());
+            Table result = JoinTask.Join(input, new CancellationToken());
 
             string[] expectedColumns = { "A", "B", "V1", "V2", "V3", "V4", "V5" };
 
@@ -1964,7 +1900,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new System.Threading.CancellationToken());
+            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1993,7 +1929,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new System.Threading.CancellationToken());
+            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2022,7 +1958,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new System.Threading.CancellationToken());
+            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2054,7 +1990,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new System.Threading.CancellationToken());
+            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2063,14 +1999,6 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class RenameColumnsTaskTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<object>[] rows =
-        {
-            new List<object> { 1,  2,  3,  4,  5,  6 },
-            new List<object> { 2,  4,  6,  8, 10, 12 },
-            new List<object> { 3,  6,  9, 12, 15, 18 },
-            new List<object> { 4,  8, 12, 16, 20, 24 },
-        };
         private static readonly ColumnRename[] renamings =
         {
             new ColumnRename { Column = "F", NewName = "W" },
@@ -2083,7 +2011,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void RenameColumnsReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
@@ -2093,7 +2021,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -2102,7 +2030,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ColumnsAreRenamed()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
@@ -2112,9 +2040,9 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
 
-            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W" };
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
         }
@@ -2122,7 +2050,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ColumnsCanBeOrderedAccoringToTheColumnMapping()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
@@ -2132,9 +2060,9 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
 
-            string[] expectedColumns = { "W", "B", "Z", "Y", "E", "X" };
+            string[] expectedColumns = { "W", "B", "Z", "Y", "E", "X", "I", "M", "N", "U" };
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
         }
@@ -2142,7 +2070,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void OtherColumnsCanBeDiscardedWhilePreservingColumnOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
@@ -2152,7 +2080,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = true // <---
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
 
             string[] expectedColumns = { "X", "Y", "Z", "W" };
 
@@ -2162,7 +2090,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void OtherColumnsCanBeDiscardedWhileNotPreservingColumnOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
@@ -2172,7 +2100,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = true   // <---
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(renamings.Select(m => m.NewName)));
         }
@@ -2180,7 +2108,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void RenamingsCanBeProvidedAsJObject()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             JObject jsonRenamings = new JObject
             {
@@ -2199,9 +2127,9 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
 
-            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W" };
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
         }
@@ -2210,30 +2138,19 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class ReorderColumnsTaskTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<string> reversedColumns = columns.Reverse<string>().ToList();
-        private static readonly List<object>[] rows =
-        {
-            new List<object> { 1,  2,  3,  4,  5,  6 },
-            new List<object> { 2,  4,  6,  8, 10, 12 },
-            new List<object> { 3,  6,  9, 12, 15, 18 },
-            new List<object> { 4,  8, 12, 16, 20, 24 },
-        };
-
-
         [Test]
         public void ReorderColumnsReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
                 Data                = original,
-                ColumnOrder         = reversedColumns.ToArray(),
+                ColumnOrder         = original.Columns.Reverse<string>().ToArray(),
                 DiscardOtherColumns = false
             };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered is Table);
             Assert.That(reordered, Is.Not.SameAs(original));
@@ -2242,47 +2159,47 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ResultHasColumnsInTheSpecifiedOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
                 Data                = original,
-                ColumnOrder         = reversedColumns.ToArray(),
+                ColumnOrder         = original.Columns.Reverse<string>().ToArray(),
                 DiscardOtherColumns = false
             };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
-            Assert.That(reordered.Columns, Is.EqualTo(reversedColumns));
+            Assert.That(reordered.Columns, Is.EqualTo(original.Columns.Reverse<string>()));
         }
 
         [Test]
         public void ResultRowsAreInColumnOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
                 Data                = original,
-                ColumnOrder         = reversedColumns.ToArray(),
+                ColumnOrder         = original.Columns.Reverse<string>().ToArray(),
                 DiscardOtherColumns = false
             };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
             // Check that each row has the columns in the new column order
             foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
             {
                 var keys = row.Select(x => x.Key);
 
-                Assert.That(keys, Is.EqualTo(reversedColumns));
+                Assert.That(keys, Is.EqualTo(original.Columns.Reverse<string>()));
             }
         }
 
         [Test]
         public void OrderOfUnspecifiedColumnsDoesNotChange()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
@@ -2291,9 +2208,9 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F" };
+            string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F", "I", "M", "N", "U" };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered.Columns, Is.EqualTo(expectedColumnOrder));
 
@@ -2309,7 +2226,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void UnspecifiedColumnsCanBeDiscarded()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
@@ -2320,7 +2237,7 @@ namespace Pori.Frends.Data.Tests
 
             string[] expectedColumns = { "C", "E", "B" };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered.Columns, Is.EqualTo(expectedColumns));
 
@@ -2335,7 +2252,7 @@ namespace Pori.Frends.Data.Tests
 
         public void ReorderColumnsThrowsWhenColumnOrderHasDuplicates()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
@@ -2344,14 +2261,14 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Action executeTask = () => ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
 
         public void ReorderColumnsThrowsWhenColumnOrderContainsAnInvalidColumn()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             ReorderColumnsParameters input = new ReorderColumnsParameters
             {
@@ -2360,7 +2277,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Action executeTask = () => ReorderColumnsTask.ReorderColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2369,20 +2286,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class SelectColumnsTaskTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<object>[] rows =
-        {
-            new List<object> { 1,  2,  3,  4,  5,  6 },
-            new List<object> { 2,  4,  6,  8, 10, 12 },
-            new List<object> { 3,  6,  9, 12, 15, 18 },
-            new List<object> { 4,  8, 12, 16, 20, 24 },
-        };
-
-
         [Test]
         public void SelectColumnsReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
@@ -2392,7 +2299,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveOrder = false
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -2401,7 +2308,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SpecificColumnsCanBeSelectedInTheSpecifiedOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             string[] selectedColumns =  new string[] { "B", "A" };
 
@@ -2413,7 +2320,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveOrder = false
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(selectedColumns));
         }
@@ -2421,7 +2328,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SpecificColumnsCanBeSelectedInTheirOriginalOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             string[] selectedColumns =  new string[] { "B", "A" };
 
@@ -2433,7 +2340,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveOrder = true
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(original.Columns.Where(c => selectedColumns.Contains(c))));
         }
@@ -2441,7 +2348,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SpecificColumnsCanBeDiscarded()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             string[] selectedColumns =  new string[] { "B", "A" };
 
@@ -2452,7 +2359,7 @@ namespace Pori.Frends.Data.Tests
                 Columns       = selectedColumns
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(original.Columns.Where(c => !selectedColumns.Contains(c))));
         }
@@ -2460,7 +2367,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ResultRowsAreInColumnOrder()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             string[] selectedColumns =  new string[] { "B", "A" };
 
@@ -2472,7 +2379,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveOrder = false
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             // Check that each row has the columns in the new column order
             foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
@@ -2485,7 +2392,7 @@ namespace Pori.Frends.Data.Tests
 
         public void SelectColumnsThrowsWhenColumnOrderHasDuplicates()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
@@ -2495,14 +2402,14 @@ namespace Pori.Frends.Data.Tests
                 PreserveOrder = false
             };
 
-            Action executeTask = () => SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
 
         public void SelectColumnsThrowsWhenColumnOrderContainsAnInvalidColumn()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
@@ -2512,7 +2419,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveOrder = false
             };
 
-            Action executeTask = () => SelectColumnsTask.SelectColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => SelectColumnsTask.SelectColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2521,36 +2428,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class SortTaskTests
     {
-        private static readonly string[] columns = { "A","B","C","D","E","F","I","M","N","U" };
-        private static readonly List<object>[] rows =
-        {
-            //                  A    B     C         D           E           F       I    M        N                  U
-            new List<object> {  0,  true, "T", "04.08.2015", "Foxtrot",     -8.6,   541,  0,       "Puce", "2027-11-15T06:56:47Z" },
-            new List<object> {  1,  true, "W", "07.12.2004",   "Tango",    -43.5,   244,  1,       "Teal", "2004-11-20T03:02:28Z" },
-            new List<object> {  2,  true, "L", "19.07.2023",    "Echo",   -10.11,  -869,  0,         null, "2015-01-14T00:51:16Z" },
-            new List<object> {  3, false, "S", "27.05.2027",    "Alfa",   -66.06,  -761,  1,         null, "2028-03-25T21:49:37Z" },
-            new List<object> {  4, false, "Z", "13.10.2014", "Uniform",   -14.72,  -275,  0,  "Goldenrod", "2028-03-16T08:08:43Z" },
-            new List<object> {  5,  true, "Y", "05.09.2013",   "Oscar",   -29.71,  -896,  1,      "Green", "2027-08-11T12:32:56Z" },
-            new List<object> {  6,  true, "T", "21.07.2003",   "Bravo",     7.05,  -706,  0,      "Khaki", "2013-12-19T14:24:42Z" },
-            new List<object> {  7, false, "X", "23.12.2004",   "Bravo",    74.45,   424,  1,       "Mauv", "2013-10-20T18:21:19Z" },
-            new List<object> {  8,  true, "P", "23.09.2023","November",    49.35,  -417,  0,         null, "1999-07-27T23:16:03Z" },
-            new List<object> {  9,  true, "G", "06.04.2007",   "Tango",    -54.5,    -8,  1,         null, "2017-05-23T19:01:35Z" },
-            new List<object> { 10,  true, "Q", "13.03.2025",    "Papa",   -87.98,   594,  0,         null, "2015-07-17T18:30:11Z" },
-            new List<object> { 11,  true, "T", "26.02.2017", "Foxtrot",       75,   745,  1,     "Fuscia", "2013-09-27T23:27:52Z" },
-            new List<object> { 12, false, "U", "24.06.2002",    "Kilo",   -97.89,  -678,  0,         null, "2028-05-17T04:10:04Z" },
-            new List<object> { 13,  true, "X", "10.02.2020",    "Mike",    63.58,   363,  1,     "Maroon", "2024-04-17T07:16:37Z" },
-            new List<object> { 14, false, "S", "03.05.2023",   "Delta",   -60.48,   979,  0,  "Goldenrod", "2000-06-10T03:15:18Z" },
-            new List<object> { 15, false, "I", "14.09.2029", "Whiskey",    72.45,  -406,  1,       "Pink", "1999-01-19T00:29:17Z" },
-            new List<object> { 16,  true, "Q", "24.02.2009",    "Papa",   -80.44,     9,  0,         null, "2013-10-27T06:43:15Z" },
-            new List<object> { 17,  true, "R", "11.08.2015", "Uniform",    -26.4,  -293,  1, "Aquamarine", "2022-02-03T08:57:37Z" },
-            new List<object> { 18,  true, "T", "07.06.2026",   "Oscar",     27.6,  -592,  0,         null, "2007-10-25T23:44:31Z" },
-            new List<object> { 19,  true, "W", "18.03.2000", "Uniform",   -60.79,  -130,  1,         null, "2001-03-09T11:05:58Z" },
-        };
-
         [Test]
         public void SortReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SortParameters input = new SortParameters
             {
@@ -2561,7 +2442,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new System.Threading.CancellationToken());
+            Table result = SortTask.Sort(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -2570,7 +2451,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SortingASingleColumnAscendingWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SortParameters input = new SortParameters
             {
@@ -2581,7 +2462,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new System.Threading.CancellationToken());
+            Table result = SortTask.Sort(input, new CancellationToken());
 
             Assert.That(result.Rows.Select(row => row.E), Is.Ordered.Ascending);
         }
@@ -2589,7 +2470,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SortingASingleColumnDescendingWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SortParameters input = new SortParameters
             {
@@ -2600,7 +2481,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new System.Threading.CancellationToken());
+            Table result = SortTask.Sort(input, new CancellationToken());
 
             Assert.That(result.Rows.Select(row => row.E), Is.Ordered.Descending);
         }
@@ -2608,7 +2489,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SortingMultipleColumnsWorks()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SortParameters input = new SortParameters
             {
@@ -2620,7 +2501,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new System.Threading.CancellationToken());
+            Table result = SortTask.Sort(input, new CancellationToken());
 
             Assert.That(
                 result.Rows.Select(row => new { row.E, row.A }),
@@ -2631,7 +2512,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void SortThrowsWhenAnInvalidColumnIsSpecified()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             SortParameters input = new SortParameters
             {
@@ -2644,7 +2525,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => SortTask.Sort(input, new System.Threading.CancellationToken());
+            Action executeTask = () => SortTask.Sort(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2653,20 +2534,10 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     class TransformColumnsTaskTests
     {
-        private static readonly string[] columns = { "A", "B", "C", "D", "E", "F" };
-        private static readonly List<object>[] rows =
-        {
-            new List<object> { 1,  2,  3,  4,  5,  6 },
-            new List<object> { 2,  4,  6,  8, 10, 12 },
-            new List<object> { 3,  6,  9, 12, 15, 18 },
-            new List<object> { 4,  8, 12, 16, 20, 24 },
-            new List<object> { 5, 10, 15, 20, 25, 30 },
-        };
-
         [Test]
         public void TransformColumnsReturnsANewTable()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             TransformColumnsParameters input = new TransformColumnsParameters
             {
@@ -2677,7 +2548,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, new System.Threading.CancellationToken());
+            Table result = TransformColumnsTask.TransformColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -2686,7 +2557,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void TransformCanBeDoneUsingRows()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             TransformColumnsParameters input = new TransformColumnsParameters
             {
@@ -2697,7 +2568,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, new System.Threading.CancellationToken());
+            Table result = TransformColumnsTask.TransformColumns(input, new CancellationToken());
 
             // Check the values in the result are correct.
             // Also ends up making sure that the original rows have not been modified.
@@ -2710,7 +2581,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void TransformCanBeDoneUsingColumnValues()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             TransformColumnsParameters input = new TransformColumnsParameters
             {
@@ -2721,7 +2592,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, new System.Threading.CancellationToken());
+            Table result = TransformColumnsTask.TransformColumns(input, new CancellationToken());
 
             // Check the values in the result are correct.
             // Also ends up making sure that the original rows have not been modified.
@@ -2734,7 +2605,7 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void TransformColumnsThrowsWhenSpecifyingAnInvalidColumnName()
         {
-            Table original = Table.From(columns, rows);
+            Table original = TestData.Typed;
 
             TransformColumnsParameters input = new TransformColumnsParameters
             {
@@ -2745,7 +2616,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => TransformColumnsTask.TransformColumns(input, new System.Threading.CancellationToken());
+            Action executeTask = () => TransformColumnsTask.TransformColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }

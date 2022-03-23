@@ -1,6 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data
 {
@@ -38,6 +41,16 @@ namespace Pori.Frends.Data
         public int Count { get { return Rows.Count(); } }
 
         /// <summary>
+        /// Serialize the table into a JToken.
+        /// </summary>
+        /// <returns>JArray containing all the rows of the table, each as a JObject.</returns>
+        public JToken ToJson()
+        {
+            // Do the conversion
+            return JToken.FromObject(Rows);
+        }
+
+        /// <summary>
         /// Create a new table from the specified data.
         /// </summary>
         /// <typeparam name="TValue">Value type of the input data.</typeparam>
@@ -50,6 +63,19 @@ namespace Pori.Frends.Data
             var rows = data.Select(row => Table.Row(columns, row));
 
             // Return a new table using the columns and created rows
+            return new Table(columns, rows);
+        }
+
+        /// <summary>
+        /// Create a table from row data supplied as JObjects.
+        /// </summary>
+        /// <param name="columns">The columns for the table.</param>
+        /// <param name="data">The row data for the table.</param>
+        /// <returns>The created table.</returns>
+        public static Table From(IEnumerable<string> columns, IEnumerable<JObject> data)
+        {
+            var rows = data.Select(row => Table.Row(columns, row));
+
             return new Table(columns, rows);
         }
 
@@ -68,6 +94,11 @@ namespace Pori.Frends.Data
 
             // Return a new table using the columns and created rows
             return new Table(columns, rows);
+        }
+
+        internal static dynamic Row(IEnumerable<string> columns, JObject source)
+        {
+            return source.ToObject<ExpandoObject>();
         }
 
         /// <summary>

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading;
 using Microsoft.CSharp; // For dynamic in .NET Standard Frends Tasks
+using Newtonsoft.Json.Linq;
 
 #pragma warning disable 1591
 
@@ -16,7 +18,12 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Load data from the result of the Frends.Csv.Parse task.
         /// </summary>
-        CSV
+        CSV,
+
+        /// <summary>
+        /// Load JSON data into a table.
+        /// </summary>
+        JSON
     }
 
     /// <summary>
@@ -38,6 +45,21 @@ namespace Pori.Frends.Data
         [DisplayFormat(DataFormatString = "Expression")]
         [UIHint(nameof(Format), "", LoadFormat.CSV)]
         public dynamic CsvData { get; set; }
+
+        /// <summary>
+        /// The names of properties to include as columns in the resulting
+        /// table.
+        /// </summary>
+        [DisplayName("Columns")]
+        public string[] JsonColumns { get; set; }
+
+        /// <summary>
+        /// The JSON data to load into a table. Must be a JArray of JObjects.
+        /// </summary>
+        [DisplayName("JSON Data") ]
+        [DisplayFormat(DataFormatString = "Expression")]
+        [UIHint(nameof(Format), "", LoadFormat.JSON)]
+        public dynamic JsonData { get; set; }
     }
     
 
@@ -64,6 +86,13 @@ namespace Pori.Frends.Data
 
                     // Create a table using the data
                     return Table.From(headers, data);
+
+
+                case LoadFormat.JSON:
+                    var rows = (input.JsonData as JArray).Cast<JObject>();
+
+                    return Table.From(input.JsonColumns, rows);
+
 
                 default:
                     throw new InvalidEnumArgumentException();

@@ -2,6 +2,7 @@ using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data.Tests
 {
@@ -58,6 +59,32 @@ namespace Pori.Frends.Data.Tests
 
                 Assert.That(keys, Is.EqualTo(columns));
             }
+        }
+
+        [Test]
+        public void TableCanBeConvertedToJson()
+        {
+            var rows = new []
+            {
+                new { A = 1, B = "foo" },
+                new { A = 2, B = "bar" },
+                new { A = 3, B = "baz" },
+            };
+
+            var data = JArray.FromObject(rows);
+
+            var input = new LoadParameters
+            {
+                Format      = LoadFormat.JSON,
+                JsonColumns = new [] { "A", "B" },
+                JsonData    = data
+            };
+
+            Table table = LoadTask.Load(input, new System.Threading.CancellationToken());
+
+            JToken result = table.ToJson();
+
+            Assert.That(JToken.DeepEquals(result, data));
         }
     }
 
@@ -403,6 +430,41 @@ namespace Pori.Frends.Data.Tests
             Assert.That(resultLetters, Is.EqualTo(expectedLetters));
             Assert.That(resultIndices, Is.EqualTo(expectedIndices));
             Assert.That(resultOddity, Is.EqualTo(expectedOddity));
+        }
+
+        [Test]
+        public void JsonDataIsLoadedCorrectly()
+        {
+            var rows = new []
+            {
+                new { A = 1, B = "foo" },
+                new { A = 2, B = "bar" },
+                new { A = 3, B = "baz" },
+            };
+
+            var data = JArray.FromObject(rows);
+
+            var input = new LoadParameters
+            {
+                Format      = LoadFormat.JSON,
+                JsonColumns = new [] { "A", "B" },
+                JsonData    = data
+            };
+
+            Table result = LoadTask.Load(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "A", "B" };
+
+            Assert.That(result is Table);
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+
+            foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
+            {
+                Console.WriteLine(resRow.A);
+                Console.WriteLine(origRow.A);
+                Assert.That(origRow.A == resRow.A);
+                Assert.That(origRow.B == resRow.B);
+            }
         }
     }
 
@@ -2113,6 +2175,35 @@ namespace Pori.Frends.Data.Tests
             Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(renamings.Select(m => m.NewName)));
+        }
+
+        [Test]
+        public void RenamingsCanBeProvidedAsJObject()
+        {
+            Table original = Table.From(columns, rows);
+
+            JObject jsonRenamings = new JObject
+            {
+                { "F", "W" },
+                { "D", "Z" },
+                { "C", "Y" },
+                { "A", "X" },
+            };
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                = original,
+                Format              = RenameFormat.JSON,
+                JsonRenamings       = jsonRenamings,
+                PreserveOrder       = true,
+                DiscardOtherColumns = false
+            };
+
+            Table result = RenameColumnsTask.RenameColumns(input, new System.Threading.CancellationToken());
+
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
         }
     }
 

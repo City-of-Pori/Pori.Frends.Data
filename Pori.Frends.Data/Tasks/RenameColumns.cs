@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.CSharp; // You can remove this if you don't need dynamic type in .NET Standard frends Tasks
+using Newtonsoft.Json.Linq;
 using Pori.Frends.Data.Linq;
+
 
 #pragma warning disable 1591
 
@@ -31,6 +33,23 @@ namespace Pori.Frends.Data
     }
 
     /// <summary>
+    /// How the column renamings are provided to the RenameColumns task.
+    /// </summary>
+    public enum RenameFormat
+    {
+        /// <summary>
+        /// Provide the column renamings as "inline" parameters to the
+        /// RenameColumns task.
+        /// </summary>
+        Manual,
+
+        /// <summary>
+        /// Provide the column renamings as a JSON object (JObject).
+        /// </summary>
+        JSON
+    }
+
+    /// <summary>
     /// Parameters for the RenameColumns task.
     /// </summary>
     public class RenameColumnsParameters
@@ -43,10 +62,23 @@ namespace Pori.Frends.Data
         public Table Data { get; set; }
 
         /// <summary>
+        /// How the renamings are provided.
+        /// </summary>
+        [DefaultValue(RenameFormat.Manual)]
+        public RenameFormat Format { get; set; }
+
+        /// <summary>
         /// The columns to rename.
         /// </summary>
         [DisplayName("Column Names")]
+        [UIHint(nameof(Format), "", RenameFormat.Manual)]
         public ColumnRename[] Renamings { get; set; }
+
+        /// <summary>
+        /// The columns to rename as a JObject.
+        /// </summary>
+        [UIHint(nameof(RenameFormat), "", RenameFormat.JSON)]
+        public dynamic JsonRenamings { get; set; }
 
         /// <summary>
         /// Whether to preserve the original order of the columns.
@@ -76,10 +108,25 @@ namespace Pori.Frends.Data
         public static Table RenameColumns([PropertyTab] RenameColumnsParameters input, CancellationToken cancellationToken)
         {
             // Mapping from old column names to new ones
-            Dictionary<string, string> newNameOf = input.Renamings.ToDictionary(r => r.Column, r => r.NewName);
+            Dictionary<string, string> newNameOf;
 
             // List of columns to rename (in order)
-            IEnumerable<string> columnsToRename = input.Renamings.Select(r => r.Column);
+            IEnumerable<string> columnsToRename;
+
+            // Get the renamings based on the input format
+            if(input.Format == RenameFormat.JSON)
+            {
+                // Get the properties of the mapping object
+                var renamings = (input.JsonRenamings as JObject).Properties();
+
+                newNameOf       = renamings.ToDictionary(prop => prop.Name, prop => prop.Value.ToString());
+                columnsToRename = renamings.Select(prop => prop.Name);
+            }
+            else
+            {
+                newNameOf       = input.Renamings.ToDictionary(r => r.Column, r => r.NewName);
+                columnsToRename = input.Renamings.Select(r => r.Column);
+            }
 
             // Check that a column isn't specified more than once
             if(columnsToRename.Distinct().Count() != columnsToRename.Count())

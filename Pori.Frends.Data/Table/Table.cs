@@ -7,6 +7,8 @@ using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data
 {
+    using RowDict = IDictionary<string, dynamic>;
+
     /// <summary>
     /// A data table.
     /// </summary>
@@ -39,6 +41,20 @@ namespace Pori.Frends.Data
         /// Number of rows in this table.
         /// </summary>
         public int Count { get { return Rows.Count(); } }
+
+        /// <summary>
+        /// Get the rows of the table in a format suitable for use with the
+        /// Frends.Csv.Create task.
+        /// </summary>
+        /// <returns>The rows of the table as a list of rows values, where each
+        /// row's values are a list of object.</returns>
+        public List<List<object>> ToCsvRows()
+        {
+            return Rows
+                    .Cast<RowDict>()
+                    .Select(row => row.Values.Cast<object>().ToList())
+                    .ToList();
+        }
 
         /// <summary>
         /// Serialize the table into a JToken.

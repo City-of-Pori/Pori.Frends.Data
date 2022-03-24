@@ -108,6 +108,18 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void TableCanBeConvertedToCsvRows()
+        {
+            Table original = TestData.Typed;
+
+            var csvRows = original.ToCsvRows();
+
+            Table result = Table.From(original.Columns, csvRows);
+
+            Assert.That(result.Rows, Is.EqualTo(original.Rows));
+        }
+
+        [Test]
         public void TableCanBeConvertedToJson()
         {
             var rows = new []

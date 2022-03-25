@@ -54,7 +54,7 @@ namespace Pori.Frends.Data
         /// Whether to preserve the original order of the columns or use
         /// the order the columns to keep are specified in.
         /// </summary>
-        [DisplayName("Preserve Column Order")]
+        [DisplayName("Preserve Column Order?")]
         [UIHint(nameof(Action), "", SelectColumnsAction.Keep)]
         [DefaultValue(false)]
         public bool PreserveOrder { get; set; }

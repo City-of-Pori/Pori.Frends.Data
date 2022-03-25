@@ -87,7 +87,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Whether to preserve the original order of the columns.
         /// </summary>
-        [DisplayName("Preserve Column Order")]
+        [DisplayName("Preserve Column Order?")]
         [DefaultValue(true)]
         public bool PreserveOrder { get; set; }
 

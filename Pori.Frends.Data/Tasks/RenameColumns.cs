@@ -75,10 +75,14 @@ namespace Pori.Frends.Data
         public ColumnRename[] Renamings { get; set; }
 
         /// <summary>
-        /// The columns to rename as a JObject.
+        /// The columns to rename as a JSON object. The object's property
+        /// names are used as the current column name and the property
+        /// values as the new column name.
         /// </summary>
+        [DisplayName("Renamings")]
         [UIHint(nameof(RenameFormat), "", RenameFormat.JSON)]
-        public dynamic JsonRenamings { get; set; }
+        [DisplayFormat(DataFormatString = "Json")]
+        public string JsonRenamings { get; set; }
 
         /// <summary>
         /// Whether to preserve the original order of the columns.
@@ -116,8 +120,8 @@ namespace Pori.Frends.Data
             // Get the renamings based on the input format
             if(input.Format == RenameFormat.JSON)
             {
-                // Get the properties of the mapping object
-                var renamings = (input.JsonRenamings as JObject).Properties();
+                // Convert the renamings to JObject and get the properties.
+                var renamings = JObject.Parse(input.JsonRenamings).Properties();
 
                 newNameOf       = renamings.ToDictionary(prop => prop.Name, prop => prop.Value.ToString());
                 columnsToRename = renamings.Select(prop => prop.Name);

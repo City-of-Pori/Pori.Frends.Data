@@ -2178,7 +2178,7 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
-        public void RenamingsCanBeProvidedAsJObject()
+        public void RenamingsCanBeProvidedAsJson()
         {
             Table original = TestData.Typed;
 
@@ -2194,7 +2194,7 @@ namespace Pori.Frends.Data.Tests
             {
                 Data                = original,
                 Format              = RenameFormat.JSON,
-                JsonRenamings       = jsonRenamings,
+                JsonRenamings       = jsonRenamings.ToString(),
                 PreserveOrder       = true,
                 DiscardOtherColumns = false
             };

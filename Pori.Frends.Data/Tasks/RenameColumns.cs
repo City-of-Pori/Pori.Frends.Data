@@ -44,7 +44,7 @@ namespace Pori.Frends.Data
         Manual,
 
         /// <summary>
-        /// Provide the column renamings as a JSON object (JObject).
+        /// Provide the column renamings as a JSON object.
         /// </summary>
         JSON
     }
@@ -80,7 +80,7 @@ namespace Pori.Frends.Data
         /// values as the new column name.
         /// </summary>
         [DisplayName("Renamings")]
-        [UIHint(nameof(RenameFormat), "", RenameFormat.JSON)]
+        [UIHint(nameof(Format), "", RenameFormat.JSON)]
         [DisplayFormat(DataFormatString = "Json")]
         public string JsonRenamings { get; set; }
 
@@ -96,7 +96,7 @@ namespace Pori.Frends.Data
         /// name mapping.
         /// </summary>
         [DisplayName("Discard Other Columns?")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool DiscardOtherColumns { get; set; }
     }
 

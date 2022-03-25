@@ -978,6 +978,57 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void ConvertColumnsToStringWorksWithNoFormat()
+        {
+            Table original = TestData.Typed;
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "I", Type = ColumnType.String },
+                }
+            };
+
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is string));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.I == orig.I.ToString()),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsToStringWorksWithAFormat()
+        {
+            Table original = TestData.Typed;
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion
+                    {
+                        Column       = "I",
+                        Type         = ColumnType.String,
+                        StringFormat = "x"
+                    },
+                }
+            };
+
+            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is string));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.I == orig.I.ToString("x")),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
         public void ConvertColumnsThrowsWhenSpecifyingAnInvalidColumnName()
         {
             Table original = TestData.Untyped;

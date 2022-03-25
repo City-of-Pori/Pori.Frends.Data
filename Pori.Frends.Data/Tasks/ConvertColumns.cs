@@ -27,6 +27,7 @@ namespace Pori.Frends.Data
         Float    = 400,
         Int      = 500,
         Long     = 600,
+        String   = 700,
 
         // Always have 'Custom' as last
         Custom   = 9999,
@@ -53,10 +54,19 @@ namespace Pori.Frends.Data
         /// See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings 
         /// for possible format specifiers.
         /// </summary>
+        [DisplayName("Format")]
         [UIHint(nameof(Type), "", ColumnType.DateTime)]
         [DisplayFormat(DataFormatString = "Text")]
         [DefaultValue("yyyy-MM-ddThh:mm:ss.fffZ")]
         public string DateTimeFormat { get; set; }
+
+        /// <summary>
+        /// Format to use when converting the column value to string.
+        /// </summary>
+        [DisplayName("Format")]
+        [UIHint(nameof(Type), "", ColumnType.String)]
+        [DisplayFormat(DataFormatString = "Text")]
+        public dynamic StringFormat { get; set; }
 
         /// <summary>
         /// The function to use as a custom converter.
@@ -134,6 +144,15 @@ namespace Pori.Frends.Data
 
                 case ColumnType.DateTime:
                     converter = x => DateTime.ParseExact(x as string, conv.DateTimeFormat, null);
+                    break;
+
+                case ColumnType.String:
+                    var fmt = conv.StringFormat;
+
+                    if(fmt == null || (fmt is string && String.IsNullOrEmpty(fmt)))
+                        converter = x => x.ToString();
+                    else
+                        converter = x => x.ToString(conv.StringFormat);
                     break;
 
                 default:

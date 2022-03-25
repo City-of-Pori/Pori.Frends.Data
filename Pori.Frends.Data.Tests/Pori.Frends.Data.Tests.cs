@@ -133,9 +133,12 @@ namespace Pori.Frends.Data.Tests
 
             var input = new LoadParameters
             {
-                Format      = LoadFormat.JSON,
-                JsonColumns = new [] { "A", "B" },
-                JsonData    = data
+                Format = LoadFormat.JSON,
+                Json   = new LoadJsonParameters
+                {
+                    Columns = new [] { "A", "B" },
+                    Data    = data
+                }
             };
 
             Table table = LoadTask.Load(input, new CancellationToken());
@@ -465,7 +468,10 @@ namespace Pori.Frends.Data.Tests
             var input = new LoadParameters
             {
                 Format = LoadFormat.CSV,
-                CsvData = CsvData
+                Csv    = new LoadCsvParameters
+                {
+                    Data = CsvData
+                }
             };
 
 
@@ -498,9 +504,12 @@ namespace Pori.Frends.Data.Tests
 
             var input = new LoadParameters
             {
-                Format      = LoadFormat.JSON,
-                JsonColumns = new [] { "A", "B" },
-                JsonData    = data
+                Format = LoadFormat.JSON,
+                Json   = new LoadJsonParameters
+                {
+                    Columns = new [] { "A", "B" },
+                    Data    = data
+                }
             };
 
             Table result = LoadTask.Load(input, new CancellationToken());

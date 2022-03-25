@@ -38,28 +38,43 @@ namespace Pori.Frends.Data
         [DefaultValue(LoadFormat.CSV)]
         public LoadFormat Format { get; set; }
 
+        [DisplayName("CSV")]
+        [UIHint(nameof(Format), "", LoadFormat.CSV)]
+        public LoadCsvParameters Csv { get; set; }
+
+        [DisplayName("JSON")]
+        [UIHint(nameof(Format), "", LoadFormat.JSON)]
+        public LoadJsonParameters Json { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for loading CSV data using the Load task.
+    /// </summary>
+    public class LoadCsvParameters
+    {
         /// <summary>
         /// CSV data to be loaded into a table. Must be in the format returned by Frends.Csv.Parse.
         /// </summary>
-        [DisplayName("CSV Data")]
         [DisplayFormat(DataFormatString = "Expression")]
-        [UIHint(nameof(Format), "", LoadFormat.CSV)]
-        public dynamic CsvData { get; set; }
+        public dynamic Data { get; set; }
+    }
+
+    /// <summary>
+    /// Parameters for loading JSON data using the Load task.
+    /// </summary>
+    public class LoadJsonParameters
+    {
+        /// <summary>
+        /// The JSON data to load into a table. Must be a JArray of JObjects.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
+        public dynamic Data { get; set; }
 
         /// <summary>
         /// The names of properties to include as columns in the resulting
         /// table.
         /// </summary>
-        [DisplayName("Columns")]
-        public string[] JsonColumns { get; set; }
-
-        /// <summary>
-        /// The JSON data to load into a table. Must be a JArray of JObjects.
-        /// </summary>
-        [DisplayName("JSON Data") ]
-        [DisplayFormat(DataFormatString = "Expression")]
-        [UIHint(nameof(Format), "", LoadFormat.JSON)]
-        public dynamic JsonData { get; set; }
+        public string[] Columns { get; set; }
     }
     
 
@@ -81,17 +96,17 @@ namespace Pori.Frends.Data
             {
                 case LoadFormat.CSV:
                     // Extract the headers and data from the input
-                    var headers = input.CsvData.Headers as List<string>;
-                    var data    = input.CsvData.Data as List<List<object>>;
+                    var headers = input.Csv.Data.Headers as List<string>;
+                    var data    = input.Csv.Data.Data as List<List<object>>;
 
                     // Create a table using the data
                     return Table.From(headers, data);
 
 
                 case LoadFormat.JSON:
-                    var rows = (input.JsonData as JArray).Cast<JObject>();
+                    var rows = (input.Json.Data as JArray).Cast<JObject>();
 
-                    return Table.From(input.JsonColumns, rows);
+                    return Table.From(input.Json.Columns, rows);
 
 
                 default:

@@ -36,7 +36,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The table whose columns are to be reordered.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 
@@ -54,10 +53,9 @@ namespace Pori.Frends.Data
         /// Whether to preserve the original order of the columns or use
         /// the order the columns to keep are specified in.
         /// </summary>
-        [DisplayName("Preserve Column Order?")]
         [UIHint(nameof(Action), "", SelectColumnsAction.Keep)]
         [DefaultValue(false)]
-        public bool PreserveOrder { get; set; }
+        public bool PreserveColumnOrder { get; set; }
     }
 
 
@@ -79,7 +77,7 @@ namespace Pori.Frends.Data
                 // Keep the specified columns in the result
                 case SelectColumnsAction.Keep:
                     // Preserve the order of the columns from the input table
-                    if(input.PreserveOrder)
+                    if(input.PreserveColumnOrder)
                         columns = input.Data.Columns.Where(c => input.Columns.Contains(c));
                     // Use the specified order of the columns
                     else

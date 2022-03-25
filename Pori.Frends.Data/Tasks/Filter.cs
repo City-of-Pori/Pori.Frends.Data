@@ -16,27 +16,23 @@ namespace Pori.Frends.Data
     /// <summary>
     /// Parameters for filtering rows from a Pori.Frends.Data.Table
     /// </summary>
-    [DisplayName("Input")]
     public class FilterParameters
     {
         /// <summary>
         /// The table to filter.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 
         /// <summary>
         /// Whether to filter rows based on the entire row or a single column.
         /// </summary>
-        [DisplayName("Filter Type")]
         [DefaultValue(ProcessingType.Row)]
         public ProcessingType FilterType { get; set; }
 
         /// <summary>
         /// Column to use as the input for the filter function
         /// </summary>
-        [DisplayName("Filter Column")]
         [DisplayFormat(DataFormatString = "Text")]
         [UIHint(nameof(FilterType), "", ProcessingType.Column)]
         public string FilterColumn { get; set; }
@@ -45,7 +41,6 @@ namespace Pori.Frends.Data
         /// Filter function to select the rows to include in the result. 
         /// Only rows for which the function returns 'true' are included in the result.
         /// </summary>
-        [DisplayName("Filter")]
         [DisplayFormat(DataFormatString = "Expression")]
         public FilterFunc Filter { get; set; }
     }

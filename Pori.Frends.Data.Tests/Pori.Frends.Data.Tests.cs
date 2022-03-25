@@ -2089,7 +2089,7 @@ namespace Pori.Frends.Data.Tests
             {
                 Data                = original,
                 Renamings           = renamings,
-                PreserveOrder       = true,
+                PreserveColumnOrder = true,
                 DiscardOtherColumns = false
             };
 
@@ -2108,7 +2108,7 @@ namespace Pori.Frends.Data.Tests
             {
                 Data                = original,
                 Renamings           = renamings,
-                PreserveOrder       = true,
+                PreserveColumnOrder = true,
                 DiscardOtherColumns = false
             };
 
@@ -2128,7 +2128,7 @@ namespace Pori.Frends.Data.Tests
             {
                 Data                = original,
                 Renamings           = renamings,
-                PreserveOrder       = false,
+                PreserveColumnOrder = false,
                 DiscardOtherColumns = false
             };
 
@@ -2148,7 +2148,7 @@ namespace Pori.Frends.Data.Tests
             {
                 Data                = original,
                 Renamings           = renamings,
-                PreserveOrder       = true,
+                PreserveColumnOrder = true,
                 DiscardOtherColumns = true // <---
             };
 
@@ -2168,7 +2168,7 @@ namespace Pori.Frends.Data.Tests
             {
                 Data                = original,
                 Renamings           = renamings,
-                PreserveOrder       = false, // <---
+                PreserveColumnOrder = false, // <---
                 DiscardOtherColumns = true   // <---
             };
 
@@ -2195,7 +2195,7 @@ namespace Pori.Frends.Data.Tests
                 Data                = original,
                 Format              = RenameFormat.JSON,
                 JsonRenamings       = jsonRenamings.ToString(),
-                PreserveOrder       = true,
+                PreserveColumnOrder = true,
                 DiscardOtherColumns = false
             };
 
@@ -2365,10 +2365,10 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Keep,
-                Columns       = new string[] { "A", "B" },
-                PreserveOrder = false
+                Data                = original,
+                Action              = SelectColumnsAction.Keep,
+                Columns             = new string[] { "A", "B" },
+                PreserveColumnOrder = false
             };
 
             Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
@@ -2386,10 +2386,10 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Keep,
-                Columns       = selectedColumns,
-                PreserveOrder = false
+                Data                = original,
+                Action              = SelectColumnsAction.Keep,
+                Columns             = selectedColumns,
+                PreserveColumnOrder = false
             };
 
             Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
@@ -2406,10 +2406,10 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Keep,
-                Columns       = selectedColumns,
-                PreserveOrder = true
+                Data                = original,
+                Action              = SelectColumnsAction.Keep,
+                Columns             = selectedColumns,
+                PreserveColumnOrder = true
             };
 
             Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
@@ -2426,9 +2426,9 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Discard,
-                Columns       = selectedColumns
+                Data    = original,
+                Action  = SelectColumnsAction.Discard,
+                Columns = selectedColumns
             };
 
             Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
@@ -2445,10 +2445,10 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Keep,
-                Columns       = selectedColumns,
-                PreserveOrder = false
+                Data                = original,
+                Action              = SelectColumnsAction.Keep,
+                Columns             = selectedColumns,
+                PreserveColumnOrder = false
             };
 
             Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
@@ -2468,10 +2468,10 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Keep,
-                Columns       = new string[] { "B", "A", "B" },
-                PreserveOrder = false
+                Data                = original,
+                Action              = SelectColumnsAction.Keep,
+                Columns             = new string[] { "B", "A", "B" },
+                PreserveColumnOrder = false
             };
 
             Action executeTask = () => SelectColumnsTask.SelectColumns(input, new CancellationToken());
@@ -2485,10 +2485,10 @@ namespace Pori.Frends.Data.Tests
 
             SelectColumnsParameters input = new SelectColumnsParameters
             {
-                Data          = original,
-                Action        = SelectColumnsAction.Keep,
-                Columns       = new string[] { "A", "B", "X" },
-                PreserveOrder = false
+                Data                = original,
+                Action              = SelectColumnsAction.Keep,
+                Columns             = new string[] { "A", "B", "X" },
+                PreserveColumnOrder = false
             };
 
             Action executeTask = () => SelectColumnsTask.SelectColumns(input, new CancellationToken());

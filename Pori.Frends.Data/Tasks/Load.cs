@@ -29,7 +29,6 @@ namespace Pori.Frends.Data
     /// <summary>
     /// Parameters for loading data into a Pori.Frends.Data.Table.
     /// </summary>
-    [DisplayName("Input")]
     public class LoadParameters
     {
         /// <summary>
@@ -38,11 +37,9 @@ namespace Pori.Frends.Data
         [DefaultValue(LoadFormat.CSV)]
         public LoadFormat Format { get; set; }
 
-        [DisplayName("CSV")]
         [UIHint(nameof(Format), "", LoadFormat.CSV)]
         public LoadCsvParameters Csv { get; set; }
 
-        [DisplayName("JSON")]
         [UIHint(nameof(Format), "", LoadFormat.JSON)]
         public LoadJsonParameters Json { get; set; }
     }

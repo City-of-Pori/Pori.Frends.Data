@@ -54,7 +54,6 @@ namespace Pori.Frends.Data
         /// See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings 
         /// for possible format specifiers.
         /// </summary>
-        [DisplayName("Format")]
         [UIHint(nameof(Type), "", ColumnType.DateTime)]
         [DisplayFormat(DataFormatString = "Text")]
         [DefaultValue("yyyy-MM-ddThh:mm:ss.fffZ")]
@@ -63,7 +62,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Format to use when converting the column value to string.
         /// </summary>
-        [DisplayName("Format")]
         [UIHint(nameof(Type), "", ColumnType.String)]
         [DisplayFormat(DataFormatString = "Text")]
         public dynamic StringFormat { get; set; }
@@ -84,7 +82,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The table to use as the source.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 

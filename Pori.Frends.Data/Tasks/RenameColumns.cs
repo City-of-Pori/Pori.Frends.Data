@@ -27,7 +27,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The new name for the column.
         /// </summary>
-        [DisplayName("New Column Name")]
         [DisplayFormat(DataFormatString = "Text")]
         public string NewName { get; set; }
     }
@@ -57,7 +56,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The table whose columns are to be renamed.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 
@@ -70,7 +68,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The columns to rename.
         /// </summary>
-        [DisplayName("Column Names")]
         [UIHint(nameof(Format), "", RenameFormat.Manual)]
         public ColumnRename[] Renamings { get; set; }
 
@@ -79,7 +76,6 @@ namespace Pori.Frends.Data
         /// names are used as the current column name and the property
         /// values as the new column name.
         /// </summary>
-        [DisplayName("Renamings")]
         [UIHint(nameof(Format), "", RenameFormat.JSON)]
         [DisplayFormat(DataFormatString = "Json")]
         public string JsonRenamings { get; set; }
@@ -87,15 +83,13 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Whether to preserve the original order of the columns.
         /// </summary>
-        [DisplayName("Preserve Column Order?")]
         [DefaultValue(true)]
-        public bool PreserveOrder { get; set; }
+        public bool PreserveColumnOrder { get; set; }
 
         /// <summary>
         /// Whether to discard columns that are not specified in the column 
         /// name mapping.
         /// </summary>
-        [DisplayName("Discard Other Columns?")]
         [DefaultValue(false)]
         public bool DiscardOtherColumns { get; set; }
     }
@@ -148,7 +142,7 @@ namespace Pori.Frends.Data
 
             // If we don't want to preserve the original order of the columns
             // to be renamed, reorder the list of columns.
-            if(!input.PreserveOrder)
+            if(!input.PreserveColumnOrder)
                 columnsBeforeRename = columnsBeforeRename.Reorder(columnsToRename);
 
             // If we only wish to include the renamed columns in the result,

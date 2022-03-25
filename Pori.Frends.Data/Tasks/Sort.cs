@@ -37,7 +37,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The table to use as the source.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 

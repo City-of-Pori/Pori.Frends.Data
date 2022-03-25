@@ -19,7 +19,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The table whose columns are to be reordered.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 
@@ -30,15 +29,13 @@ namespace Pori.Frends.Data
         /// in which case unspecified columns are not included in the 
         /// resulting table).
         /// </summary>
-        [DisplayName("New Column Order")]
         public string[] ColumnOrder { get; set; }
 
         /// <summary>
         /// Whether to discard columns that are not specified in the column 
         /// order from the resulting table.
         /// </summary>
-        [DisplayName("Discard Other Columns?")]
-        [DefaultValue(true)]
+        [DefaultValue(false)]
         public bool DiscardOtherColumns { get; set; }
     }
     

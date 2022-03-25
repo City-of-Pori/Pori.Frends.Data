@@ -66,7 +66,6 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The table to use as a source for the join operation.
         /// </summary>
-        [DisplayName("Table")]
         [DisplayFormat(DataFormatString = "Expression")]
         public Table Data { get; set; }
 

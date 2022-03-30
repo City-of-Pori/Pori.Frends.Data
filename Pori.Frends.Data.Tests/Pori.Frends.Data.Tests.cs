@@ -1782,7 +1782,7 @@ namespace Pori.Frends.Data.Tests
 
             Table result = JoinTask.Join(input, new CancellationToken());
 
-            var resultMatchedRows = result.Rows.Where(row => row.right.X != null);
+            var resultMatchedRows = result.Rows.Where(row => row.right != null);
 
             Assert.That(resultMatchedRows.Select(row => row.right), Is.EquivalentTo(rightMatched.Rows));
         }
@@ -1907,6 +1907,70 @@ namespace Pori.Frends.Data.Tests
                     var keys = row.Select(x => x.Key);
 
                     Assert.That(keys, Is.EqualTo(testCase.ExpectedColumns));
+                }
+            }
+        }
+
+        [Test]
+        public void RightRowColumnsCanBeExpandedWithLeftOuterJoin()
+        {
+            Table leftTable = Table.From(left.columns, left.unmatched);
+
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            var testCases = new [] {
+                new
+                {
+                    ResultType      = JoinResult.AllColumns,
+                    ResultColumns   = new string[] {},
+                    ExpectedColumns = new [] { "left", "X", "Y", "V4", "V5" }
+                },
+                new
+                {
+                    ResultType      = JoinResult.DiscardKey,
+                    ResultColumns   = new string[] {},
+                    ExpectedColumns = new [] { "left", "V4", "V5" }
+                },
+                new
+                {
+                    ResultType      = JoinResult.SelectColumns,
+                    ResultColumns   = new [] { "X", "Y", "V5" },
+                    ExpectedColumns = new [] { "left", "X", "Y", "V5" }
+                },
+            };
+
+            foreach(var testCase in testCases)
+            {
+                JoinParameters input = new JoinParameters
+                {
+                    JoinType = JoinType.LeftOuter,
+                    Left = new JoinTable
+                    {
+                        Data          = leftTable,
+                        KeyColumns    = left.key,
+                        ResultType    = JoinResult.Row,
+                        ResultColumn  = "left"
+                    },
+                    Right = new JoinTable
+                    {
+                        Data          = rightTable,
+                        KeyColumns    = right.key,
+                        ResultType    = testCase.ResultType,
+                        ResultColumns = testCase.ResultColumns
+                    }
+                };
+
+                Table result = JoinTask.Join(input, new CancellationToken());
+
+                Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
+                // Check that each row has the columns in the new column order
+                foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
+                {
+                    var keys = row.Select(x => x.Key);
+                    var nonNullKeys = row.Where(x => x.Value != null).Select(x => x.Key);
+
+                    Assert.That(keys, Is.EqualTo(testCase.ExpectedColumns));
+                    Assert.That(nonNullKeys, Is.EqualTo(new[] { "left" }));
                 }
             }
         }

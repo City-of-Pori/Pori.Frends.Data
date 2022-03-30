@@ -384,7 +384,7 @@ namespace Pori.Frends.Data
             dynamic DoExpandColumn(RowDict row)
             {
                 // Get the value of the column
-                RowDict valueToExpand = row[column];
+                RowDict valueToExpand = row[column] ?? Table.NullRow(nestedColumns);
 
                 // Remove the expanded column from the row
                 row.Remove(column);
@@ -507,7 +507,7 @@ namespace Pori.Frends.Data
             IEnumerable<dynamic> SelectResult(dynamic leftRow, IEnumerable<dynamic> rightRows)
             {
                 return rightRows
-                        .DefaultIfEmpty(Table.NullRow(right.Columns) as RowDict)
+                        .DefaultIfEmpty(null)
                         .Select(rightRow => Table.Row(resultColumns, (new[] { leftRow, rightRow })));
             }
 

@@ -92,6 +92,14 @@ namespace Pori.Frends.Data
         /// </summary>
         [DefaultValue(false)]
         public bool DiscardOtherColumns { get; set; }
+
+        /// <summary>
+        /// Whether to ignore any invalid column names specified to be
+        /// renamed. If set to true, renamings referencing invalid column
+        /// names will not affect the result table in any way.
+        /// </summary>
+        [DefaultValue(false)]
+        public bool IgnoreInvalidColumnNames { get; set; }
     }
 
 
@@ -125,6 +133,10 @@ namespace Pori.Frends.Data
                 newNameOf       = input.Renamings.ToDictionary(r => r.Column, r => r.NewName);
                 columnsToRename = input.Renamings.Select(r => r.Column);
             }
+
+            // Remove invalid column names from the list if we wish to ignore them
+            if(input.IgnoreInvalidColumnNames)
+                columnsToRename = columnsToRename.Where(c => input.Data.Columns.Contains(c));
 
             // Check that a column isn't specified more than once
             if(columnsToRename.Distinct().Count() != columnsToRename.Count())

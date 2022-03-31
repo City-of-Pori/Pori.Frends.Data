@@ -2345,6 +2345,15 @@ namespace Pori.Frends.Data.Tests
             new ColumnRename { Column = "A", NewName = "X" },
         };
 
+        private static readonly ColumnRename[] partlyInvalidRenamings =
+        {
+            new ColumnRename { Column = "F", NewName = "W" },
+            new ColumnRename { Column = "D", NewName = "Z" },
+            new ColumnRename { Column = "C", NewName = "Y" },
+            new ColumnRename { Column = "A", NewName = "X" },
+            new ColumnRename { Column = "INVALID", NewName = "?" }
+        };
+
 
         [Test]
         public void RenameColumnsReturnsANewTable()
@@ -2372,10 +2381,11 @@ namespace Pori.Frends.Data.Tests
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
-                Data                = original,
-                Renamings           = renamings,
-                PreserveColumnOrder = true,
-                DiscardOtherColumns = false
+                Data                     = original,
+                Renamings                = renamings,
+                PreserveColumnOrder      = true,
+                DiscardOtherColumns      = false,
+                IgnoreInvalidColumnNames = false
             };
 
             Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
@@ -2392,10 +2402,11 @@ namespace Pori.Frends.Data.Tests
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
-                Data                = original,
-                Renamings           = renamings,
-                PreserveColumnOrder = false,
-                DiscardOtherColumns = false
+                Data                     = original,
+                Renamings                = renamings,
+                PreserveColumnOrder      = false,
+                DiscardOtherColumns      = false,
+                IgnoreInvalidColumnNames = false
             };
 
             Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
@@ -2412,10 +2423,11 @@ namespace Pori.Frends.Data.Tests
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
-                Data                = original,
-                Renamings           = renamings,
-                PreserveColumnOrder = true,
-                DiscardOtherColumns = true // <---
+                Data                     = original,
+                Renamings                = renamings,
+                PreserveColumnOrder      = true,
+                DiscardOtherColumns      = true, // <---
+                IgnoreInvalidColumnNames = false
             };
 
             Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
@@ -2432,10 +2444,11 @@ namespace Pori.Frends.Data.Tests
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
-                Data                = original,
-                Renamings           = renamings,
-                PreserveColumnOrder = false, // <---
-                DiscardOtherColumns = true   // <---
+                Data                     = original,
+                Renamings                = renamings,
+                PreserveColumnOrder      = false, // <---
+                DiscardOtherColumns      = true,  // <---
+                IgnoreInvalidColumnNames = false
             };
 
             Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
@@ -2458,11 +2471,52 @@ namespace Pori.Frends.Data.Tests
 
             RenameColumnsParameters input = new RenameColumnsParameters
             {
-                Data                = original,
-                Format              = RenameFormat.JSON,
-                JsonRenamings       = jsonRenamings.ToString(),
-                PreserveColumnOrder = true,
-                DiscardOtherColumns = false
+                Data                     = original,
+                Format                   = RenameFormat.JSON,
+                JsonRenamings            = jsonRenamings.ToString(),
+                PreserveColumnOrder      = true,
+                DiscardOtherColumns      = false,
+                IgnoreInvalidColumnNames = false
+            };
+
+            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+
+            string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
+
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+        }
+
+        [Test]
+        public void ByDefaultRenameColumnsThrowsWhenEncounteringAnInvalidColumnName()
+        {
+            Table original = TestData.Typed;
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                     = original,
+                Renamings                = partlyInvalidRenamings,
+                PreserveColumnOrder      = true,
+                DiscardOtherColumns      = false,
+                IgnoreInvalidColumnNames = false
+            };
+
+            Action executeTask = () => RenameColumnsTask.RenameColumns(input, new CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void RenameColumnsCanIgnoreInvalidColumnNames()
+        {
+            Table original = TestData.Typed;
+
+            RenameColumnsParameters input = new RenameColumnsParameters
+            {
+                Data                     = original,
+                Renamings                = partlyInvalidRenamings,
+                PreserveColumnOrder      = true,
+                DiscardOtherColumns      = false,
+                IgnoreInvalidColumnNames = true   // <--
             };
 
             Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());

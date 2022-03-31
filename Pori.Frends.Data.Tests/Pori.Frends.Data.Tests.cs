@@ -1478,6 +1478,11 @@ namespace Pori.Frends.Data.Tests
                 new List<object> {    "Delta",   "Bravo",  true, 31,    "Violet" },
                 new List<object> { "November",  "Victor",  true,  3,    "Maroon" },
             },
+            duplicateMatches = new []
+            {
+                new List<object> {    "India",   "Delta", true, 0,     "Brown" },
+                new List<object> {     "Mike",   "Delta", true, 123,   "Olive" },
+            },
             unmatched = new []
             {
                 new List<object> {    "Kilo", "Oscar",  true,  7, "Mauv" },
@@ -1550,12 +1555,101 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void JoinsWork()
+        {
+            Table leftMatched    = Table.From(left.columns, left.matched);
+            Table leftUnmatched  = Table.From(left.columns, left.unmatched);
+            Table leftDuplicates = Table.From(left.columns, left.duplicateMatches);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched, leftDuplicates })
+                                .CreateTable();
+
+            Table rightMatched   = Table.From(right.columns, right.matched);
+            Table rightUnmatched = Table.From(right.columns, right.unmatched);
+            Table rightDuplicates = Table.From(right.columns, right.duplicateMatches);
+
+            Table rightTable = TableBuilder
+                                .From(rightMatched)
+                                .Concatenate(new []{ rightUnmatched, rightDuplicates })
+                                .CreateTable();
+
+            var testCases = new []
+            {
+                new
+                {
+                    JoinType          = JoinType.Inner,
+                    ExpectedLeftRows  = leftMatched.Rows.Concat(leftDuplicates.Rows),
+                    ExpectedRightRows = rightMatched.Rows.Concat(rightDuplicates.Rows)
+                },
+                new
+                {
+                    JoinType          = JoinType.LeftOuter,
+                    ExpectedLeftRows  = leftTable.Rows,
+                    ExpectedRightRows = rightMatched.Rows.Concat(rightDuplicates.Rows)
+                },
+                new
+                {
+                    JoinType          = JoinType.FullOuter,
+                    ExpectedLeftRows  = leftTable.Rows,
+                    ExpectedRightRows = rightTable.Rows
+                }
+            };
+
+            foreach(var testCase in testCases)
+            {
+                JoinParameters input = new JoinParameters
+                {
+                    JoinType = testCase.JoinType,
+                    Left = new JoinTable
+                    {
+                        Data         = leftTable,
+                        KeyColumns   = left.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "left"
+                    },
+                    Right = new JoinTable
+                    {
+                        Data         = rightTable,
+                        KeyColumns   = right.key,
+                        ResultType   = JoinResult.Row,
+                        ResultColumn = "right"
+                    }
+                };
+
+                Table result = JoinTask.Join(input, new CancellationToken());
+
+                foreach(var row in result.Rows)
+                {
+                    Assert.That(row.left != null || row.right != null);
+
+                    if(row.left != null && row.right != null)
+                        Assert.That(row.left.A == row.right.X && row.left.B == row.right.Y);
+                }
+
+                var leftJoinedRows = result.Rows
+                                        .Where(row => row.left != null)
+                                        .Select(row => row.left)
+                                        .Distinct();
+
+                var rightJoinedRows = result.Rows
+                                        .Where(row => row.right != null)
+                                        .Select(row => row.right)
+                                        .Distinct();
+
+                Assert.That(leftJoinedRows, Is.EquivalentTo(testCase.ExpectedLeftRows));
+                Assert.That(rightJoinedRows, Is.EquivalentTo(testCase.ExpectedRightRows));
+            }
+        }
+
+        [Test]
         public void JoinWorksWhenAllLeftRowsHaveASingleMatch()
         {
             Table leftTable = Table.From(left.columns, left.matched);
             Table rightTable = Table.From(right.columns, right.matched);
 
-            JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter };
+            JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter, JoinType.FullOuter };
 
             foreach(var joinType in joins)
             {
@@ -1605,7 +1699,7 @@ namespace Pori.Frends.Data.Tests
             Table leftTable = Table.From(left.columns, left.matched);
             Table rightTable = Table.From(right.columns, rightRows);
 
-            JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter };
+            JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter, JoinType.FullOuter };
 
             foreach(var joinType in joins)
             {
@@ -1654,14 +1748,122 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
-        public void InnerJoinDoesNotProduceLeftRowsThatHaveNoMatch()
+        public void FullOuterJoinProducesAllRowsFromBothTables()
         {
-            Table leftMatched    = Table.From(left.columns, left.matched);
-            Table rightUnmatched = Table.From(left.columns, left.unmatched);
+            Table leftMatched   = Table.From(left.columns, left.matched);
+            Table leftUnmatched = Table.From(left.columns, left.unmatched);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched })
+                                .CreateTable();
+
+            Table rightMatched   = Table.From(right.columns, right.matched);
+            Table rightUnmatched = Table.From(right.columns, right.unmatched);
+
+            Table rightTable = TableBuilder
+                                .From(rightMatched)
                                 .Concatenate(new []{ rightUnmatched })
+                                .CreateTable();
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.FullOuter,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table result = JoinTask.Join(input, new CancellationToken());
+
+            var leftJoinedRows = result.Rows
+                                    .Where(row => row.left != null)
+                                    .Select(row => row.left);
+
+            var rightJoinedRows = result.Rows
+                                    .Where(row => row.right != null)
+                                    .Select(row => row.right);
+
+            Assert.That(leftJoinedRows, Is.EquivalentTo(leftTable.Rows));
+            Assert.That(rightJoinedRows, Is.EquivalentTo(rightTable.Rows));
+        }
+
+        [Test]
+        public void FullOuterJoinProducesAllRowsFromBothTablesWhenThereAreDuplicateMatches()
+        {
+            Table leftMatched    = Table.From(left.columns, left.matched);
+            Table leftUnmatched  = Table.From(left.columns, left.unmatched);
+            Table leftDuplicates = Table.From(left.columns, left.duplicateMatches);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched, leftDuplicates })
+                                .CreateTable();
+
+            Table rightMatched   = Table.From(right.columns, right.matched);
+            Table rightUnmatched = Table.From(right.columns, right.unmatched);
+            Table rightDuplicates = Table.From(right.columns, right.duplicateMatches);
+
+            Table rightTable = TableBuilder
+                                .From(rightMatched)
+                                .Concatenate(new []{ rightUnmatched, rightDuplicates })
+                                .CreateTable();
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.FullOuter,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table result = JoinTask.Join(input, new CancellationToken());
+
+            var leftJoinedRows = result.Rows
+                                    .Where(row => row.left != null)
+                                    .Select(row => row.left)
+                                    .Distinct();
+
+            var rightJoinedRows = result.Rows
+                                    .Where(row => row.right != null)
+                                    .Select(row => row.right)
+                                    .Distinct();
+
+            Assert.That(leftJoinedRows, Is.EquivalentTo(leftTable.Rows));
+            Assert.That(rightJoinedRows, Is.EquivalentTo(rightTable.Rows));
+        }
+
+        [Test]
+        public void InnerJoinDoesNotProduceLeftRowsThatHaveNoMatch()
+        {
+            Table leftMatched   = Table.From(left.columns, left.matched);
+            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched })
                                 .CreateTable();
 
             Table rightTable = Table.From(right.columns, right.matched);

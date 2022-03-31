@@ -55,7 +55,12 @@ namespace Pori.Frends.Data
         /// Perform a left outer join (all rows from the left side table and
         /// only matching rows from the right side table).
         /// </summary>
-        LeftOuter
+        LeftOuter,
+
+        /// <summary>
+        /// Perform a full outer join (all rows from both tables).
+        /// </summary>
+        FullOuter
     }
 
     /// <summary>
@@ -153,13 +158,24 @@ namespace Pori.Frends.Data
             // Start building the result table
             var result = TableBuilder.From(left.Data);
 
-            // Based on the parameters, perform either an inner or a left outer join
-            if(input.JoinType == JoinType.Inner)
-                result.InnerJoin(left.KeyColumns, leftJoinColumn,
-                                 right.Data, right.KeyColumns, rightJoinColumn);
-            else if(input.JoinType == JoinType.LeftOuter)
-                result.LeftOuterJoin(left.KeyColumns, leftJoinColumn,
+            // Perform the actual join
+            switch(input.JoinType)
+            {
+                case JoinType.Inner:
+                    result.InnerJoin(left.KeyColumns, leftJoinColumn,
                                      right.Data, right.KeyColumns, rightJoinColumn);
+                    break;
+
+                case JoinType.LeftOuter:
+                    result.LeftOuterJoin(left.KeyColumns, leftJoinColumn,
+                                         right.Data, right.KeyColumns, rightJoinColumn);
+                    break;
+
+                case JoinType.FullOuter:
+                    result.FullOuterJoin(left.KeyColumns, leftJoinColumn,
+                                         right.Data, right.KeyColumns, rightJoinColumn);
+                    break;
+            }
 
             // If the result type is other than JoinResult.Row,
             // expand the join columns

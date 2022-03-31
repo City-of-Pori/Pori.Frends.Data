@@ -118,6 +118,27 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Perform a full outer join on the source table and another table.
+        /// </summary>
+        /// <param name="leftKeyColumns">The columns to use as the key for the source (left side) table.</param>
+        /// <param name="leftResultColumn">The column name to use in the result table for the rows of the left table.</param>
+        /// <param name="right">The right side table to join to the source (left side) table.</param>
+        /// <param name="rightKeyColumns">The columns to as the key for the right side table.</param>
+        /// <param name="rightResultColumn">The column name to use in the result table for the rows of the right side table.</param>
+        /// <returns>The table builder itself (for method chaining).</returns>
+        public TableBuilder FullOuterJoin(IEnumerable<string> leftKeyColumns, string leftResultColumn,
+                                          Table right, IEnumerable<string> rightKeyColumns, string rightResultColumn)
+        {
+            // The columns of the result table
+            columns = (new[] { leftResultColumn, rightResultColumn }).ToList();
+
+            // Perform the inner join on the rows.
+            rows.FullOuterJoin(leftKeyColumns, right, rightKeyColumns, columns);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
         /// Group rows based on the value of a given column.
         /// </summary>
         /// <param name="keyColumns"></param>
@@ -429,6 +450,49 @@ namespace Pori.Frends.Data
         public void Filter(Func<dynamic, bool> filter)
         {
             rows = rows.Where(filter);
+        }
+
+        /// <summary>
+        /// Perform a full outer join on the current rows with the rows of a table.
+        /// </summary>
+        /// <param name="leftKeyColumns">The columns to use as the key of for each row.</param>
+        /// <param name="right">The table whose rows are joined to the current rows.</param>
+        /// <param name="rightKeyColumns">The columns to use as the key for the other table.</param>
+        /// <param name="resultColumns">The names of the columns for the result rows.</param>
+        public void FullOuterJoin(IEnumerable<string> leftKeyColumns,
+                                  Table right, IEnumerable<string> rightKeyColumns, List<string> resultColumns)
+        {
+            var eq = new RowEquality();
+
+            // Convert rows from both sides to a lookup
+            var leftLookup  = rows.ToLookup(ExtractKey(leftKeyColumns), eq);
+            var rightLookup = right.Rows.ToLookup(ExtractKey(rightKeyColumns), eq);
+
+            // Get all the keys
+            var leftKeys  = leftLookup.Select(group => group.Key);
+            var rightKeys = rightLookup
+                                .Where(group => !leftLookup.Contains(group.Key))
+                                .Select(group => group.Key);
+
+            var keys = leftKeys.Concat(rightKeys);
+
+            // Function for calculating all the result rows for a given key
+            IEnumerable<dynamic> RowsForKey(List<dynamic> key)
+            {
+                return leftLookup[key]
+                        .DefaultIfEmpty(null)
+                        .SelectMany(
+                            leftRow => rightLookup[key]
+                                        .DefaultIfEmpty(null)
+                                        .Select(rightRow => Table.Row(resultColumns, (new[] { leftRow, rightRow })))
+                        );
+            }
+
+            // Calculate the rows
+            rows = keys.SelectMany(RowsForKey);
+
+            // Mark that the rows can be modified in-place.
+            copied = true;
         }
 
         /// <summary>

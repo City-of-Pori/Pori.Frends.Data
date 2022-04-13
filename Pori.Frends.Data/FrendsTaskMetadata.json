@@ -22,6 +22,9 @@
 			"TaskMethod": "Pori.Frends.Data.JoinTask.Join"
 		},
 		{
+			"TaskMethod": "Pori.Frends.Data.RemoveDuplicatesTask.RemoveDuplicates"
+		},
+		{
 			"TaskMethod": "Pori.Frends.Data.RenameColumnsTask.RenameColumns"
 		},
 		{

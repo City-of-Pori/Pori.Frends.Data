@@ -2761,6 +2761,68 @@ namespace Pori.Frends.Data.Tests
     }
 
     [TestFixture]
+    class RemoveDuplicatesTaskTests
+    {
+        [Test]
+        public void RemoveDuplicatesReturnsANewTable()
+        {
+            Table original = TestData.Typed;
+
+            RemoveDuplicatesParameters input = new RemoveDuplicatesParameters
+            {
+                Data = original,
+                Key  = RemoveDuplicatesKey.EntireRows
+            };
+
+            Table result = RemoveDuplicatesTask.RemoveDuplicates(input, new CancellationToken());
+
+            Assert.That(result is Table);
+            Assert.That(result, Is.Not.SameAs(original));
+        }
+
+        [Test]
+        public void RemoveDuplicatesWorksWithSingleColumnKey()
+        {
+            Table original = TestData.Typed;
+
+            RemoveDuplicatesParameters input = new RemoveDuplicatesParameters
+            {
+                Data       = original,
+                Key        = RemoveDuplicatesKey.SelectedColumns,
+                KeyColumns = new [] { "E" }
+            };
+
+            Table result = RemoveDuplicatesTask.RemoveDuplicates(input, new CancellationToken());
+
+            Assert.That(result.Count > 0);
+            Assert.That(result.Rows.Select(row => row.E), Is.Unique);
+            Assert.That(result.Rows.Select(row => row.E), Is.EqualTo(original.Rows.Select(row => row.E).Distinct()));
+            Assert.That(result.Rows, Is.SubsetOf(original.Rows));
+        }
+
+        [Test]
+        public void RemoveDuplicatesWorksWithMultiColumnKey()
+        {
+            Table original = TestData.Typed;
+
+            RemoveDuplicatesParameters input = new RemoveDuplicatesParameters
+            {
+                Data       = original,
+                Key        = RemoveDuplicatesKey.SelectedColumns,
+                KeyColumns = new [] { "B", "E" }
+            };
+
+            Table result = RemoveDuplicatesTask.RemoveDuplicates(input, new CancellationToken());
+
+            Assert.That(result.Count > 0);
+            Assert.That(result.Rows.Select(row => (row.B, row.E)), Is.Unique);
+            Assert.That(result.Rows.Select(row => (row.B, row.E)), Is.EqualTo(original.Rows.Select(row => (row.B, row.E)).Distinct()));
+            Assert.That(result.Rows, Is.SubsetOf(original.Rows));
+        }
+    }
+
+
+    [TestFixture]
     class RenameColumnsTaskTests
     {
         private static readonly ColumnRename[] renamings =
@@ -2779,7 +2841,6 @@ namespace Pori.Frends.Data.Tests
             new ColumnRename { Column = "A", NewName = "X" },
             new ColumnRename { Column = "INVALID", NewName = "?" }
         };
-
 
         [Test]
         public void RenameColumnsReturnsANewTable()

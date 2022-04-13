@@ -231,6 +231,18 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Remove duplicate rows from the result table.
+        /// </summary>
+        /// <param name="keyColumns">The names of the columns to use as the key for matching duplicate rows.</param>
+        /// <returns></returns>
+        public TableBuilder RemoveDuplicates(IEnumerable<string> keyColumns)
+        {
+            rows.RemoveDuplicates(keyColumns);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
         /// Rename columns in the result.
         /// </summary>
         /// <param name="renamings">A mapping of column names to new names.</param>

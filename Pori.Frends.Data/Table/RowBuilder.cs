@@ -353,6 +353,15 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Remove duplicate rows.
+        /// </summary>
+        /// <param name="keyColumns">The names of the columns to use as the key for matching duplicate rows.</param>
+        public void RemoveDuplicates(IEnumerable<string> keyColumns)
+        {
+            rows = rows.GroupBy(ExtractKey(keyColumns), (key, group) => group.First(), new RowEquality());
+        }
+
+        /// <summary>
         /// Rename all columns of the rows
         /// </summary>
         /// <param name="columns">The new column names, in order.</param>
@@ -546,7 +555,7 @@ namespace Pori.Frends.Data
                 // DJB2 hash variant
                 // Algorithm source: http://www.cse.yorku.ca/~oz/hash.html
                 return Xs
-                        .Select(x => x.GetHashCode())
+                        .Select(x => x == null ? 0 : x.GetHashCode())
                         .Aggregate(5381, (hash, xhash) => ((hash << 5) + hash) ^ xhash);
 
             }

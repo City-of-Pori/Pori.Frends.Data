@@ -42,6 +42,10 @@ Group rows of a table based on the values of one or more columns.
 
 Join the rows of two tables on the values of one or more columns.
 
+## RemoveDuplicates
+
+Remove duplicate rows from a table as a new table.
+
 ## RenameColumns
 
 Rename columns of a table into a new table.

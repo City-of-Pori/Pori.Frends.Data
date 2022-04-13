@@ -50,7 +50,7 @@ namespace Pori.Frends.Data
         public string[] KeyColumns { get; set; }
     }
 
-    public class RemoveDuplicatesTask
+    public static class RemoveDuplicatesTask
     {
         /// <summary>
         /// Remove duplicate rows from a table.

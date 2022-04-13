@@ -38,7 +38,7 @@ namespace Pori.Frends.Data
         public string FilterColumn { get; set; }
 
         /// <summary>
-        /// Filter function to select the rows to include in the result. 
+        /// Filter function to select the rows to include in the result.
         /// Only rows for which the function returns 'true' are included in the result.
         /// </summary>
         [DisplayFormat(DataFormatString = "Expression")]
@@ -52,9 +52,10 @@ namespace Pori.Frends.Data
         /// Filter rows from a table.
         /// </summary>
         /// <param name="input"></param>
+        /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>Filtered data as a Pori.Frends.Data.Table</returns>
-        public static Table Filter([PropertyTab] FilterParameters input, CancellationToken cancellationToken)
+        public static Table Filter([PropertyTab] FilterParameters input, [PropertyTab] CommonOptions options, CancellationToken cancellationToken)
         {
             FilterFunc filter;
 
@@ -68,6 +69,7 @@ namespace Pori.Frends.Data
             return TableBuilder
                     .From(input.Data)   // Use the input table as the source
                     .Filter(filter)     // Filter the rows
+                    .OnError(options.ErrorHandling)
                     .CreateTable();     // Create the resulting table
         }
     }

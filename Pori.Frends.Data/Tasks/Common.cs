@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Pori.Frends.Data
 {
     /// <summary>
@@ -30,5 +32,26 @@ namespace Pori.Frends.Data
         /// Sort table rows in descending order.
         /// </summary>
         Descending
+    }
+
+    /// <summary>
+    /// Common options for multiple tasks.
+    /// </summary>
+    [DisplayName("Options")]
+    public class CommonOptions
+    {
+        /// <summary>
+        /// How to handle errors encountered when executing the task.
+        /// </summary>
+        [DefaultValue(Table.ErrorHandling.Fail)]
+        public Table.ErrorHandling ErrorHandling { get; set; }
+
+        /// <summary>
+        /// Default values for the options.
+        /// </summary>
+        public static readonly CommonOptions Defaults = new CommonOptions
+        {
+            ErrorHandling = Table.ErrorHandling.Fail
+        };
     }
 }

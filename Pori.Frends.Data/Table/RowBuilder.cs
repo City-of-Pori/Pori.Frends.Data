@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Pori.Frends.Data.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -24,13 +25,22 @@ namespace Pori.Frends.Data
         /// </summary>
         private bool copied = false;
 
+        private Table.ErrorHandling errorHandling = Table.ErrorHandling.Fail;
+
+        /// <summary>
+        /// List of errors encountered while applying the operations to the
+        /// rows.
+        /// </summary>
+        public List<Table.Error> Errors { get; private set; }
+
         /// <summary>
         /// Create a new row builder starting with the given rows.
         /// </summary>
         /// <param name="source"></param>
         public RowBuilder(IEnumerable<dynamic> source)
         {
-            this.rows = source;
+            rows   = source;
+            Errors = new List<Table.Error>();
         }
 
         /// <summary>
@@ -45,14 +55,7 @@ namespace Pori.Frends.Data
             if(!copied)
                 Copy();
 
-            dynamic StoreColumnValue(dynamic row)
-            {
-                (row as RowDict)[column] = generator(row);
-
-                return row;
-            }
-
-            rows = rows.Select(StoreColumnValue);
+            rows = ApplyColumnTransform(rows, column, generator);
         }
 
         /// <summary>
@@ -137,7 +140,22 @@ namespace Pori.Frends.Data
         /// <param name="filter">The function to use to filter the rows</param>
         public void Filter(Func<dynamic, bool> filter)
         {
-            rows = rows.Where(filter);
+            bool ApplyFilter(dynamic row, int i)
+            {
+                try
+                {
+                    return filter(row);
+                }
+                catch(Exception e)
+                {
+                    HandleError(row, i, e);
+
+                    // Filter out rows which cause an error
+                    return false;
+                }
+            }
+
+            rows = rows.Where(ApplyFilter);
         }
 
         /// <summary>
@@ -274,6 +292,65 @@ namespace Pori.Frends.Data
             copied = true;
         }
 
+        /// <summary>
+        /// Load rows from an enumerable using the provided loader function
+        /// which produces the table rows.
+        /// </summary>
+        /// <typeparam name="TRow">The type of data to load as rows.</typeparam>
+        /// <param name="data">The data to load as rows.</param>
+        /// <param name="loader">The function to convert each item to a table row.</param>
+        public void Load<TRow>(IEnumerable<TRow> data, Func<TRow, dynamic> loader)
+        {
+            bool LoadErrorHandler(int i, Exception e)
+            {
+                var result = HandleError(null, i, e);
+
+                return result != Table.ErrorHandling.Discard;
+            }
+
+            rows = ApplyRowTransform<TRow>(data.Catch(LoadErrorHandler), loader);
+        }
+
+        /// <summary>
+        /// Specify how to handle errors encountered while applying the
+        /// operations.
+        /// </summary>
+        /// <param name="action"></param>
+        public void OnError(Table.ErrorHandling action)
+        {
+            errorHandling = action;
+        }
+
+        /// <summary>
+        /// Process an error encountered while building the result rows.
+        /// </summary>
+        /// <param name="row">The row that was being processed when the error occured.</param>
+        /// <param name="i">THe index of the row in the original table.</param>
+        /// <param name="exception">The exception that caused the error.</param>
+        /// <returns>
+        /// The error handling option applied (can be used by the caller to
+        /// change its operation).
+        /// </returns>
+        private Table.ErrorHandling HandleError(dynamic row, int i, Exception exception)
+        {
+            var error = new Table.Error(row, i, exception);
+
+            Errors.Add(error);
+
+            switch(errorHandling)
+            {
+                default:
+                case Table.ErrorHandling.Fail:
+                    throw error;
+
+                case Table.ErrorHandling.Discard:
+                    return Table.ErrorHandling.Discard;
+
+                case Table.ErrorHandling.Continue:
+                case Table.ErrorHandling.ContinueAndFail:
+                    return Table.ErrorHandling.Continue;
+            }
+        }
 
         /// <summary>
         /// Rename all columns of the rows
@@ -350,7 +427,15 @@ namespace Pori.Frends.Data
         /// <returns>An enumerable that produces the rows as row dictionaries.</returns>
         public IEnumerable<RowDict> ToRows()
         {
-            return rows.Cast<RowDict>();
+            foreach(var row in rows.Cast<RowDict>())
+                yield return row;
+
+            if(Errors.Count > 0
+               && errorHandling != Table.ErrorHandling.Continue
+               && errorHandling != Table.ErrorHandling.Discard)
+            {
+                throw new Table.FailedOperationException(Errors);
+            }
         }
 
         /// <summary>
@@ -365,14 +450,72 @@ namespace Pori.Frends.Data
             if(!copied)
                 Copy();
 
-            dynamic ApplyTransformation(dynamic row)
+            rows = ApplyColumnTransform(rows, column, transform);
+        }
+
+        /// <summary>
+        /// Apply a transformation function to a specific column of each row.
+        /// </summary>
+        /// <param name="theRows"></param>
+        /// <param name="column">The column whose values are to be transformed.</param>
+        /// <param name="transform">
+        /// The transformation function to apply. Receives the entire row as
+        /// its input and should return the new value for the specified column.
+        /// </param>
+        /// <returns>The rows after applying the transformation</returns>
+        private IEnumerable<dynamic> ApplyColumnTransform(IEnumerable<dynamic> theRows, string column, Func<dynamic, dynamic> transform)
+        {
+            var enumerated = theRows.Select((row, i) => (row, i));
+
+            foreach(var (row, index) in enumerated)
             {
-                (row as RowDict)[column] = transform(row);
+                dynamic value = null;
 
-                return row;
-            }
+                try
+                {
+                    value = transform(row);
+                }
+                catch(Exception e)
+                {
+                    // Skip this row if we want to discard erroneus rows from the result
+                    if(HandleError(row, index, e) == Table.ErrorHandling.Discard)
+                        continue;
+                }
 
-            rows = rows.Select(ApplyTransformation);
+                (row as RowDict)[column] = value;
+
+                yield return row;
+            };
+        }
+
+        /// <summary>
+        /// Apply a transformation function to each row.
+        /// </summary>
+        /// <typeparam name="TRow"></typeparam>
+        /// <param name="theRows"></param>
+        /// <param name="transform"></param>
+        /// <returns></returns>
+        private IEnumerable<dynamic> ApplyRowTransform<TRow>(IEnumerable<TRow> theRows, Func<TRow, dynamic> transform)
+        {
+            var enumerated = theRows.Select((row, i) => (row, i));
+
+            foreach(var (row, index) in enumerated)
+            {
+                dynamic resultRow = null;
+
+                try
+                {
+                    resultRow = transform(row);
+                }
+                catch(Exception e)
+                {
+                    // Skip this row if we want to discard erroneus rows from the result
+                    if(HandleError(row, index, e) == Table.ErrorHandling.Discard)
+                        continue;
+                }
+
+                yield return resultRow;
+            };
         }
 
         /// <summary>

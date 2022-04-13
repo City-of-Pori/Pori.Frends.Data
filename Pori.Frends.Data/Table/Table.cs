@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data
@@ -19,12 +18,14 @@ namespace Pori.Frends.Data
         /// </summary>
         /// <param name="columns">The columns of the table, in order.</param>
         /// <param name="rows">The rows for the new table. Rows a presumed to be created using Table.Row()</param>
-        internal Table(IEnumerable<string> columns, IEnumerable<dynamic> rows)
+        /// <param name="errors">An enuemrable that will contain any errors encountered while creating the table rows.</param>
+        internal Table(IEnumerable<string> columns, IEnumerable<dynamic> rows, IEnumerable<Error> errors)
         {
             // Convert the columns and rows to a list
             // to make performance more predictable.
             Columns = columns.ToList();
             Rows    = rows.ToList();
+            Errors  = errors;
         }
 
         /// <summary>
@@ -41,6 +42,11 @@ namespace Pori.Frends.Data
         /// Number of rows in this table.
         /// </summary>
         public int Count { get { return Rows.Count(); } }
+
+        /// <summary>
+        /// List of errors encountered while creating the table.
+        /// </summary>
+        public IEnumerable<Error> Errors { get; private set; }
 
         /// <summary>
         /// Get the rows of the table in a format suitable for use with the
@@ -72,27 +78,15 @@ namespace Pori.Frends.Data
         /// <typeparam name="TValue">Value type of the input data.</typeparam>
         /// <param name="columns">Ordered list of the columns for the table</param>
         /// <param name="data">The table's data (rows) as a collection of dictionary-like objects.</param>
+        /// <param name="errors">An enumerable that will contain any errors encountered while creating the table rows.</param>
         /// <returns>The created table.</returns>
-        public static Table From<TValue>(IEnumerable<string> columns, IEnumerable<IDictionary<string, TValue>> data)
+        public static Table From<TValue>(IEnumerable<string> columns, IEnumerable<IDictionary<string, TValue>> data, IEnumerable<Error> errors = null)
         {
             // Create column ordered rows for the table
             var rows = data.Select(row => Table.Row(columns, row));
 
             // Return a new table using the columns and created rows
-            return new Table(columns, rows);
-        }
-
-        /// <summary>
-        /// Create a table from row data supplied as JObjects.
-        /// </summary>
-        /// <param name="columns">The columns for the table.</param>
-        /// <param name="data">The row data for the table.</param>
-        /// <returns>The created table.</returns>
-        public static Table From(IEnumerable<string> columns, IEnumerable<JObject> data)
-        {
-            var rows = data.Select(row => Table.Row(columns, row));
-
-            return new Table(columns, rows);
+            return new Table(columns, rows, errors);
         }
 
         /// <summary>
@@ -101,20 +95,16 @@ namespace Pori.Frends.Data
         /// <typeparam name="TCollection">The data type for each row's values</typeparam>
         /// <param name="columns">Ordered list of the columns for the table</param>
         /// <param name="data">The table's data (rows) as a list of row values.</param>
+        /// <param name="errors">An enumerable that will contain any errors encountered while creating the table rows.</param>
         /// <returns>The created table.</returns>
-        public static Table From<TCollection>(IEnumerable<string> columns, IEnumerable<TCollection> data)
+        public static Table From<TCollection>(IEnumerable<string> columns, IEnumerable<TCollection> data, IEnumerable<Error> errors = null)
             where TCollection : IEnumerable<object>
         {
             // Create column ordered rows for the table
             var rows = data.Select(row => Table.Row(columns, row));
 
             // Return a new table using the columns and created rows
-            return new Table(columns, rows);
-        }
-
-        internal static dynamic Row(IEnumerable<string> columns, JObject source)
-        {
-            return source.ToObject<ExpandoObject>();
+            return new Table(columns, rows, errors);
         }
 
         /// <summary>
@@ -131,7 +121,14 @@ namespace Pori.Frends.Data
 
             // Store the values in the column order
             foreach(var col in columns)
-                row[col] = values[col];
+            {
+                TValue value;
+                
+                if(!values.TryGetValue(col, out value))
+                    value = default;
+
+                row[col] = value;
+            }
 
             // Return the resulting row object
             return row;
@@ -184,6 +181,84 @@ namespace Pori.Frends.Data
 
             // Create a new row using the columns and the null values.
             return Table.Row(columns, values);
+        }
+
+        /// <summary>
+        /// A class for reporting errors encountered while processing a table.
+        /// </summary>
+        public class Error : InvalidOperationException
+        {
+            /// <summary>
+            /// Create a new table error.
+            /// </summary>
+            /// <param name="row">The row being processed when the error occurred.</param>
+            /// <param name="index">The index of the row in the source table.</param>
+            /// <param name="exception">The exception that caused the error.</param>
+            public Error(dynamic row, long index, Exception exception) : base(exception.Message, exception)
+            {
+                Row   = row;
+                Index = index;
+            }
+
+            /// <summary>
+            /// The index of the row that caused the error.
+            /// </summary>
+            public long Index { get; set; }
+
+            /// <summary>
+            /// The row which resulted in the error.
+            /// </summary>
+            public dynamic Row { get; set; }
+        }
+
+        /// <summary>
+        /// An exception class for failing the processing of a table.
+        /// </summary>
+        public class FailedOperationException : InvalidOperationException
+        {
+            /// <summary>
+            /// Create a new failed table operation exception.
+            /// </summary>
+            /// <param name="errors"></param>
+            public FailedOperationException(IEnumerable<Error> errors) : base("One or more operations on a table failed.")
+            {
+                Errors = errors;
+            }
+
+            /// <summary>
+            /// List of the errors that caused this exception to be thrown.
+            /// </summary>
+            public IEnumerable<Error> Errors { get; set; }
+        }
+
+        /// <summary>
+        /// How errors encountered while processing a table should be handled.
+        /// </summary>
+        public enum ErrorHandling
+        {
+            /// <summary>
+            /// Continue processing rows even if previous rows caused errors.
+            /// For tasks that modify the row values, a value of null is used
+            /// when an error occurs.
+            /// </summary>
+            Continue,
+
+            /// <summary>
+            /// Discard any rows that cause errors and continue processing.
+            /// </summary>
+            Discard,
+
+            /// <summary>
+            /// Stop processing when the first error is encountered and
+            /// throw an exception.
+            /// </summary>
+            Fail,
+
+            /// <summary>
+            /// Process all rows but fail after processing all rows if any
+            /// errors were encountered.
+            /// </summary>
+            ContinueAndFail,
         }
     }
 }

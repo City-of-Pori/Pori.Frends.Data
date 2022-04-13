@@ -141,7 +141,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table table = LoadTask.Load(input, new CancellationToken());
+            Table table = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             JToken result = table.ToJson();
 
@@ -475,7 +475,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = LoadTask.Load(input, new CancellationToken());
+            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             var resultLetters = from row in result.Rows select row.letter;
             var resultIndices = from row in result.Rows select row.index;
@@ -512,12 +512,141 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = LoadTask.Load(input, new CancellationToken());
+            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             string[] expectedColumns = { "A", "B" };
 
             Assert.That(result is Table);
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+            Assert.That(result.Rows.Count, Is.EqualTo(rows.Length));
+
+            foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
+            {
+                Console.WriteLine(resRow.A);
+                Console.WriteLine(origRow.A);
+                Assert.That(origRow.A == resRow.A);
+                Assert.That(origRow.B == resRow.B);
+            }
+        }
+
+        [Test]
+        public void JsonDataLoadingFailsOnErrorsByDefault()
+        {
+            var rows = new []
+            {
+                new { A = 1, B = "foo" },
+                new { A = 2, B = "bar" },
+                new { A = 3, B = "baz" },
+            };
+
+            var data = JArray.FromObject(rows);
+
+            // Add a null to the end of the rows to cause an error
+            data.Add(null);
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.JSON,
+                Json   = new LoadJsonParameters
+                {
+                    Columns = new [] { "A", "B" },
+                    Data    = data
+                }
+            };
+
+            Action executeTask = () => LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(executeTask, Throws.TypeOf<Table.Error>());
+        }
+
+        [Test]
+        public void JsonDataLoadingCanIgnoreErrors()
+        {
+            var rows = new []
+            {
+                new { A = 1, B = "foo" },
+                new { A = 2, B = "bar" },
+                new { A = 3, B = "baz" },
+            };
+
+            var data = JArray.FromObject(rows);
+
+            // Add a null to the end of the rows to cause an error
+            data.Add(null);
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.JSON,
+                Json   = new LoadJsonParameters
+                {
+                    Columns = new [] { "A", "B" },
+                    Data    = data
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Continue
+            };
+
+            Table result = LoadTask.Load(input, options, new CancellationToken());
+
+            string[] expectedColumns = { "A", "B" };
+
+            Assert.That(result is Table);
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+            Assert.That(result.Errors.Count(), Is.EqualTo(1));
+            Assert.That(result.Rows.Count, Is.EqualTo(rows.Length + 1));
+
+            foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
+            {
+                Console.WriteLine(resRow.A);
+                Console.WriteLine(origRow.A);
+                Assert.That(origRow.A == resRow.A);
+                Assert.That(origRow.B == resRow.B);
+            }
+
+            Assert.That(result.Rows.Last().A == null && result.Rows.Last().B == null);
+        }
+
+        [Test]
+        public void JsonDataLoadingCanDiscardErrors()
+        {
+            var rows = new []
+            {
+                new { A = 1, B = "foo" },
+                new { A = 2, B = "bar" },
+                new { A = 3, B = "baz" },
+            };
+
+            var data = JArray.FromObject(rows);
+
+            // Add a null to the end of the rows to cause an error
+            data.Add(null);
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.JSON,
+                Json   = new LoadJsonParameters
+                {
+                    Columns = new [] { "A", "B" },
+                    Data    = data
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Discard
+            };
+
+            Table result = LoadTask.Load(input, options, new CancellationToken());
+
+            string[] expectedColumns = { "A", "B" };
+
+            Assert.That(result is Table);
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+            Assert.That(result.Errors.Count(), Is.EqualTo(1));
+            Assert.That(result.Rows.Count, Is.EqualTo(rows.Length));
 
             foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
             {
@@ -546,7 +675,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -570,7 +699,7 @@ namespace Pori.Frends.Data.Tests
             IEnumerable<string> expectedColumns = original.Columns.Concat(input.Columns.Select(c => c.Name));
 
             
-            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
@@ -600,7 +729,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
 
             // Check each row contains the correct columns
@@ -627,7 +756,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = AddColumnsTask.AddColumns(input, new CancellationToken());
+            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
 
             // Check each row contains the correct values in the new columns
@@ -653,7 +782,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, new CancellationToken());
+            Action executeTask = () => AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -672,10 +801,139 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, new CancellationToken());
+            Action executeTask = () => AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
+
+        [Test]
+        public void AddColumnsFailsOnErrorsByDefault()
+        {
+            Table original = TestData.Typed;
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn
+                    {
+                        Name           = "firstOfN",
+                        ValueSource    = NewColumnValueSource.Computed,
+                        ValueGenerator = row => row.N[0]
+                    },
+                }
+            };
+
+
+            Action executeTask = () => AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(executeTask, Throws.TypeOf<Table.Error>());
+        }
+
+        [Test]
+        public void AddColumnsCanDiscardErroneousRows()
+        {
+            Table original = TestData.Typed;
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn
+                    {
+                        Name           = "firstOfN",
+                        ValueSource    = NewColumnValueSource.Computed,
+                        ValueGenerator = row => row.N[0]
+                    },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Discard
+            };
+
+            Table result = AddColumnsTask.AddColumns(input, options, new CancellationToken());
+
+            Assert.That(
+                original.Rows.Where(row => row.N != null).Zip(result.Rows, (orig, res) => res.firstOfN == orig.N[0]),
+                Has.All.EqualTo(true)
+            );
+            Assert.That(result.Errors.Count() == original.Rows.Where(row => row.N == null).Count());
+        }
+
+        [Test]
+        public void AddColumnsCanIgnoreErrors()
+        {
+            Table original = TestData.Typed;
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn
+                    {
+                        Name           = "firstOfN",
+                        ValueSource    = NewColumnValueSource.Computed,
+                        ValueGenerator = row => row.N[0]
+                    },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Continue
+            };
+
+            Table result = AddColumnsTask.AddColumns(input, options, new CancellationToken());
+
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => (orig.N == null && res.firstOfN == null) || res.firstOfN == orig.N[0]),
+                Has.All.EqualTo(true)
+            );
+            
+            Assert.That(result.Errors.Count() == original.Rows.Where(row => row.N == null).Count());
+        }
+
+        [Test]
+        public void AddColumnsCanFailOnErrorsAfterProcessingAllRows()
+        {
+            Table original = TestData.Typed;
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn
+                    {
+                        Name           = "firstOfN",
+                        ValueSource    = NewColumnValueSource.Computed,
+                        ValueGenerator = row => row.N[0]
+                    },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.ContinueAndFail
+            };
+
+            Action executeTask = () => AddColumnsTask.AddColumns(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == original.Rows.Where(row => row.N == null).Count())
+            );
+        }
+
+        
     }
 
     [TestFixture]
@@ -788,7 +1046,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -808,7 +1066,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.B is bool));
         }
@@ -827,7 +1085,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is bool));
             Assert.That(
@@ -850,7 +1108,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.D is DateTime));
             Assert.That(
@@ -876,7 +1134,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is decimal));
             Assert.That(
@@ -899,7 +1157,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is double));
             Assert.That(
@@ -922,7 +1180,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is float));
             Assert.That(
@@ -945,7 +1203,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is int));
             Assert.That(
@@ -968,7 +1226,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is long));
             Assert.That(
@@ -991,7 +1249,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is string));
             Assert.That(
@@ -1019,7 +1277,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is string));
             Assert.That(
@@ -1042,9 +1300,125 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, new CancellationToken());
+            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void ConvertColumnsFailsOnErrorsByDefault()
+        {
+            Table original = TestData.Typed;
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "N", Type = ColumnType.Custom, Converter = s => s[0] },
+                }
+            };
+
+            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(executeTask, Throws.TypeOf<Table.Error>());
+
+            /*Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is bool));
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => res.I == (orig.I > 0)),
+                Has.All.EqualTo(true)
+            );*/
+        }
+
+        [Test]
+        public void ConvertColumnsCanDiscardErroneousRows()
+        {
+            Table original = TestData.Typed;
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "N", Type = ColumnType.Custom, Converter = s => s[0] },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Discard
+            };            
+
+            Table result = ConvertColumnsTask.ConvertColumns(input, options, new CancellationToken());
+
+            Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.N != null));
+            Assert.That(
+                original.Rows.Where(row => row.N != null).Zip(result.Rows, (orig, res) => res.N == (orig.N[0])),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsCanContinueOnErrors()
+        {
+            Table original = TestData.Typed;
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "N", Type = ColumnType.Custom, Converter = s => s[0] },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Continue
+            };
+
+            Table result = ConvertColumnsTask.ConvertColumns(input, options, new CancellationToken());
+
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => (orig.I == res.I)),
+                Has.All.EqualTo(true)
+            );
+            Assert.That(
+                original.Rows.Zip(result.Rows, (orig, res) => (orig.N == null && res.N == null) || res.N == (orig.N[0])),
+                Has.All.EqualTo(true)
+            );
+        }
+
+        [Test]
+        public void ConvertColumnsCanCollectErrorsAndThenFail()
+        {
+            Table original = TestData.Typed;
+
+            ConvertColumnsParameters input = new ConvertColumnsParameters
+            {
+                Data        = original,
+                Conversions = new ColumnConversion[]
+                {
+                    new ColumnConversion { Column = "N", Type = ColumnType.Custom, Converter = s => s[0] },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.ContinueAndFail
+            };
+
+            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == original.Rows.Where(row => row.N == null).Count())
+            );
         }
     }
 
@@ -1339,7 +1713,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => row.B == true
             };
             
-            Table filtered = FilterTask.Filter(input, new CancellationToken());
+            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered is Table);
             Assert.That(filtered, Is.Not.SameAs(original));
@@ -1358,7 +1732,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = B => B == true
             };
 
-            Table filtered = FilterTask.Filter(input, new CancellationToken());
+            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered is Table);
             Assert.That(filtered, Is.Not.SameAs(original));
@@ -1374,7 +1748,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => row.B == true
             };
 
-            Table filtered = FilterTask.Filter(input, new CancellationToken());
+            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
         }
@@ -1390,7 +1764,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = B => B == true
             };
 
-            Table filtered = FilterTask.Filter(input, new CancellationToken());
+            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
         }
@@ -1407,7 +1781,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => true            // Accept all rows
             };
 
-            Table filtered = FilterTask.Filter(input, new CancellationToken());
+            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
@@ -1425,7 +1799,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = B => true
             };
 
-            Table filtered = FilterTask.Filter(input, new CancellationToken());
+            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
@@ -1443,9 +1817,61 @@ namespace Pori.Frends.Data.Tests
                 Filter       = doesNotExist => true
             };
 
-            Action executeTask = () => FilterTask.Filter(input, new CancellationToken());
+            Action executeTask = () => FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void FilterCanIgnoreErrors()
+        {
+            Table original = TestData.Typed;
+
+            FilterParameters input = new FilterParameters
+            {
+                Data         = original,
+                FilterType   = ProcessingType.Column,
+                FilterColumn = "doesNotExist",
+                Filter       = doesNotExist => true
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Continue
+            };
+
+            Table result = FilterTask.Filter(input, options, new CancellationToken());
+
+            Assert.That(result.Errors, Is.Not.Empty);
+        }
+
+        [Test]
+        public void FilterCanCollectErrorsAndThenFail()
+        {
+            Table original = TestData.Typed;
+
+            FilterParameters input = new FilterParameters
+            {
+                Data         = original,
+                FilterType   = ProcessingType.Column,
+                FilterColumn = "doesNotExist",
+                Filter       = doesNotExist => true
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.ContinueAndFail
+            };
+
+            Action executeTask = () => FilterTask.Filter(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == original.Count)
+            );
         }
     }
 
@@ -2940,7 +3366,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, new CancellationToken());
+            Table result = TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -2960,7 +3386,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, new CancellationToken());
+            Table result = TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             // Check the values in the result are correct.
             // Also ends up making sure that the original rows have not been modified.
@@ -2984,7 +3410,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, new CancellationToken());
+            Table result = TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             // Check the values in the result are correct.
             // Also ends up making sure that the original rows have not been modified.
@@ -3008,9 +3434,110 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => TransformColumnsTask.TransformColumns(input, new CancellationToken());
+            Action executeTask = () => TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
+
+        [Test]
+        public void TransformColumnsFailsOnErrorsByDefault()
+        {
+            Table original = TestData.Typed;
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "N", TransformType = ProcessingType.Row, Transform = row => row.N[0] },
+                }
+            };
+
+            Action executeTask = () => TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(executeTask, Throws.Exception);
+        }
+
+        [Test]
+        public void TransformColumnsCanDiscardErroneousRows()
+        {
+            Table original = TestData.Typed;
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "N", TransformType = ProcessingType.Row, Transform = row => row.N.Substring(0) },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Discard
+            };
+
+            Table result = TransformColumnsTask.TransformColumns(input, options, new CancellationToken());
+
+            Assert.That(result.Rows, Is.EquivalentTo(original.Rows.Where(row => row.N != null)));
+            Assert.That(result.Errors.Count() == original.Rows.Where(row => row.N == null).Count());
+        }
+
+        [Test]
+        public void TransformColumnsCanContinueAfterErrors()
+        {
+            Table original = TestData.Typed;
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "N", TransformType = ProcessingType.Row, Transform = row => row.N.Substring(0) },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Continue
+            };
+
+            Table result = TransformColumnsTask.TransformColumns(input, options, new CancellationToken());
+
+            Assert.That(result.Rows, Is.EquivalentTo(original.Rows));
+            Assert.That(result.Errors.Count() == original.Rows.Where(row => row.N == null).Count());
+        }
+
+        [Test]
+        public void TransformColumnsCanFailOnErrorsAfterProcessingAllRows()
+        {
+            Table original = TestData.Typed;
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "N", TransformType = ProcessingType.Row, Transform = row => row.N.Substring(0) },
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.ContinueAndFail
+            };
+
+            Action executeTask = () => TransformColumnsTask.TransformColumns(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == original.Rows.Where(row => row.N == null).Count())
+            );
+        }
+
+        
     }
 }

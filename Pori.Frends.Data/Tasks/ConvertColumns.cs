@@ -51,7 +51,7 @@ namespace Pori.Frends.Data
 
         /// <summary>
         /// The format to use when converting values to DateTime.
-        /// See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings 
+        /// See https://docs.microsoft.com/en-us/dotnet/standard/base-types/standard-date-and-time-format-strings
         /// for possible format specifiers.
         /// </summary>
         [UIHint(nameof(Type), "", ColumnType.DateTime)]
@@ -98,9 +98,10 @@ namespace Pori.Frends.Data
         /// Convert the values of one or more columns in a table to specific type.
         /// </summary>
         /// <param name="input"></param>
+        /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>A new table with the specifed transforms applied to the rows.</returns>
-        public static Table ConvertColumns([PropertyTab] ConvertColumnsParameters input, CancellationToken cancellationToken)
+        public static Table ConvertColumns([PropertyTab] ConvertColumnsParameters input, [PropertyTab] CommonOptions options, CancellationToken cancellationToken)
         {
             // Get the names of the columns to be transformed
             var columnNames = input.Conversions.Select(tr => tr.Column);
@@ -117,7 +118,9 @@ namespace Pori.Frends.Data
                 builder.TransformColumn(conv.Column, ConverterFor(conv));
 
             // Create and return the table with the transformed rows.
-            return builder.CreateTable();
+            return builder
+                    .OnError(options.ErrorHandling)
+                    .CreateTable();
         }
 
         /// <summary>

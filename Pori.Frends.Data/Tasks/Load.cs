@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Dynamic;
 using System.Linq;
 using System.Threading;
 using Microsoft.CSharp; // For dynamic in .NET Standard Frends Tasks
@@ -84,9 +85,10 @@ namespace Pori.Frends.Data
         /// Load data into a table structure for further processing.
         /// </summary>
         /// <param name="input"></param>
+        /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>The data as a Pori.Frends.Data.Table</returns>
-        public static Table Load([PropertyTab] LoadParameters input, CancellationToken cancellationToken)
+        public static Table Load([PropertyTab] LoadParameters input, [PropertyTab] CommonOptions options, CancellationToken cancellationToken)
         {
             // Load data based on the input format
             switch(input.Format)
@@ -97,13 +99,22 @@ namespace Pori.Frends.Data
                     var data    = input.Csv.Data.Data as List<List<object>>;
 
                     // Create a table using the data
-                    return Table.From(headers, data);
+                    return TableBuilder
+                            .Load(headers, data)
+                            .OnError(options.ErrorHandling)
+                            .CreateTable();
 
 
                 case LoadFormat.JSON:
-                    var rows = (input.Json.Data as JArray).Cast<JObject>();
+                    // Convert each JObject to a dynamic object
+                    var rows = (input.Json.Data as JArray)
+                                .Cast<JObject>()
+                                .Select(row => row.ToObject<ExpandoObject>());
 
-                    return Table.From(input.Json.Columns, rows);
+                    return TableBuilder
+                            .Load(input.Json.Columns, rows)
+                            .OnError(options.ErrorHandling)
+                            .CreateTable();
 
 
                 default:

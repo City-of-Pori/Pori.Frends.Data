@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 using Pori.Frends.Data.Linq;
 
 namespace Pori.Frends.Data
@@ -24,19 +26,28 @@ namespace Pori.Frends.Data
         private RowBuilder rows;
 
         /// <summary>
-        /// Create a new table builder instance using the given table as the 
+        /// Create a new table builder instance using the given table as the
         /// source.
         /// </summary>
         /// <param name="source">The table to use as the source for the new table.</param>
-        internal TableBuilder(Table source)
+        internal TableBuilder(Table source) : this(source.Columns, source.Rows)
+        {}
+
+        /// <summary>
+        /// Create a new table builder from the given columns and rows as the
+        /// starting point.
+        /// </summary>
+        /// <param name="columns">The original columns.</param>
+        /// <param name="rows">The original rows.</param>
+        internal TableBuilder(IEnumerable<string> columns, IEnumerable<dynamic> rows)
         {
             // Create a copy the source table's columns to allow in-place
             // modifications to the list
-            columns = new List<string>(source.Columns);
+            this.columns = new List<string>(columns);
 
             // Create a new RowBuilder using the source table's rows as the
             // starting point.
-            rows = new RowBuilder(source.Rows);
+            this.rows = new RowBuilder(rows);
         }
 
         /// <summary>
@@ -46,7 +57,7 @@ namespace Pori.Frends.Data
         public Table CreateTable()
         {
             // Create the resulting table using the columns and rows
-            return Table.From(columns, rows.ToRows());
+            return Table.From(columns, rows.ToRows(), rows.Errors);
         }
         
 
@@ -55,7 +66,7 @@ namespace Pori.Frends.Data
         /// </summary>
         /// <param name="column">The name of the column to add to the result.</param>
         /// <param name="generator">
-        /// A function to generate a values for the new column. Receives a 
+        /// A function to generate a values for the new column. Receives a
         /// row as it parameter and should produce values for the new column.
         /// </param>
         /// <returns>The table builder itself (for method chaining).</returns>
@@ -199,6 +210,26 @@ namespace Pori.Frends.Data
             return this; // Enable method chaining
         }
 
+        private TableBuilder Load<TRow>(IEnumerable<TRow> rows, Func<TRow, dynamic> transform)
+        {
+            this.rows.Load(rows, transform);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
+        /// Specify how to handle errors encountered while building the
+        /// result table.
+        /// </summary>
+        /// <param name="errorHandling">How to handle any errors.</param>
+        /// <returns>The table builder itself (for method chaining).</returns>
+        public TableBuilder OnError(Table.ErrorHandling errorHandling)
+        {
+            rows.OnError(errorHandling);
+
+            return this; // Enable method chaining
+        }
+
         /// <summary>
         /// Rename columns in the result.
         /// </summary>
@@ -267,8 +298,8 @@ namespace Pori.Frends.Data
         /// </summary>
         /// <param name="column">The column whose values are transformed.</param>
         /// <param name="transform">
-        /// The function to produce new values for the column. Receives the 
-        /// row as a parameter and should produce a value for the specified 
+        /// The function to produce new values for the column. Receives the
+        /// row as a parameter and should produce a value for the specified
         /// column.
         /// </param>
         /// <returns>The table builder itself (for method chaining).</returns>
@@ -280,7 +311,7 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
-        /// Create a wrapped function that when called with a table row, 
+        /// Create a wrapped function that when called with a table row,
         /// calls the original function with the value of a specific column.
         /// </summary>
         /// <typeparam name="TResult">The result of the function</typeparam>
@@ -292,13 +323,40 @@ namespace Pori.Frends.Data
             return row => function((row as RowDict)[column]);
         }
 
-
         /// <summary>
         /// Create a new table builder using a given table as the source.
         /// </summary>
         /// <param name="source">The table to use as the source for the new table</param>
         /// <returns></returns>
-        public static TableBuilder From(Table source) => new TableBuilder(source);
+        public static TableBuilder From(Table source) => new TableBuilder(source.Columns, source.Rows);
+
+        /// <summary>
+        /// Create a table from row data supplied as JObjects.
+        /// </summary>
+        /// <param name="columns">The columns for the table.</param>
+        /// <param name="data">The row data for the table.</param>
+        /// <returns>The created table.</returns>
+        public static TableBuilder Load(IEnumerable<string> columns, IEnumerable<dynamic> data)
+        {
+            var builder = new TableBuilder(columns, Enumerable.Empty<dynamic>());
+
+            return builder.Load(data, row => Table.Row(columns, (row ?? Table.NullRow(columns)) as RowDict));
+        }
+
+        /// <summary>
+        /// Create a new table from the specified data.
+        /// </summary>
+        /// <typeparam name="TCollection">The data type for each row's values</typeparam>
+        /// <param name="columns">Ordered list of the columns for the table</param>
+        /// <param name="data">The table's data (rows) as a list of row values.</param>
+        /// <returns>The created table.</returns>
+        public static TableBuilder Load<TCollection>(IEnumerable<string> columns, IEnumerable<TCollection> data)
+            where TCollection : IEnumerable<object>
+        {
+            var builder = new TableBuilder(columns, Enumerable.Empty<dynamic>());
+
+            return builder.Load(data, row => Table.Row(columns, row));
+        }
 
         /// <summary>
         /// A single sorting criterion for sorting the rows of a table.

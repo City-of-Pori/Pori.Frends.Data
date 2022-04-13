@@ -62,9 +62,10 @@ namespace Pori.Frends.Data
         /// Transform the values of one or more columns in a table.
         /// </summary>
         /// <param name="input"></param>
+        /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>A new table with the specifed transforms applied to the rows.</returns>
-        public static Table TransformColumns([PropertyTab] TransformColumnsParameters input, CancellationToken cancellationToken)
+        public static Table TransformColumns([PropertyTab] TransformColumnsParameters input, [PropertyTab] CommonOptions options, CancellationToken cancellationToken)
         {
             // Get the names of the columns to be transformed
             var columnNames = input.Transforms.Select(tr => tr.Column);
@@ -92,7 +93,9 @@ namespace Pori.Frends.Data
             }
 
             // Create and return the table with the transformed rows.
-            return builder.CreateTable();
+            return builder
+                    .OnError(options.ErrorHandling)
+                    .CreateTable();
         }
     }
 }

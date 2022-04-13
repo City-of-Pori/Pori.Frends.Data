@@ -27,7 +27,7 @@ namespace Pori.Frends.Data
     }
 
     /// <summary>
-    /// A definition for a new table column for adding new columns to a table 
+    /// A definition for a new table column for adding new columns to a table
     /// using the AddColumns task.
     /// </summary>
     public class NewColumn
@@ -84,9 +84,10 @@ namespace Pori.Frends.Data
         /// Add one or more columns to a table.
         /// </summary>
         /// <param name="input"></param>
+        /// <param name="options"></param>
         /// <param name="cancellationToken"></param>
         /// <returns>A new table with the added columns.</returns>
-        public static Table AddColumns([PropertyTab] AddColumnsParameters input, CancellationToken cancellationToken)
+        public static Table AddColumns([PropertyTab] AddColumnsParameters input, [PropertyTab] CommonOptions options, CancellationToken cancellationToken)
         {
             var columnNames = input.Columns.Select(c => c.Name);
 
@@ -116,7 +117,9 @@ namespace Pori.Frends.Data
                 builder.AddColumn(column.Name, generator);
             }
 
-            return builder.CreateTable();
+            return builder
+                    .OnError(options.ErrorHandling)
+                    .CreateTable();
         }
     }
 }

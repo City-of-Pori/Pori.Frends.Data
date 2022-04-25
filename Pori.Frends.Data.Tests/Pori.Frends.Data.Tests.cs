@@ -491,6 +491,134 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void CustomDataCanBeLoaded()
+        {
+            Table source = TestData.Typed;
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.Custom,
+                Custom = new LoadCustomParameters
+                {
+                    Data         = source.Rows,
+                    Columns      = new [] { "A", "B", "I" },
+                    ColumnLoader = (row, column) => (row as RowDict)[column]
+                }
+            };
+
+            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Columns, Is.EqualTo(new[] { "A", "B", "I" }));
+            Assert.That(result.Count, Is.EqualTo(source.Count));
+
+            foreach(var (resultRow, sourceRow) in result.Rows.Zip(source.Rows, (r, s) => (r, s)))
+            {
+                Assert.That(resultRow.A, Is.EqualTo(sourceRow.A));
+                Assert.That(resultRow.B, Is.EqualTo(sourceRow.B));
+                Assert.That(resultRow.I, Is.EqualTo(sourceRow.I));
+            }
+        }
+
+        [Test]
+        public void CustomDataLoadingCanDiscardErrors()
+        {
+            Table source = TestData.Typed;
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.Custom,
+                Custom = new LoadCustomParameters
+                {
+                    Data         = source.Rows,
+                    Columns      = new [] { "N" },
+                    ColumnLoader = (row, column) => (row as RowDict)[column].Substring(0)
+                }
+            };
+
+            var options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Discard
+            };
+
+            Table result = LoadTask.Load(input, options, new CancellationToken());
+
+            var expectedRows = source.Rows.Where(row => row.N != null);
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Columns, Is.EqualTo(new[] { "N" }));
+            Assert.That(result.Count, Is.EqualTo(expectedRows.Count()));
+            Assert.That(result.Errors.Count, Is.EqualTo(source.Rows.Where(row => row.N == null).Count()));
+
+            foreach(var (resultRow, sourceRow) in result.Rows.Zip(expectedRows, (r, s) => (r, s)))
+                Assert.That(resultRow.N, Is.EqualTo(sourceRow.N));
+        }
+
+        [Test]
+        public void CustomDataLoadingCanIgnoreErrors()
+        {
+            Table source = TestData.Typed;
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.Custom,
+                Custom = new LoadCustomParameters
+                {
+                    Data         = source.Rows,
+                    Columns      = new [] { "N" },
+                    ColumnLoader = (row, column) => (row as RowDict)[column].Substring(0)
+                }
+            };
+
+            var options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.Continue
+            };
+
+            Table result = LoadTask.Load(input, options, new CancellationToken());
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Columns, Is.EqualTo(new[] { "N" }));
+            Assert.That(result.Count, Is.EqualTo(source.Count));
+            Assert.That(result.Errors.Count, Is.EqualTo(source.Rows.Where(row => row.N == null).Count()));
+
+            foreach(var (resultRow, sourceRow) in result.Rows.Zip(source.Rows, (r, s) => (r, s)))
+                Assert.That(resultRow.N, Is.EqualTo(sourceRow.N));
+        }
+
+        [Test]
+        public void CustomDataLoadingCanCollectErrorsAndThenFail()
+        {
+            Table source = TestData.Typed;
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.Custom,
+                Custom = new LoadCustomParameters
+                {
+                    Data         = source.Rows,
+                    Columns      = new [] { "N" },
+                    ColumnLoader = (row, column) => (row as RowDict)[column].Substring(0)
+                }
+            };
+
+            var options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.ContinueAndFail
+            };
+
+            Action executeTask = () => LoadTask.Load(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == source.Rows.Where(row => row.N == null).Count())
+            );
+        }
+
+        [Test]
         public void JsonDataIsLoadedCorrectly()
         {
             var rows = new []

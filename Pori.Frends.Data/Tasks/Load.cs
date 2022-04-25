@@ -32,7 +32,12 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Load XML data into a table.
         /// </summary>
-        XML
+        XML,
+
+        /// <summary>
+        /// Load custom data into a table.
+        /// </summary>
+        Custom
     }
 
     /// <summary>
@@ -54,6 +59,9 @@ namespace Pori.Frends.Data
 
         [UIHint(nameof(Format), "", LoadFormat.XML)]
         public LoadXmlParameters Xml { get; set; }
+
+        [UIHint(nameof(Format), "", LoadFormat.Custom)]
+        public LoadCustomParameters Custom { get; set; }
     }
 
     /// <summary>
@@ -183,6 +191,25 @@ namespace Pori.Frends.Data
     }
 
 
+    public class LoadCustomParameters
+    {
+        /// <summary>
+        /// The custom data to load into a table.
+        /// </summary>
+        public IEnumerable<dynamic> Data { get; set; }
+
+        /// <summary>
+        /// Names of columns to include in the resulting table.
+        /// </summary>
+        public string[] Columns { get; set; }
+
+        /// <summary>
+        /// Function to extract a value for a given column of a row.
+        /// </summary>
+        public Func<dynamic, string, dynamic> ColumnLoader { get; set; }
+    }
+
+
     /// <summary>
     /// Frends task for loading data into a table.
     /// </summary>
@@ -222,6 +249,10 @@ namespace Pori.Frends.Data
 
                 case LoadFormat.XML:
                     return LoadXml(input.Xml, options.ErrorHandling);
+
+
+                case LoadFormat.Custom:
+                    return LoadCustom(input.Custom, options.ErrorHandling);
 
 
                 default:
@@ -351,6 +382,41 @@ namespace Pori.Frends.Data
                 return values.ToList();
             else
                 return values.DefaultIfEmpty(null).First();
+        }
+
+        /// <summary>
+        /// Load custom data into a table.
+        /// </summary>
+        /// <param name="input">Input data and options for loading the data.</param>
+        /// <param name="errorHandling">How to handle errors encountered while loading the data.</param>
+        /// <returns>The resulting table.</returns>
+        private static Table LoadCustom(LoadCustomParameters input, Table.ErrorHandling errorHandling)
+        {
+            var loader = CustomRowLoader(input.Columns, input.ColumnLoader);
+
+            return TableBuilder
+                    .Load(input.Columns, input.Data, loader)
+                    .OnError(errorHandling)
+                    .CreateTable();
+        }
+
+        /// <summary>
+        /// Produce row data from custom data using the specified column loader.
+        /// </summary>
+        /// <param name="columns">The columns to load.</param>
+        /// <param name="columnLoader">Function for extracting a value for a single column of a row.</param>
+        /// <returns>A function for loading data for a single table row.</returns>
+        private static Func<dynamic, IDictionary<string, dynamic>> CustomRowLoader(string[] columns, Func<dynamic, string, dynamic> columnLoader)
+        {
+            return source =>
+            {
+                IDictionary<string, dynamic> row = new Dictionary<string, dynamic>();
+
+                foreach(var column in columns)
+                    row[column] = columnLoader(source, column);
+
+                return row;
+            };
         }
     }
 }

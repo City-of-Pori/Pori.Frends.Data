@@ -348,7 +348,7 @@ namespace Pori.Frends.Data
         /// <param name="data">The data for the table rows.</param>
         /// <param name="rowLoader">Function for extracting row data for each row.</param>
         /// <returns>A table builder with the loaded data as the starting data.</returns>
-        public static TableBuilder Load(IEnumerable<string> columns, IEnumerable<dynamic> data, Func<dynamic, RowDict> rowLoader)
+        public static TableBuilder Load<TRow>(IEnumerable<string> columns, IEnumerable<TRow> data, Func<TRow, RowDict> rowLoader)
         {
             var builder = new TableBuilder(columns, Enumerable.Empty<dynamic>());
 

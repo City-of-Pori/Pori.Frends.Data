@@ -695,6 +695,303 @@ namespace Pori.Frends.Data.Tests
                     .Matches<dynamic>(errors => errors.Count == 1)
             );
         }
+
+        private static string XmlData =
+            @"<?xml version='1.0' encoding='utf-8'?>
+            <entityset>
+                <entity id='987654321' name='FOO220417K'>
+                    <template id='2399' name='Työasema' code='workstation'/>
+                    <group code='workstations'/>
+                    <attribute id='774219' name='Nimi' code='device_name'>
+                        <value>FOO220417K</value>
+                    </attribute>
+                    <attribute id='774250' name='Sarjanumero' code='serial_number'>
+                        <value>ABCDEF12345</value>
+                    </attribute>
+                    <attribute id='2408' name='Työaseman malli' code='device_model'>
+                        <reference id='9563700' name='HP EliteBook 830 G5'/>
+                    </attribute>
+                    <attribute id='774535' name='Kustannuspaikka' code='cost_center'>
+                        <reference id='790606' name='FOO Mumble'/>
+                    </attribute>
+                    <attribute id='2302' name='Levyt' code='drives'>
+                        <reference id='9578833' name='C:'/>
+                        <reference id='9840398' name='D:'/>
+                        <reference id='9840393' name='G:'/>
+                    </attribute>
+                    <attribute id='2318' name='Näytönohjain' code='display_adapter'>
+                        <value>Citrix Indirect Display Adapter</value>
+                        <value>Intel(R) UHD Graphics 620</value>
+                    </attribute>
+                </entity>
+                <entity id='-1' name='BROKEN' invalid=''> <!-- Invalid element for testing error handling -->
+                    <template id='2399' name='Työasema' code='workstation'/>
+                    <group code='workstations'/>
+                    <attribute id='774219' name='Nimi' code='device_name'>
+                        <value>BROKEN</value>
+                    </attribute>
+                    <attribute id='774250' name='Sarjanumero' code='serial_number'>
+                        <value>XYZ547123</value>
+                    </attribute>
+                    <attribute id='2408' name='Työaseman malli' code='device_model'>
+                        <reference id='9563700' name='HP EliteBook 830 G5'/>
+                    </attribute>
+                    <attribute id='774535' name='Kustannuspaikka' code='cost_center'>
+                        <reference id='790606' name='NIL Null'/>
+                    </attribute>
+                    <attribute id='2302' name='Levyt' code='drives'>
+                        <reference id='9578833' name='C:'/>
+                        <reference id='9840398' name='D:'/>
+                        <reference id='9840393' name='G:'/>
+                    </attribute>
+                    <attribute id='2318' name='Näytönohjain' cod='display_adapter'>
+                        <value>Citrix Indirect Display Adapter</value>
+                        <value>Intel(R) UHD Graphics 620</value>
+                    </attribute>
+                </entity>
+                <entity id='123456789' name='BAR220417K'>
+                    <template id='2399' name='Työasema' code='workstation'/>
+                    <group code='workstations'/>
+                    <attribute id='774219' name='Nimi' code='device_name'>
+                        <value>BAR220417K</value>
+                    </attribute>
+                    <attribute id='774250' name='Sarjanumero' code='serial_number'>
+                        <value>XYZ547123</value>
+                    </attribute>
+                    <attribute id='2408' name='Työaseman malli' code='device_model'>
+                        <reference id='9563700' name='HP EliteBook 830 G5'/>
+                    </attribute>
+                    <attribute id='774535' name='Kustannuspaikka' code='cost_center'>
+                        <reference id='790606' name='BAR Blah'/>
+                    </attribute>
+                    <attribute id='2302' name='Levyt' code='drives'>
+                        <reference id='9578833' name='C:'/>
+                        <reference id='9840398' name='D:'/>
+                        <reference id='9840393' name='G:'/>
+                    </attribute>
+                    <attribute id='2318' name='Näytönohjain' code='display_adapter'>
+                        <value>Citrix Indirect Display Adapter</value>
+                        <value>Intel(R) UHD Graphics 620</value>
+                    </attribute>
+                </entity>
+            </entityset>
+        ";
+
+        [Test]
+        public void XmlDataLoadingWorks()
+        {
+            var expectedXmlResult = new []
+            {
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "FOO220417K",
+                    serial_number   = "ABCDEF12345",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                },
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "BAR220417K",
+                    serial_number   = "XYZ547123",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                }
+            };
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.XML,
+                Xml = new LoadXmlParameters
+                {
+                    Columns  = new [] { "template", "device_name", "serial_number", "display_adapter" },
+                    Data     = XmlData,
+                    RowsPath = "//entity[not(@invalid)]",
+                    ColumnSources = new XmlColumnSource[]
+                    {
+                        new XmlColumnSource
+                        {
+                            Type       = XmlColumnSourceType.SingleColumn,
+                            ColumnName = "template",
+                            ValuePath  = "./template/@code",
+                            ValueType  = XmlColumnValueType.SingleValue
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)=1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.SingleValue
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)>1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.MultipleValues
+                        }
+                    }
+                }
+            };
+
+            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Count, Is.EqualTo(expectedXmlResult.Count()));
+
+            foreach(var (resultRow, expectedRow) in result.Rows.Zip(expectedXmlResult, (r, e) => (r, e)))
+            {
+                Assert.That(resultRow.template, Is.EqualTo(expectedRow.template));
+                Assert.That(resultRow.device_name, Is.EqualTo(expectedRow.device_name));
+                Assert.That(resultRow.serial_number, Is.EqualTo(expectedRow.serial_number));
+                Assert.That(resultRow.display_adapter, Is.EqualTo(expectedRow.display_adapter));
+            }
+        }
+
+        [Test]
+        public void XmlDataLoadingCanDiscardErroneousRows()
+        {
+            var expectedXmlResult = new []
+            {
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "FOO220417K",
+                    serial_number   = "ABCDEF12345",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                },
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "BAR220417K",
+                    serial_number   = "XYZ547123",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                }
+            };
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.XML,
+                Xml = new LoadXmlParameters
+                {
+                    Columns  = new [] { "template", "device_name", "serial_number", "display_adapter" },
+                    Data     = XmlData,
+                    RowsPath = "//entity",
+                    ColumnSources = new XmlColumnSource[]
+                    {
+                        new XmlColumnSource
+                        {
+                            Type       = XmlColumnSourceType.SingleColumn,
+                            ColumnName = "template",
+                            ValuePath  = "./template/@code",
+                            ValueType  = XmlColumnValueType.SingleValue
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)=1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.SingleValue
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)>1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.MultipleValues
+                        }
+                    }
+                }
+            };
+
+            var options = new CommonOptions { ErrorHandling = Table.ErrorHandling.Discard };
+
+            Table result = LoadTask.Load(input, options, new CancellationToken());
+
+            Assert.That(result.Count, Is.EqualTo(expectedXmlResult.Count()));
+            Assert.That(result.Errors.Count, Is.EqualTo(1));
+
+            foreach(var (resultRow, expectedRow) in result.Rows.Zip(expectedXmlResult, (r, e) => (r, e)))
+            {
+                Assert.That(resultRow.template, Is.EqualTo(expectedRow.template));
+                Assert.That(resultRow.device_name, Is.EqualTo(expectedRow.device_name));
+                Assert.That(resultRow.serial_number, Is.EqualTo(expectedRow.serial_number));
+                Assert.That(resultRow.display_adapter, Is.EqualTo(expectedRow.display_adapter));
+            }
+        }
+
+        [Test]
+        public void XmlDataLoadingCanCollectErrorsAndThenFail()
+        {
+            var expectedXmlResult = new []
+            {
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "FOO220417K",
+                    serial_number   = "ABCDEF12345",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                },
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "BAR220417K",
+                    serial_number   = "XYZ547123",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                }
+            };
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.XML,
+                Xml = new LoadXmlParameters
+                {
+                    Columns  = new [] { "template", "device_name", "serial_number", "display_adapter" },
+                    Data     = XmlData,
+                    RowsPath = "//entity",
+                    ColumnSources = new XmlColumnSource[]
+                    {
+                        new XmlColumnSource
+                        {
+                            Type       = XmlColumnSourceType.SingleColumn,
+                            ColumnName = "template",
+                            ValuePath  = "./template/@code",
+                            ValueType  = XmlColumnValueType.SingleValue
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)=1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.SingleValue
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)>1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.MultipleValues
+                        }
+                    }
+                }
+            };
+
+            var options = new CommonOptions { ErrorHandling = Table.ErrorHandling.ContinueAndFail };
+
+            Action executeTask = () => LoadTask.Load(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == 1)
+            );
+        }
     }
 
     [TestFixture]

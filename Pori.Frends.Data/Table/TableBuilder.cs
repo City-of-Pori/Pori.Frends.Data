@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using Pori.Frends.Data.Linq;
 
 namespace Pori.Frends.Data
@@ -210,9 +209,9 @@ namespace Pori.Frends.Data
             return this; // Enable method chaining
         }
 
-        private TableBuilder Load<TRow>(IEnumerable<TRow> rows, Func<TRow, dynamic> transform)
+        private TableBuilder Load<TRow>(IEnumerable<TRow> rows, Func<TRow, RowDict> transform)
         {
-            this.rows.Load(rows, transform);
+            this.rows.Load(columns, rows, transform);
 
             return this; // Enable method chaining
         }
@@ -343,16 +342,17 @@ namespace Pori.Frends.Data
         public static TableBuilder From(Table source) => new TableBuilder(source.Columns, source.Rows);
 
         /// <summary>
-        /// Create a table from row data supplied as JObjects.
+        /// Load data into a table from an enumerable.
         /// </summary>
-        /// <param name="columns">The columns for the table.</param>
-        /// <param name="data">The row data for the table.</param>
-        /// <returns>The created table.</returns>
-        public static TableBuilder Load(IEnumerable<string> columns, IEnumerable<dynamic> data)
+        /// <param name="columns">The columns for the table to be created.</param>
+        /// <param name="data">The data for the table rows.</param>
+        /// <param name="rowLoader">Function for extracting row data for each row.</param>
+        /// <returns>A table builder with the loaded data as the starting data.</returns>
+        public static TableBuilder Load(IEnumerable<string> columns, IEnumerable<dynamic> data, Func<dynamic, RowDict> rowLoader)
         {
             var builder = new TableBuilder(columns, Enumerable.Empty<dynamic>());
 
-            return builder.Load(data, row => Table.Row(columns, (row ?? Table.NullRow(columns)) as RowDict));
+            return builder.Load(data, rowLoader);
         }
 
         /// <summary>
@@ -361,7 +361,7 @@ namespace Pori.Frends.Data
         /// <typeparam name="TCollection">The data type for each row's values</typeparam>
         /// <param name="columns">Ordered list of the columns for the table</param>
         /// <param name="data">The table's data (rows) as a list of row values.</param>
-        /// <returns>The created table.</returns>
+        /// <returns>A table builder with the loaded data as the starting data.</returns>
         public static TableBuilder Load<TCollection>(IEnumerable<string> columns, IEnumerable<TCollection> data)
             where TCollection : IEnumerable<object>
         {

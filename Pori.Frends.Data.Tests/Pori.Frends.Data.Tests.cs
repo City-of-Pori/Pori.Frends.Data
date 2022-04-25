@@ -571,7 +571,7 @@ namespace Pori.Frends.Data.Tests
 
             var data = JArray.FromObject(rows);
 
-            // Add a null to the end of the rows to cause an error
+            // Add a null to the rows to cause an error
             data.Add(null);
 
             var input = new LoadParameters
@@ -600,8 +600,6 @@ namespace Pori.Frends.Data.Tests
 
             foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
             {
-                Console.WriteLine(resRow.A);
-                Console.WriteLine(origRow.A);
                 Assert.That(origRow.A == resRow.A);
                 Assert.That(origRow.B == resRow.B);
             }
@@ -622,7 +620,7 @@ namespace Pori.Frends.Data.Tests
             var data = JArray.FromObject(rows);
 
             // Add a null to the end of the rows to cause an error
-            data.Add(null);
+            data.Insert(1, null);
 
             var input = new LoadParameters
             {
@@ -648,13 +646,54 @@ namespace Pori.Frends.Data.Tests
             Assert.That(result.Errors.Count(), Is.EqualTo(1));
             Assert.That(result.Rows.Count, Is.EqualTo(rows.Length));
 
-            foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
+            foreach(var (origRow, resRow) in rows.Where(row => row != null).Zip(result.Rows, (o, r) => (o, r)))
             {
                 Console.WriteLine(resRow.A);
                 Console.WriteLine(origRow.A);
                 Assert.That(origRow.A == resRow.A);
                 Assert.That(origRow.B == resRow.B);
             }
+        }
+
+        [Test]
+        public void JsonDataLoadingCanCollectErrorsAndFail()
+        {
+            var rows = new []
+            {
+                new { A = 1, B = "foo" },
+                new { A = 2, B = "bar" },
+                new { A = 3, B = "baz" },
+            };
+
+            var data = JArray.FromObject(rows);
+
+            // Add a null to the end of the rows to cause an error
+            data.Insert(1, null);
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.JSON,
+                Json   = new LoadJsonParameters
+                {
+                    Columns = new [] { "A", "B" },
+                    Data    = data
+                }
+            };
+
+            CommonOptions options = new CommonOptions
+            {
+                ErrorHandling = Table.ErrorHandling.ContinueAndFail
+            };
+
+            Action executeTask = () => LoadTask.Load(input, options, new CancellationToken());
+
+            Assert.That(
+                executeTask,
+                Throws
+                    .TypeOf<Table.FailedOperationException>()
+                    .With.Property("Errors")
+                    .Matches<dynamic>(errors => errors.Count == 1)
+            );
         }
     }
 
@@ -1842,7 +1881,7 @@ namespace Pori.Frends.Data.Tests
 
             Table result = FilterTask.Filter(input, options, new CancellationToken());
 
-            Assert.That(result.Errors, Is.Not.Empty);
+            Assert.That(result.Errors.Count(), Is.EqualTo(original.Count));
         }
 
         [Test]

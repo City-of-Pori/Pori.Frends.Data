@@ -174,7 +174,7 @@ namespace Pori.Frends.Data
         /// </summary>
         /// <param name="columns">The columns for the row.</param>
         /// <returns>The new table row with all values set to null.</returns>
-        internal static dynamic NullRow(IEnumerable<string> columns)
+        internal static RowDict NullRow(IEnumerable<string> columns)
         {
             // Create an enumerable with null values.
             IEnumerable<dynamic> values = columns.Select(c => null as dynamic);

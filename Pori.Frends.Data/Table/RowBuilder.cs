@@ -294,21 +294,46 @@ namespace Pori.Frends.Data
 
         /// <summary>
         /// Load rows from an enumerable using the provided loader function
-        /// which produces the table rows.
+        /// for extracting row data for each row.
         /// </summary>
         /// <typeparam name="TRow">The type of data to load as rows.</typeparam>
+        /// <param name="columns">The columns for the target table.</param>
         /// <param name="data">The data to load as rows.</param>
-        /// <param name="loader">The function to convert each item to a table row.</param>
-        public void Load<TRow>(IEnumerable<TRow> data, Func<TRow, dynamic> loader)
+        /// <param name="rowLoader">The function to convert each item to a table row.</param>
+        public void Load<TRow>(IEnumerable<string> columns, IEnumerable<TRow> data, Func<TRow, RowDict> rowLoader)
         {
-            bool LoadErrorHandler(int i, Exception e)
+            rows = LoadRows(columns, data, rowLoader);
+        }
+
+        /// <summary>
+        /// Load row data from a given enumerable.
+        /// </summary>
+        /// <typeparam name="TRow">The datatype for rows to be loaded.</typeparam>
+        /// <param name="columns">The columns of the target table.</param>
+        /// <param name="theRows">The row data to be loaded as table rows.</param>
+        /// <param name="rowLoader">Function to produce row values from the row data as a dictionary.</param>
+        /// <returns>The loaded rows.</returns>
+        private IEnumerable<dynamic> LoadRows<TRow>(IEnumerable<string> columns, IEnumerable<TRow> theRows, Func<TRow, RowDict> rowLoader)
+        {
+            var enumerated = theRows.Select((row, i) => (row, i));
+
+            foreach(var (row, index) in enumerated)
             {
-                var result = HandleError(null, i, e);
+                RowDict rowData = null;
 
-                return result != Table.ErrorHandling.Discard;
-            }
+                try
+                {
+                    rowData = rowLoader(row);
+                }
+                catch(Exception e)
+                {
+                    // Skip this row if we want to discard erroneus rows from the result
+                    if(HandleError(row, index, e) == Table.ErrorHandling.Discard)
+                        continue;
+                }
 
-            rows = ApplyRowTransform<TRow>(data.Catch(LoadErrorHandler), loader);
+                yield return Table.Row(columns, rowData ?? Table.NullRow(columns));
+            };
         }
 
         /// <summary>
@@ -497,35 +522,6 @@ namespace Pori.Frends.Data
             };
         }
 
-        /// <summary>
-        /// Apply a transformation function to each row.
-        /// </summary>
-        /// <typeparam name="TRow"></typeparam>
-        /// <param name="theRows"></param>
-        /// <param name="transform"></param>
-        /// <returns></returns>
-        private IEnumerable<dynamic> ApplyRowTransform<TRow>(IEnumerable<TRow> theRows, Func<TRow, dynamic> transform)
-        {
-            var enumerated = theRows.Select((row, i) => (row, i));
-
-            foreach(var (row, index) in enumerated)
-            {
-                dynamic resultRow = null;
-
-                try
-                {
-                    resultRow = transform(row);
-                }
-                catch(Exception e)
-                {
-                    // Skip this row if we want to discard erroneus rows from the result
-                    if(HandleError(row, index, e) == Table.ErrorHandling.Discard)
-                        continue;
-                }
-
-                yield return resultRow;
-            };
-        }
 
         /// <summary>
         /// Helper function to convert a row into an ordered list of values.

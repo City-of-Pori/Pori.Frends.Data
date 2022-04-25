@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
@@ -106,13 +107,10 @@ namespace Pori.Frends.Data
 
 
                 case LoadFormat.JSON:
-                    // Convert each JObject to a dynamic object
-                    var rows = (input.Json.Data as JArray)
-                                .Cast<JObject>()
-                                .Select(row => row.ToObject<ExpandoObject>());
+                    var rows = input.Json.Data as JArray;
 
                     return TableBuilder
-                            .Load(input.Json.Columns, rows)
+                            .Load(input.Json.Columns, rows, row => (row as JObject).ToObject<ExpandoObject>())
                             .OnError(options.ErrorHandling)
                             .CreateTable();
 

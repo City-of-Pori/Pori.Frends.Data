@@ -35,64 +35,6 @@ namespace Pori.Frends.Data
                         yield return value;
                 }
             }
-
-            /// <summary>
-            /// Produce the values of the source enumerable but catch
-            /// exceptions encountered during the iteration. For each
-            /// exception caught, call the catchAction with the index
-            /// of the item and the exception thrown.
-            /// </summary>
-            /// <typeparam name="TSource">The value type of the enumerable.</typeparam>
-            /// <param name="source">The source iterable to wrap.</param>
-            /// <param name="catchAction"></param>
-            /// <returns></returns>
-            public static IEnumerable<TSource> Catch<TSource>(this IEnumerable<TSource> source,
-                                                              Func<int, Exception, bool> catchAction)
-            {
-                return source.Catch(catchAction, () => default);
-            }
-
-            /// <summary>
-            /// Produce the values of the source enumerable but catch
-            /// exceptions encountered during the iteration. For each
-            /// exception caught, call the catchAction with the index
-            /// of the item and the exception thrown.
-            /// </summary>
-            /// <typeparam name="TSource">The value type of the enumerable.</typeparam>
-            /// <param name="source">The source iterable to wrap.</param>
-            /// <param name="catchAction"></param>
-            /// <param name="defaultValueSelector">
-            /// A function used to produce a value for rows that throw and exception
-            /// </param>
-            /// <returns></returns>
-            public static IEnumerable<TSource> Catch<TSource>(this IEnumerable<TSource> source,
-                                                              Func<int, Exception, bool> catchAction,
-                                                              Func<TSource> defaultValueSelector)
-            {
-                var enumerator = source.GetEnumerator();
-                TSource value;
-
-                for(int i = 0; true; i++)
-                {
-                    try
-                    {
-                        if(!enumerator.MoveNext())
-                            break;
-
-                        value = enumerator.Current;
-                    }
-                    catch(Exception e)
-                    {
-                        value = defaultValueSelector();
-
-                        if(!catchAction(i, e))
-                            continue;
-                    }
-
-                    yield return value;
-                }
-
-            }
         }
     }
 }

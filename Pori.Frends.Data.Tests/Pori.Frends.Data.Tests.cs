@@ -147,6 +147,49 @@ namespace Pori.Frends.Data.Tests
 
             Assert.That(JToken.DeepEquals(result, data));
         }
+
+        [Test]
+        public void TableCanBeConvertedToXml()
+        {
+            Table table = TestData.Typed;
+
+            string expectedDecl = @"<?xml version=""1.0"" encoding=""UTF-8""?>";
+            string expectedXml = @"
+                <table>
+                    <row><A>0</A><B>true</B><C>T</C><D>04.08.2015</D><E>Foxtrot</E><F>-8.6</F><I>541</I><M>0</M><N>Puce</N><U>2027-11-15T06:56:47Z</U></row>
+                    <row><A>1</A><B>true</B><C>W</C><D>07.12.2004</D><E>Tango</E><F>-43.5</F><I>244</I><M>1</M><N>Teal</N><U>2004-11-20T03:02:28Z</U></row>
+                    <row><A>2</A><B>true</B><C>L</C><D>19.07.2023</D><E>Echo</E><F>-10.11</F><I>-869</I><M>0</M><N /><U>2015-01-14T00:51:16Z</U></row>
+                    <row><A>3</A><B>false</B><C>S</C><D>27.05.2027</D><E>Alfa</E><F>-66.06</F><I>-761</I><M>1</M><N /><U>2028-03-25T21:49:37Z</U></row>
+                    <row><A>4</A><B>false</B><C>Z</C><D>13.10.2014</D><E>Uniform</E><F>-14.72</F><I>-275</I><M>0</M><N>Goldenrod</N><U>2028-03-16T08:08:43Z</U></row>
+                    <row><A>5</A><B>true</B><C>Y</C><D>05.09.2013</D><E>Oscar</E><F>-29.71</F><I>-896</I><M>1</M><N>Green</N><U>2027-08-11T12:32:56Z</U></row>
+                    <row><A>6</A><B>true</B><C>T</C><D>21.07.2003</D><E>Bravo</E><F>7.05</F><I>-706</I><M>0</M><N>Khaki</N><U>2013-12-19T14:24:42Z</U></row>
+                    <row><A>7</A><B>false</B><C>X</C><D>23.12.2004</D><E>Bravo</E><F>74.45</F><I>424</I><M>1</M><N>Mauv</N><U>2013-10-20T18:21:19Z</U></row>
+                    <row><A>8</A><B>true</B><C>P</C><D>23.09.2023</D><E>November</E><F>49.35</F><I>-417</I><M>0</M><N /><U>1999-07-27T23:16:03Z</U></row>
+                    <row><A>9</A><B>true</B><C>G</C><D>06.04.2007</D><E>Tango</E><F>-54.5</F><I>-8</I><M>1</M><N /><U>2017-05-23T19:01:35Z</U></row>
+                    <row><A>10</A><B>true</B><C>Q</C><D>13.03.2025</D><E>Papa</E><F>-87.98</F><I>594</I><M>0</M><N /><U>2015-07-17T18:30:11Z</U></row>
+                    <row><A>11</A><B>true</B><C>T</C><D>26.02.2017</D><E>Foxtrot</E><F>75</F><I>745</I><M>1</M><N>Fuscia</N><U>2013-09-27T23:27:52Z</U></row>
+                    <row><A>12</A><B>false</B><C>U</C><D>24.06.2002</D><E>Kilo</E><F>-97.89</F><I>-678</I><M>0</M><N /><U>2028-05-17T04:10:04Z</U></row>
+                    <row><A>13</A><B>true</B><C>X</C><D>10.02.2020</D><E>Mike</E><F>63.58</F><I>363</I><M>1</M><N>Maroon</N><U>2024-04-17T07:16:37Z</U></row>
+                    <row><A>14</A><B>false</B><C>S</C><D>03.05.2023</D><E>Delta</E><F>-60.48</F><I>979</I><M>0</M><N>Goldenrod</N><U>2000-06-10T03:15:18Z</U></row>
+                    <row><A>15</A><B>false</B><C>I</C><D>14.09.2029</D><E>Whiskey</E><F>72.45</F><I>-406</I><M>1</M><N>Pink</N><U>1999-01-19T00:29:17Z</U></row>
+                    <row><A>16</A><B>true</B><C>Q</C><D>24.02.2009</D><E>Papa</E><F>-80.44</F><I>9</I><M>0</M><N /><U>2013-10-27T06:43:15Z</U></row>
+                    <row><A>17</A><B>true</B><C>R</C><D>11.08.2015</D><E>Uniform</E><F>-26.4</F><I>-293</I><M>1</M><N>Aquamarine</N><U>2022-02-03T08:57:37Z</U></row>
+                    <row><A>18</A><B>true</B><C>T</C><D>07.06.2026</D><E>Oscar</E><F>27.6</F><I>-592</I><M>0</M><N /><U>2007-10-25T23:44:31Z</U></row>
+                    <row><A>19</A><B>true</B><C>W</C><D>18.03.2000</D><E>Uniform</E><F>-60.79</F><I>-130</I><M>1</M><N /><U>2001-03-09T11:05:58Z</U></row>
+                </table>";
+
+            string RemoveWhitespace(string text)
+            {
+                var nonWhitespace = text.ToCharArray()
+                                        .Where(c => !char.IsWhiteSpace(c))
+                                        .ToArray();
+
+                return new string(nonWhitespace);
+            }
+
+            Assert.That(RemoveWhitespace(table.ToXml()), Is.EqualTo(RemoveWhitespace(expectedDecl + expectedXml)));
+            Assert.That(RemoveWhitespace(table.ToXml(declaration: false)), Is.EqualTo(RemoveWhitespace(expectedXml)));
+        }
     }
 
     [TestFixture]

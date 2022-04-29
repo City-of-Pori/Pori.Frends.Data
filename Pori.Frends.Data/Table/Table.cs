@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data
@@ -70,6 +71,32 @@ namespace Pori.Frends.Data
         {
             // Do the conversion
             return JToken.FromObject(Rows);
+        }
+
+        /// <summary>
+        /// Convert the table into XML.
+        /// </summary>
+        /// <returns>The XML representation of the table as a string.</returns>
+        public string ToXml(string version = "1.0", string encoding = "UTF-8", string standalone = null, bool declaration = true)
+        {
+            XElement ColumnToXml(string column, dynamic row)
+            {
+                return new XElement(column, (row as RowDict)[column]);
+            }
+
+            XElement RowToXml(dynamic row)
+            {
+                return new XElement("row", Columns.Select(c => ColumnToXml(c, row)));
+            }
+
+            var table = new XElement("table", Rows.Select(RowToXml));
+            var decl  = new XDeclaration(version, encoding, standalone);
+            var doc   = new XDocument(decl, table);
+
+            if(declaration)
+                return doc.Declaration.ToString() + doc.ToString();
+            else
+                return doc.ToString();
         }
 
         /// <summary>

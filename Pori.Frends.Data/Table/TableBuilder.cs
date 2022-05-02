@@ -93,6 +93,26 @@ namespace Pori.Frends.Data
             return this; // Enable method chaining
         }
 
+
+        /// <summary>
+        /// Split the source table into multiple tables of a given (maximum) size.
+        /// </summary>
+        /// <param name="size">The maximum size of each chunk table.</param>
+        /// <returns>An enumerable that yields the chunk tables.</returns>
+        public IEnumerable<Table> Chunk(int size)
+        {
+            IEnumerable<RowDict> rowsLeft = rows.ToRows();
+
+            var chunkCount = Math.Ceiling(rowsLeft.Count() / (double)size);
+
+            for(int i = 0; i < chunkCount; i++)
+            {
+                yield return Table.From(columns, rowsLeft.Take(size));
+
+                rowsLeft = rowsLeft.Skip(size);
+            }
+        }
+
         /// <summary>
         /// Expand the nested values of a column into new columns.
         /// </summary>

@@ -7,6 +7,9 @@
 			"TaskMethod": "Pori.Frends.Data.AddColumnsTask.AddColumns"
 		},
 		{
+			"TaskMethod": "Pori.Frends.Data.ChunkTask.Chunk"
+		},
+		{
 			"TaskMethod": "Pori.Frends.Data.ConcatenateTask.Concatenate"
 		},
 		{

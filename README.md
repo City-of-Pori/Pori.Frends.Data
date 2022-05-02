@@ -22,6 +22,10 @@ Load data into a new table.
 
 Add one or more columns to a table.
 
+## Chunk
+
+Split a table into tables of a given (maximum size).
+
 ## Concatenate
 
 Concatenate the rows of multiple tables into a new table.

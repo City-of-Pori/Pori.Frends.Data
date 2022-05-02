@@ -1444,6 +1444,101 @@ namespace Pori.Frends.Data.Tests
     }
 
     [TestFixture]
+    class ChunkTaskTests
+    {
+        [Test]
+        public void ChunkReturnsTablesOfTheCorrectSize()
+        {
+            Table source = TestData.Typed;
+
+            foreach(var size in new[] { 6, 5 })
+            {
+                var input = new ChunkParameters
+                {
+                    Data = source,
+                    Size = size
+                };
+
+                List<Table> result = ChunkTask.Chunk(input, new CancellationToken());
+
+                Table last = result.Last();
+
+                foreach(var chunk in result)
+                {
+                    if(chunk != last)
+                        Assert.That(chunk.Count, Is.EqualTo(size));
+                    else
+                        Assert.That(chunk.Count, Is.InRange(1, size));
+                }
+            }
+        }
+
+        [Test]
+        public void ChunkResultHasTheCorrectColumns()
+        {
+            Table source = TestData.Typed;
+
+            foreach(var size in new[] { 50, 6, 5 })
+            {
+                var input = new ChunkParameters
+                {
+                    Data = source,
+                    Size = size
+                };
+
+                List<Table> result = ChunkTask.Chunk(input, new CancellationToken());
+
+                foreach(var chunk in result)
+                    Assert.That(chunk.Columns, Is.EqualTo(source.Columns));
+            }
+        }
+
+        [Test]
+        public void ChunkResultContainsAllTheOriginalRows()
+        {
+            Table source = TestData.Typed;
+
+            foreach(var size in new[] { 50, 6, 5 })
+            {
+                var input = new ChunkParameters
+                {
+                    Data = source,
+                    Size = size
+                };
+
+                List<Table> result = ChunkTask.Chunk(input, new CancellationToken());
+
+                Table concatenated = TableBuilder
+                                        .From(result.First())
+                                        .Concatenate(result.Skip(1))
+                                        .CreateTable();
+
+                Assert.That(concatenated.Rows, Is.EqualTo(source.Rows));
+            }
+        }
+
+        [Test]
+        public void ChunkFailsWhenGivenAnInvalidChunkSize()
+        {
+            Table source = TestData.Typed;
+
+            foreach(var size in new[] { 0, -11 })
+            {
+                var input = new ChunkParameters
+                {
+                    Data = source,
+                    Size = size
+                };
+
+                Action executeTask = () => ChunkTask.Chunk(input, new CancellationToken());
+
+                Assert.That(executeTask, Throws.Exception);
+            }
+        }
+    }
+
+
+    [TestFixture]
     class ConcatenateTaskTests
     {
         [Test]

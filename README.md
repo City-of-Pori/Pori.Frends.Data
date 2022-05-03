@@ -88,5 +88,5 @@ Create a NuGet package
 
 | Version | Changes |
 | ------- | ------- |
-| 0.14.0  | Development version with all tasks implemented |
+| 0.25.0  | Development version with all tasks implemented |
 | 0.0.1   | Initial version |

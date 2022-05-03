@@ -23,7 +23,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class ConcatenateTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Concatenate one or more tables together. All tables must have

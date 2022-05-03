@@ -46,7 +46,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class FilterTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Filter rows from a table.

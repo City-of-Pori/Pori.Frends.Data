@@ -123,7 +123,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class JoinTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Join the rows of two tables into a new table.

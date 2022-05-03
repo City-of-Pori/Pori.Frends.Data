@@ -40,7 +40,7 @@ namespace Pori.Frends.Data
     }
     
 
-    public class ReorderColumnsTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Reorder the columns of a table.

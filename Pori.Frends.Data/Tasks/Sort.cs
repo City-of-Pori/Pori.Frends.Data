@@ -47,7 +47,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class SortTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Sort the rows of a table by one or more columns.

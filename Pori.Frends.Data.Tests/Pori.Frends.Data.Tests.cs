@@ -141,7 +141,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table table = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+            Table table = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             JToken result = table.ToJson();
 
@@ -518,7 +518,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             var resultLetters = from row in result.Rows select row.letter;
             var resultIndices = from row in result.Rows select row.index;
@@ -549,7 +549,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Columns, Is.EqualTo(new[] { "A", "B", "I" }));
@@ -584,7 +584,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Discard
             };
 
-            Table result = LoadTask.Load(input, options, new CancellationToken());
+            Table result = TableTasks.Load(input, options, new CancellationToken());
 
             var expectedRows = source.Rows.Where(row => row.N != null);
 
@@ -618,7 +618,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Continue
             };
 
-            Table result = LoadTask.Load(input, options, new CancellationToken());
+            Table result = TableTasks.Load(input, options, new CancellationToken());
 
             Assert.That(result, Is.Not.Null);
             Assert.That(result.Columns, Is.EqualTo(new[] { "N" }));
@@ -650,7 +650,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.ContinueAndFail
             };
 
-            Action executeTask = () => LoadTask.Load(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.Load(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,
@@ -683,7 +683,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             string[] expectedColumns = { "A", "B" };
 
@@ -725,7 +725,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.TypeOf<Table.Error>());
         }
@@ -760,7 +760,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Continue
             };
 
-            Table result = LoadTask.Load(input, options, new CancellationToken());
+            Table result = TableTasks.Load(input, options, new CancellationToken());
 
             string[] expectedColumns = { "A", "B" };
 
@@ -808,7 +808,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Discard
             };
 
-            Table result = LoadTask.Load(input, options, new CancellationToken());
+            Table result = TableTasks.Load(input, options, new CancellationToken());
 
             string[] expectedColumns = { "A", "B" };
 
@@ -856,7 +856,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.ContinueAndFail
             };
 
-            Action executeTask = () => LoadTask.Load(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.Load(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,
@@ -1006,7 +1006,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = LoadTask.Load(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Count, Is.EqualTo(expectedXmlResult.Count()));
 
@@ -1079,7 +1079,7 @@ namespace Pori.Frends.Data.Tests
 
             var options = new CommonOptions { ErrorHandling = Table.ErrorHandling.Discard };
 
-            Table result = LoadTask.Load(input, options, new CancellationToken());
+            Table result = TableTasks.Load(input, options, new CancellationToken());
 
             Assert.That(result.Count, Is.EqualTo(expectedXmlResult.Count()));
             Assert.That(result.Errors.Count, Is.EqualTo(1));
@@ -1153,7 +1153,7 @@ namespace Pori.Frends.Data.Tests
 
             var options = new CommonOptions { ErrorHandling = Table.ErrorHandling.ContinueAndFail };
 
-            Action executeTask = () => LoadTask.Load(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.Load(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,
@@ -1182,7 +1182,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -1206,7 +1206,7 @@ namespace Pori.Frends.Data.Tests
             IEnumerable<string> expectedColumns = original.Columns.Concat(input.Columns.Select(c => c.Name));
 
             
-            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
 
             Assert.That(result.Columns, Is.EqualTo(expectedColumns));
@@ -1236,7 +1236,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
 
             // Check each row contains the correct columns
@@ -1263,7 +1263,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Table result = AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
 
             // Check each row contains the correct values in the new columns
@@ -1289,7 +1289,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1308,7 +1308,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1333,7 +1333,7 @@ namespace Pori.Frends.Data.Tests
             };
 
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.TypeOf<Table.Error>());
         }
@@ -1362,7 +1362,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Discard
             };
 
-            Table result = AddColumnsTask.AddColumns(input, options, new CancellationToken());
+            Table result = TableTasks.AddColumns(input, options, new CancellationToken());
 
             Assert.That(
                 original.Rows.Where(row => row.N != null).Zip(result.Rows, (orig, res) => res.firstOfN == orig.N[0]),
@@ -1395,7 +1395,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Continue
             };
 
-            Table result = AddColumnsTask.AddColumns(input, options, new CancellationToken());
+            Table result = TableTasks.AddColumns(input, options, new CancellationToken());
 
             Assert.That(
                 original.Rows.Zip(result.Rows, (orig, res) => (orig.N == null && res.firstOfN == null) || res.firstOfN == orig.N[0]),
@@ -1429,7 +1429,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.ContinueAndFail
             };
 
-            Action executeTask = () => AddColumnsTask.AddColumns(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.AddColumns(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,
@@ -1459,7 +1459,7 @@ namespace Pori.Frends.Data.Tests
                     Size = size
                 };
 
-                List<Table> result = ChunkTask.Chunk(input, new CancellationToken());
+                List<Table> result = TableTasks.Chunk(input, new CancellationToken());
 
                 Table last = result.Last();
 
@@ -1486,7 +1486,7 @@ namespace Pori.Frends.Data.Tests
                     Size = size
                 };
 
-                List<Table> result = ChunkTask.Chunk(input, new CancellationToken());
+                List<Table> result = TableTasks.Chunk(input, new CancellationToken());
 
                 foreach(var chunk in result)
                     Assert.That(chunk.Columns, Is.EqualTo(source.Columns));
@@ -1506,7 +1506,7 @@ namespace Pori.Frends.Data.Tests
                     Size = size
                 };
 
-                List<Table> result = ChunkTask.Chunk(input, new CancellationToken());
+                List<Table> result = TableTasks.Chunk(input, new CancellationToken());
 
                 Table concatenated = TableBuilder
                                         .From(result.First())
@@ -1530,7 +1530,7 @@ namespace Pori.Frends.Data.Tests
                     Size = size
                 };
 
-                Action executeTask = () => ChunkTask.Chunk(input, new CancellationToken());
+                Action executeTask = () => TableTasks.Chunk(input, new CancellationToken());
 
                 Assert.That(executeTask, Throws.Exception);
             }
@@ -1559,7 +1559,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConcatenateTask.Concatenate(input, new CancellationToken());
+            Table result = TableTasks.Concatenate(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(fullTable));
@@ -1575,7 +1575,7 @@ namespace Pori.Frends.Data.Tests
                 Tables = new Table[] { fullTable }
             };
 
-            Table result = ConcatenateTask.Concatenate(input, new CancellationToken());
+            Table result = TableTasks.Concatenate(input, new CancellationToken());
 
             Assert.That(result, Is.Not.SameAs(fullTable));
             Assert.That(result.Columns, Is.EqualTo(fullTable.Columns));
@@ -1600,7 +1600,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConcatenateTask.Concatenate(input, new CancellationToken());
+            Table result = TableTasks.Concatenate(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(fullTable.Columns));
             Assert.That(result.Rows, Is.EqualTo(fullTable.Rows));
@@ -1625,7 +1625,7 @@ namespace Pori.Frends.Data.Tests
                 Tables = new [] { first, incompatible }
             };
 
-            Action executeTask = () => ConcatenateTask.Concatenate(input, new CancellationToken());
+            Action executeTask = () => TableTasks.Concatenate(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1648,7 +1648,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -1668,7 +1668,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.B is bool));
         }
@@ -1687,7 +1687,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is bool));
             Assert.That(
@@ -1710,7 +1710,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.D is DateTime));
             Assert.That(
@@ -1736,7 +1736,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is decimal));
             Assert.That(
@@ -1759,7 +1759,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is double));
             Assert.That(
@@ -1782,7 +1782,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is float));
             Assert.That(
@@ -1805,7 +1805,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is int));
             Assert.That(
@@ -1828,7 +1828,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is long));
             Assert.That(
@@ -1851,7 +1851,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is string));
             Assert.That(
@@ -1879,7 +1879,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is string));
             Assert.That(
@@ -1902,7 +1902,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -1921,11 +1921,11 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.TypeOf<Table.Error>());
 
-            /*Table result = ConvertColumnsTask.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
+            /*Table result = TableTasks.ConvertColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.I is bool));
             Assert.That(
@@ -1953,7 +1953,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Discard
             };            
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, options, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, options, new CancellationToken());
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.N != null));
             Assert.That(
@@ -1981,7 +1981,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Continue
             };
 
-            Table result = ConvertColumnsTask.ConvertColumns(input, options, new CancellationToken());
+            Table result = TableTasks.ConvertColumns(input, options, new CancellationToken());
 
             Assert.That(
                 original.Rows.Zip(result.Rows, (orig, res) => (orig.I == res.I)),
@@ -2012,7 +2012,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.ContinueAndFail
             };
 
-            Action executeTask = () => ConvertColumnsTask.ConvertColumns(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.ConvertColumns(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,
@@ -2040,7 +2040,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping     = GroupingType.EntireRows
             };
 
-            Table result = GroupByTask.GroupBy(input, new CancellationToken());
+            Table result = TableTasks.GroupBy(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -2060,7 +2060,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping     = GroupingType.EntireRows
             };
 
-            Table result = GroupByTask.GroupBy(input, new CancellationToken());
+            Table result = TableTasks.GroupBy(input, new CancellationToken());
 
 
             string[] expectedColumns = { "B", "M", "G" };
@@ -2091,7 +2091,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping     = GroupingType.EntireRows
             };
 
-            Table result = GroupByTask.GroupBy(input, new CancellationToken());
+            Table result = TableTasks.GroupBy(input, new CancellationToken());
 
             // Check that each group is a table
             foreach(var row in result.Rows)
@@ -2123,7 +2123,7 @@ namespace Pori.Frends.Data.Tests
                 Columns      = new[] { "A", "B", "C" }
             };
 
-            Table result = GroupByTask.GroupBy(input, new CancellationToken());
+            Table result = TableTasks.GroupBy(input, new CancellationToken());
 
             string[] expectedColumns = { "A", "B", "C" };
 
@@ -2158,7 +2158,7 @@ namespace Pori.Frends.Data.Tests
                 Column       = "A"
             };
 
-            Table result = GroupByTask.GroupBy(input, new CancellationToken());
+            Table result = TableTasks.GroupBy(input, new CancellationToken());
 
             // Check that each group consists of the values of the selected
             // column.
@@ -2199,7 +2199,7 @@ namespace Pori.Frends.Data.Tests
                 ComputeValue    = selectElement
             };
 
-            Table result = GroupByTask.GroupBy(input, new CancellationToken());
+            Table result = TableTasks.GroupBy(input, new CancellationToken());
 
             // Check that each group consists of the values of the selected
             // column.
@@ -2237,7 +2237,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping        = GroupingType.EntireRows
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
+            Action executeTask = () => TableTasks.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2256,7 +2256,7 @@ namespace Pori.Frends.Data.Tests
                 Columns         = new[] { "A", "X" }  // <---
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
+            Action executeTask = () => TableTasks.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2275,7 +2275,7 @@ namespace Pori.Frends.Data.Tests
                 Column          = "X" // <---
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
+            Action executeTask = () => TableTasks.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2294,7 +2294,7 @@ namespace Pori.Frends.Data.Tests
                 Grouping        = GroupingType.EntireRows
             };
 
-            Action executeTask = () => GroupByTask.GroupBy(input, new CancellationToken());
+            Action executeTask = () => TableTasks.GroupBy(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2315,7 +2315,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => row.B == true
             };
             
-            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered is Table);
             Assert.That(filtered, Is.Not.SameAs(original));
@@ -2334,7 +2334,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = B => B == true
             };
 
-            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered is Table);
             Assert.That(filtered, Is.Not.SameAs(original));
@@ -2350,7 +2350,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => row.B == true
             };
 
-            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
         }
@@ -2366,7 +2366,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = B => B == true
             };
 
-            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
         }
@@ -2383,7 +2383,7 @@ namespace Pori.Frends.Data.Tests
                 Filter     = row => true            // Accept all rows
             };
 
-            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
@@ -2401,7 +2401,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = B => true
             };
 
-            Table filtered = FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Is.EqualTo(original.Rows));
         }
@@ -2419,7 +2419,7 @@ namespace Pori.Frends.Data.Tests
                 Filter       = doesNotExist => true
             };
 
-            Action executeTask = () => FilterTask.Filter(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -2442,7 +2442,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Continue
             };
 
-            Table result = FilterTask.Filter(input, options, new CancellationToken());
+            Table result = TableTasks.Filter(input, options, new CancellationToken());
 
             Assert.That(result.Errors.Count(), Is.EqualTo(original.Count));
         }
@@ -2465,7 +2465,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.ContinueAndFail
             };
 
-            Action executeTask = () => FilterTask.Filter(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.Filter(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,
@@ -2575,7 +2575,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(leftTable));
@@ -2646,7 +2646,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new CancellationToken());
+                Table result = TableTasks.Join(input, new CancellationToken());
 
                 foreach(var row in result.Rows)
                 {
@@ -2700,7 +2700,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new CancellationToken());
+                Table result = TableTasks.Join(input, new CancellationToken());
 
                 string[] expectedColumns = { "left", "right" };
 
@@ -2750,7 +2750,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new CancellationToken());
+                Table result = TableTasks.Join(input, new CancellationToken());
 
                 string[] expectedColumns = { "left", "right" };
 
@@ -2813,7 +2813,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             var leftJoinedRows = result.Rows
                                     .Where(row => row.left != null)
@@ -2867,7 +2867,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             var leftJoinedRows = result.Rows
                                     .Where(row => row.left != null)
@@ -2915,7 +2915,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             Assert.That(result.Rows.Select(row => row.left), Is.EquivalentTo(leftMatched.Rows));
         }
@@ -2952,7 +2952,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             string[] expectedColumns = { "left", "right" };
 
@@ -3010,7 +3010,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             var resultMatchedRows = result.Rows.Where(row => row.right != null);
 
@@ -3065,7 +3065,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new CancellationToken());
+                Table result = TableTasks.Join(input, new CancellationToken());
 
                 Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
 
@@ -3127,7 +3127,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new CancellationToken());
+                Table result = TableTasks.Join(input, new CancellationToken());
 
                 Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
 
@@ -3190,7 +3190,7 @@ namespace Pori.Frends.Data.Tests
                     }
                 };
 
-                Table result = JoinTask.Join(input, new CancellationToken());
+                Table result = TableTasks.Join(input, new CancellationToken());
 
                 Assert.That(result.Columns, Is.EqualTo(testCase.ExpectedColumns));
                 // Check that each row has the columns in the new column order
@@ -3228,7 +3228,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = JoinTask.Join(input, new CancellationToken());
+            Table result = TableTasks.Join(input, new CancellationToken());
 
             string[] expectedColumns = { "A", "B", "V1", "V2", "V3", "V4", "V5" };
 
@@ -3266,7 +3266,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
+            Action executeTask = () => TableTasks.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3295,7 +3295,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
+            Action executeTask = () => TableTasks.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3324,7 +3324,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
+            Action executeTask = () => TableTasks.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3356,7 +3356,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => JoinTask.Join(input, new CancellationToken());
+            Action executeTask = () => TableTasks.Join(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3376,7 +3376,7 @@ namespace Pori.Frends.Data.Tests
                 Key  = RemoveDuplicatesKey.EntireRows
             };
 
-            Table result = RemoveDuplicatesTask.RemoveDuplicates(input, new CancellationToken());
+            Table result = TableTasks.RemoveDuplicates(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -3394,7 +3394,7 @@ namespace Pori.Frends.Data.Tests
                 KeyColumns = new [] { "E" }
             };
 
-            Table result = RemoveDuplicatesTask.RemoveDuplicates(input, new CancellationToken());
+            Table result = TableTasks.RemoveDuplicates(input, new CancellationToken());
 
             Assert.That(result.Count > 0);
             Assert.That(result.Rows.Select(row => row.E), Is.Unique);
@@ -3414,7 +3414,7 @@ namespace Pori.Frends.Data.Tests
                 KeyColumns = new [] { "B", "E" }
             };
 
-            Table result = RemoveDuplicatesTask.RemoveDuplicates(input, new CancellationToken());
+            Table result = TableTasks.RemoveDuplicates(input, new CancellationToken());
 
             Assert.That(result.Count > 0);
             Assert.That(result.Rows.Select(row => (row.B, row.E)), Is.Unique);
@@ -3457,7 +3457,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -3477,7 +3477,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
 
@@ -3498,7 +3498,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             string[] expectedColumns = { "W", "B", "Z", "Y", "E", "X", "I", "M", "N", "U" };
 
@@ -3519,7 +3519,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             string[] expectedColumns = { "X", "Y", "Z", "W" };
 
@@ -3540,7 +3540,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(renamings.Select(m => m.NewName)));
         }
@@ -3568,7 +3568,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = false
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
 
@@ -3589,7 +3589,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = false
             };
 
-            Action executeTask = () => RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Action executeTask = () => TableTasks.RenameColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3608,7 +3608,7 @@ namespace Pori.Frends.Data.Tests
                 IgnoreInvalidColumnNames = true   // <--
             };
 
-            Table result = RenameColumnsTask.RenameColumns(input, new CancellationToken());
+            Table result = TableTasks.RenameColumns(input, new CancellationToken());
 
             string[] expectedColumns = { "X", "B", "Y", "Z", "E", "W", "I", "M", "N", "U" };
 
@@ -3631,7 +3631,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Table reordered = TableTasks.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered is Table);
             Assert.That(reordered, Is.Not.SameAs(original));
@@ -3649,7 +3649,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Table reordered = TableTasks.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered.Columns, Is.EqualTo(original.Columns.Reverse<string>()));
         }
@@ -3666,7 +3666,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Table reordered = TableTasks.ReorderColumns(input, new CancellationToken());
 
             // Check that each row has the columns in the new column order
             foreach(IEnumerable<KeyValuePair<string, dynamic>> row in reordered.Rows)
@@ -3691,7 +3691,7 @@ namespace Pori.Frends.Data.Tests
 
             string[] expectedColumnOrder = { "A", "C", "E", "D", "B", "F", "I", "M", "N", "U" };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Table reordered = TableTasks.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered.Columns, Is.EqualTo(expectedColumnOrder));
 
@@ -3718,7 +3718,7 @@ namespace Pori.Frends.Data.Tests
 
             string[] expectedColumns = { "C", "E", "B" };
 
-            Table reordered = ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Table reordered = TableTasks.ReorderColumns(input, new CancellationToken());
 
             Assert.That(reordered.Columns, Is.EqualTo(expectedColumns));
 
@@ -3742,7 +3742,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Action executeTask = () => ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Action executeTask = () => TableTasks.ReorderColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3758,7 +3758,7 @@ namespace Pori.Frends.Data.Tests
                 DiscardOtherColumns = false
             };
 
-            Action executeTask = () => ReorderColumnsTask.ReorderColumns(input, new CancellationToken());
+            Action executeTask = () => TableTasks.ReorderColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3780,7 +3780,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveColumnOrder = false
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Table result = TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -3801,7 +3801,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveColumnOrder = false
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Table result = TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(selectedColumns));
         }
@@ -3821,7 +3821,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveColumnOrder = true
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Table result = TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(original.Columns.Where(c => selectedColumns.Contains(c))));
         }
@@ -3840,7 +3840,7 @@ namespace Pori.Frends.Data.Tests
                 Columns = selectedColumns
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Table result = TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(result.Columns, Is.EqualTo(original.Columns.Where(c => !selectedColumns.Contains(c))));
         }
@@ -3860,7 +3860,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveColumnOrder = false
             };
 
-            Table result = SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Table result = TableTasks.SelectColumns(input, new CancellationToken());
 
             // Check that each row has the columns in the new column order
             foreach(IEnumerable<KeyValuePair<string, dynamic>> row in result.Rows)
@@ -3883,7 +3883,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveColumnOrder = false
             };
 
-            Action executeTask = () => SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Action executeTask = () => TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3900,7 +3900,7 @@ namespace Pori.Frends.Data.Tests
                 PreserveColumnOrder = false
             };
 
-            Action executeTask = () => SelectColumnsTask.SelectColumns(input, new CancellationToken());
+            Action executeTask = () => TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -3923,7 +3923,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new CancellationToken());
+            Table result = TableTasks.Sort(input, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -3943,7 +3943,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new CancellationToken());
+            Table result = TableTasks.Sort(input, new CancellationToken());
 
             Assert.That(result.Rows.Select(row => row.E), Is.Ordered.Ascending);
         }
@@ -3962,7 +3962,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new CancellationToken());
+            Table result = TableTasks.Sort(input, new CancellationToken());
 
             Assert.That(result.Rows.Select(row => row.E), Is.Ordered.Descending);
         }
@@ -3982,7 +3982,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = SortTask.Sort(input, new CancellationToken());
+            Table result = TableTasks.Sort(input, new CancellationToken());
 
             Assert.That(
                 result.Rows.Select(row => new { row.E, row.A }),
@@ -4006,7 +4006,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => SortTask.Sort(input, new CancellationToken());
+            Action executeTask = () => TableTasks.Sort(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -4029,7 +4029,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(result is Table);
             Assert.That(result, Is.Not.SameAs(original));
@@ -4049,7 +4049,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             // Check the values in the result are correct.
             // Also ends up making sure that the original rows have not been modified.
@@ -4073,7 +4073,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Table result = TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             // Check the values in the result are correct.
             // Also ends up making sure that the original rows have not been modified.
@@ -4097,7 +4097,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -4116,7 +4116,7 @@ namespace Pori.Frends.Data.Tests
                 }
             };
 
-            Action executeTask = () => TransformColumnsTask.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+            Action executeTask = () => TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
         }
@@ -4140,7 +4140,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Discard
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, options, new CancellationToken());
+            Table result = TableTasks.TransformColumns(input, options, new CancellationToken());
 
             Assert.That(result.Rows, Is.EquivalentTo(original.Rows.Where(row => row.N != null)));
             Assert.That(result.Errors.Count() == original.Rows.Where(row => row.N == null).Count());
@@ -4165,7 +4165,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.Continue
             };
 
-            Table result = TransformColumnsTask.TransformColumns(input, options, new CancellationToken());
+            Table result = TableTasks.TransformColumns(input, options, new CancellationToken());
 
             Assert.That(result.Rows, Is.EquivalentTo(original.Rows));
             Assert.That(result.Errors.Count() == original.Rows.Where(row => row.N == null).Count());
@@ -4190,7 +4190,7 @@ namespace Pori.Frends.Data.Tests
                 ErrorHandling = Table.ErrorHandling.ContinueAndFail
             };
 
-            Action executeTask = () => TransformColumnsTask.TransformColumns(input, options, new CancellationToken());
+            Action executeTask = () => TableTasks.TransformColumns(input, options, new CancellationToken());
 
             Assert.That(
                 executeTask,

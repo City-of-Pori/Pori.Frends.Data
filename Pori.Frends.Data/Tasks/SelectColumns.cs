@@ -59,7 +59,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class SelectColumnsTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Select only a subset of columns from a table.

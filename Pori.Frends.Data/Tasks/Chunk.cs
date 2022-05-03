@@ -32,7 +32,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class ChunkTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Split a table into multiple tables of a given (maximum) size.

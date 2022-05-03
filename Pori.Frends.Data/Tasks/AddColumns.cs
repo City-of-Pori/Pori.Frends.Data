@@ -78,7 +78,9 @@ namespace Pori.Frends.Data
         /// </summary>
         public NewColumn[] Columns { get; set; }
     }
-    public class AddColumnsTask
+
+
+    public static partial class TableTasks
     {
         /// <summary>
         /// Add one or more columns to a table.

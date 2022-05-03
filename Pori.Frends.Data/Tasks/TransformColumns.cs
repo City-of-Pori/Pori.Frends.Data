@@ -56,7 +56,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class TransformColumnsTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Transform the values of one or more columns in a table.

@@ -92,7 +92,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class ConvertColumnsTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Convert the values of one or more columns in a table to specific type.

@@ -93,7 +93,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class GroupByTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Group rows of a table based on the values of one or more columns.

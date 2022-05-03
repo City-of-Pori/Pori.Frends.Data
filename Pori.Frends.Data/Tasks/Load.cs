@@ -213,7 +213,7 @@ namespace Pori.Frends.Data
     /// <summary>
     /// Frends task for loading data into a table.
     /// </summary>
-    public static class LoadTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Load data into a table structure for further processing.

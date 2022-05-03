@@ -103,7 +103,7 @@ namespace Pori.Frends.Data
     }
 
 
-    public class RenameColumnsTask
+    public static partial class TableTasks
     {
         /// <summary>
         /// Rename the columns of a table.

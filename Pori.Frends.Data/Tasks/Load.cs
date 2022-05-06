@@ -284,9 +284,15 @@ namespace Pori.Frends.Data
                     Type           = src.Type,
                     ValueType      = src.ValueType,
                     ColumnName     = src.ColumnName,
-                    ColumnPath     = XPathExpression.Compile(src.ColumnPath ?? "."),
-                    ColumnNamePath = XPathExpression.Compile(src.ColumnNamePath ?? "."),
-                    ValuePath      = XPathExpression.Compile(src.ValuePath ?? ".")
+                    ColumnPath     = XPathExpression.Compile(
+                                        string.IsNullOrEmpty(src.ColumnPath) ? "." : src.ColumnPath
+                                     ),
+                    ColumnNamePath = XPathExpression.Compile(
+                                        string.IsNullOrEmpty(src.ColumnNamePath) ? "." : src.ColumnNamePath
+                                     ),
+                    ValuePath      = XPathExpression.Compile(
+                                        string.IsNullOrEmpty(src.ValuePath) ? "." : src.ValuePath
+                                     )
                 };
             }
 

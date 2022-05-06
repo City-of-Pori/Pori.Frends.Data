@@ -1020,6 +1020,83 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void XmlDataLoadingWorksWhenUnusedConditionalParametersHaveEmptyStringsAsValues()
+        {
+            var expectedXmlResult = new []
+            {
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "FOO220417K",
+                    serial_number   = "ABCDEF12345",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                },
+                new
+                {
+                    template        = "workstation",
+                    device_name     = "BAR220417K",
+                    serial_number   = "XYZ547123",
+                    display_adapter = new [] { "Citrix Indirect Display Adapter", "Intel(R) UHD Graphics 620" }
+                }
+            };
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.XML,
+                Xml = new LoadXmlParameters
+                {
+                    Columns  = new [] { "template", "device_name", "serial_number", "display_adapter" },
+                    Data     = XmlData,
+                    RowsPath = "//entity[not(@invalid)]",
+                    ColumnSources = new XmlColumnSource[]
+                    {
+                        new XmlColumnSource
+                        {
+                            Type       = XmlColumnSourceType.SingleColumn,
+                            ColumnName = "template",
+                            ValuePath  = "./template/@code",
+                            ValueType  = XmlColumnValueType.SingleValue,
+
+                            ColumnNamePath  = "", // <--
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)=1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.SingleValue,
+
+                            ColumnName = "", // <--
+                        },
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "attribute[count(value)>1]",
+                            ColumnNamePath  = "@code",
+                            ValuePath       = "value",
+                            ValueType       = XmlColumnValueType.MultipleValues,
+
+                            ColumnName = "", // <--
+                        }
+                    }
+                }
+            };
+
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Count, Is.EqualTo(expectedXmlResult.Count()));
+
+            foreach(var (resultRow, expectedRow) in result.Rows.Zip(expectedXmlResult, (r, e) => (r, e)))
+            {
+                Assert.That(resultRow.template, Is.EqualTo(expectedRow.template));
+                Assert.That(resultRow.device_name, Is.EqualTo(expectedRow.device_name));
+                Assert.That(resultRow.serial_number, Is.EqualTo(expectedRow.serial_number));
+                Assert.That(resultRow.display_adapter, Is.EqualTo(expectedRow.display_adapter));
+            }
+        }
+
+        [Test]
         public void XmlDataLoadingCanDiscardErroneousRows()
         {
             var expectedXmlResult = new []

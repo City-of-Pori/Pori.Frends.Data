@@ -3080,6 +3080,37 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void ConditionalParametersAreIgnoredWhenTheyAreNotUsed()
+        {
+            Table leftTable = Table.From(left.columns, left.matched);
+            Table rightTable = Table.From(right.columns, right.matched);
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.LeftOuter,
+                Left = new JoinTable
+                {
+                    Data          = leftTable,
+                    KeyColumns    = left.key,
+                    ResultType    = JoinResult.AllColumns,
+                    ResultColumn  = ""
+                },
+                Right = new JoinTable
+                {
+                    Data          = rightTable,
+                    KeyColumns    = right.key,
+                    ResultType    = JoinResult.SelectColumns,
+                    ResultColumns = new [] { "V4" },
+                    ResultColumn  = ""
+                }
+            };
+
+            Action executeTask = () => TableTasks.Join(input, new CancellationToken());
+
+            Assert.That(executeTask, Throws.Nothing);
+        }
+
+        [Test]
         public void RightRowColumnsCanBeExpanded()
         {
             Table leftTable = Table.From(left.columns, left.matched);

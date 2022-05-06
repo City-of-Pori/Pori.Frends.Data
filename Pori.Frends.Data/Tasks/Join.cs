@@ -144,8 +144,8 @@ namespace Pori.Frends.Data
             // When the result is a row, we use the provided names for the join columns,
             // otherwise we use temporary column names that aren't visible to the user
             // as they are replaced when expanding the join columns
-            var leftJoinColumn  = left.ResultColumn ?? "$Pori.Frends.Data.Join.Left$";
-            var rightJoinColumn = right.ResultColumn ?? "$Pori.Frends.Data.Join.Right$";
+            var leftJoinColumn  = left.ResultType  == JoinResult.Row ? left.ResultColumn  : "$Pori.Frends.Data.Join.Left$";
+            var rightJoinColumn = right.ResultType == JoinResult.Row ? right.ResultColumn : "$Pori.Frends.Data.Join.Right$";
 
             // Validate parameters for each side of the join
             ValidateJoinParameters(left);

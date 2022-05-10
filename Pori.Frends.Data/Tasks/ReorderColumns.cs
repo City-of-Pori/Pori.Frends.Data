@@ -29,7 +29,7 @@ namespace Pori.Frends.Data
         /// in which case unspecified columns are not included in the 
         /// resulting table).
         /// </summary>
-        public string[] ColumnOrder { get; set; }
+        public IEnumerable<string> ColumnOrder { get; set; }
 
         /// <summary>
         /// Whether to discard columns that are not specified in the column 

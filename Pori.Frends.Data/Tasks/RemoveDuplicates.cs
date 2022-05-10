@@ -47,7 +47,7 @@ namespace Pori.Frends.Data
         /// Names of columns to use determine duplicate rows.
         /// </summary>
         [UIHint(nameof(Key), "", RemoveDuplicatesKey.SelectedColumns)]
-        public string[] KeyColumns { get; set; }
+        public IEnumerable<string> KeyColumns { get; set; }
     }
 
     public static partial class TableTasks

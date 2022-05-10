@@ -19,7 +19,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The tables to concatenate.
         /// </summary>
-        public dynamic[] Tables { get; set; }
+        public IEnumerable<dynamic> Tables { get; set; }
     }
 
 

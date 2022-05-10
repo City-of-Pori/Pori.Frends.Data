@@ -91,7 +91,7 @@ namespace Pori.Frends.Data
         /// The names of properties to include as columns in the resulting
         /// table.
         /// </summary>
-        public string[] Columns { get; set; }
+        public IEnumerable<string> Columns { get; set; }
     }
 
 
@@ -182,7 +182,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Names of columns to include in the resulting table.
         /// </summary>
-        public string[] Columns { get; set; }
+        public IEnumerable<string> Columns { get; set; }
 
         /// <summary>
         /// Definitions for extracting column names and values from the data.
@@ -202,7 +202,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Names of columns to include in the resulting table.
         /// </summary>
-        public string[] Columns { get; set; }
+        public IEnumerable<string> Columns { get; set; }
 
         /// <summary>
         /// Function to extract a value for a given column of a row.
@@ -399,7 +399,7 @@ namespace Pori.Frends.Data
         /// <returns>The resulting table.</returns>
         private static Table LoadCustom(LoadCustomParameters input, Table.ErrorHandling errorHandling)
         {
-            var loader = CustomRowLoader(input.Columns, input.ColumnLoader);
+            var loader = CustomRowLoader(input.Columns.ToArray(), input.ColumnLoader);
 
             return TableBuilder
                     .Load(input.Columns, input.Data, loader)

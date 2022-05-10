@@ -57,7 +57,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Names of columns to group rows by.
         /// </summary>
-        public string[] KeyColumns { get; set; }
+        public IEnumerable<string> KeyColumns { get; set; }
 
         /// <summary>
         /// Name of the column for the the grouped rows.
@@ -82,7 +82,7 @@ namespace Pori.Frends.Data
         /// The columns to include in the grouped rows.
         /// </summary>
         [UIHint(nameof(Grouping), "", GroupingType.SelectedColumns)]
-        public string[] Columns { get; set; }
+        public IEnumerable<string> Columns { get; set; }
 
         /// <summary>
         /// Function to compute a value for each grouped row.

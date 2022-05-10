@@ -47,7 +47,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The columns to include in / discard from the result table.
         /// </summary>
-        public string[] Columns { get; set; }
+        public IEnumerable<string> Columns { get; set; }
 
         /// <summary>
         /// Whether to preserve the original order of the columns or use

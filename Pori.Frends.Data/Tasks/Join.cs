@@ -77,7 +77,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The names columns to use as the key for the join.
         /// </summary>
-        public string[] KeyColumns { get; set; }
+        public IEnumerable<string> KeyColumns { get; set; }
 
         /// <summary>
         /// How the matching rows should be included in the result.
@@ -97,7 +97,7 @@ namespace Pori.Frends.Data
         /// the original table to include in the result.
         /// </summary>
         [UIHint(nameof(ResultType), "", JoinResult.SelectColumns)]
-        public string[] ResultColumns { get; set; }
+        public IEnumerable<string> ResultColumns { get; set; }
     }
 
     /// <summary>

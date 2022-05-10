@@ -196,6 +196,7 @@ namespace Pori.Frends.Data
         /// <summary>
         /// The custom data to load into a table.
         /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
         public IEnumerable<dynamic> Data { get; set; }
 
         /// <summary>

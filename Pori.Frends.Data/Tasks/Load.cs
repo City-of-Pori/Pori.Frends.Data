@@ -14,6 +14,8 @@ using Newtonsoft.Json.Linq;
 
 namespace Pori.Frends.Data
 {
+    using RowDict = IDictionary<string, dynamic>;
+
     /// <summary>
     /// The format of the data to be loaded as a table.
     /// </summary>
@@ -35,9 +37,14 @@ namespace Pori.Frends.Data
         XML,
 
         /// <summary>
+        /// Load table rows into a new table.
+        /// </summary>
+        Rows,
+
+        /// <summary>
         /// Load custom data into a table.
         /// </summary>
-        Custom
+        Custom = 9999
     }
 
     /// <summary>
@@ -59,6 +66,9 @@ namespace Pori.Frends.Data
 
         [UIHint(nameof(Format), "", LoadFormat.XML)]
         public LoadXmlParameters Xml { get; set; }
+
+        [UIHint(nameof(Format), "", LoadFormat.Rows)]
+        public LoadRowsParameters Rows { get; set; }
 
         [UIHint(nameof(Format), "", LoadFormat.Custom)]
         public LoadCustomParameters Custom { get; set; }
@@ -191,6 +201,21 @@ namespace Pori.Frends.Data
     }
 
 
+    public class LoadRowsParameters
+    {
+        /// <summary>
+        /// The rows to load into a table. The input should contain only rows from other tables.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
+        public IEnumerable<dynamic> Data { get; set; }
+
+        /// <summary>
+        /// Names of columns to include in the resulting table.
+        /// </summary>
+        public IEnumerable<string> Columns { get; set; }
+    }
+
+
     public class LoadCustomParameters
     {
         /// <summary>
@@ -250,6 +275,13 @@ namespace Pori.Frends.Data
 
                 case LoadFormat.XML:
                     return LoadXml(input.Xml, options.ErrorHandling);
+
+
+                case LoadFormat.Rows:
+                    return TableBuilder
+                                .Load(input.Rows.Columns, input.Rows.Data, row => row as RowDict)
+                                .OnError(options.ErrorHandling)
+                                .CreateTable();
 
 
                 case LoadFormat.Custom:

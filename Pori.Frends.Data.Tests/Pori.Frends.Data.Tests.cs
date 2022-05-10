@@ -661,6 +661,70 @@ namespace Pori.Frends.Data.Tests
             );
         }
 
+
+        [Test]
+        public void LoadingRowsWorks()
+        {
+            Table source = TestData.Typed;
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.Rows,
+                Rows   = new LoadRowsParameters
+                {
+                    Data    = source.Rows,
+                    Columns = source.Columns
+                }
+            };
+
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Columns, Is.EqualTo(source.Columns));
+            Assert.That(result.Count, Is.EqualTo(source.Count));
+            Assert.That(result.Rows, Is.EqualTo(source.Rows));
+
+            foreach(var row in result.Rows)
+                Assert.That((row as RowDict).Keys, Is.EqualTo(source.Columns));
+
+            foreach(var (resultRow, sourceRow) in result.Rows.Zip(source.Rows, (r, s) => (r, s)))
+                Assert.That(resultRow, Is.Not.SameAs(sourceRow));
+        }
+
+        [Test]
+        public void LoadingRowsCanSelectOnlySomeColumns()
+        {
+            Table source = TestData.Typed;
+            var expectedColumns = new [] { "A", "B", "I" };
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.Rows,
+                Rows   = new LoadRowsParameters
+                {
+                    Data    = source.Rows,
+                    Columns = expectedColumns
+                }
+            };
+
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.Columns, Is.EqualTo(expectedColumns));
+            Assert.That(result.Count, Is.EqualTo(source.Count));
+
+            foreach(var row in result.Rows)
+                Assert.That((row as RowDict).Keys, Is.EqualTo(expectedColumns));
+
+            foreach(var (resultRow, sourceRow) in result.Rows.Zip(source.Rows, (r, s) => (r, s)))
+            {
+                Assert.That(resultRow.A, Is.EqualTo(sourceRow.A));
+                Assert.That(resultRow.B, Is.EqualTo(sourceRow.B));
+                Assert.That(resultRow.I, Is.EqualTo(sourceRow.I));
+            }
+        }
+
+
         [Test]
         public void JsonDataIsLoadedCorrectly()
         {

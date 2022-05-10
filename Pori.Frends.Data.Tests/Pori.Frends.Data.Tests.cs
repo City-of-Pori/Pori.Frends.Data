@@ -4043,6 +4043,7 @@ namespace Pori.Frends.Data.Tests
             }
         }
 
+        [Test]
         public void SelectColumnsThrowsWhenColumnOrderHasDuplicates()
         {
             Table original = TestData.Typed;
@@ -4060,6 +4061,7 @@ namespace Pori.Frends.Data.Tests
             Assert.That(executeTask, Throws.Exception);
         }
 
+        [Test]
         public void SelectColumnsThrowsWhenColumnOrderContainsAnInvalidColumn()
         {
             Table original = TestData.Typed;

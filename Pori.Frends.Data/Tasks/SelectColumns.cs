@@ -71,11 +71,17 @@ namespace Pori.Frends.Data
         {
             IEnumerable<string> columns;
 
+            if(input.Columns.Distinct().Count() != input.Columns.Count())
+                throw new ArgumentException("Same column specified more than once.");
+
             // Set column order based on input parameters
             switch(input.Action)
             {
                 // Keep the specified columns in the result
                 case SelectColumnsAction.Keep:
+                    if(input.Columns.Any(c => !input.Data.Columns.Contains(c)))
+                        throw new ArgumentException("Invalid columns specified.");
+
                     // Preserve the order of the columns from the input table
                     if(input.PreserveColumnOrder)
                         columns = input.Data.Columns.Where(c => input.Columns.Contains(c));

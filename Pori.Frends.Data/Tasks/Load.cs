@@ -6,9 +6,11 @@ using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Text;
 using System.Xml.XPath;
 using Microsoft.CSharp; // For dynamic in .NET Standard Frends Tasks
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 #pragma warning disable 1591
 
@@ -42,6 +44,11 @@ namespace Pori.Frends.Data
         Rows,
 
         /// <summary>
+        /// Load table from data produced using the Serialize task.
+        /// </summary>
+        Serialized,
+
+        /// <summary>
         /// Load custom data into a table.
         /// </summary>
         Custom = 9999
@@ -69,6 +76,9 @@ namespace Pori.Frends.Data
 
         [UIHint(nameof(Format), "", LoadFormat.Rows)]
         public LoadRowsParameters Rows { get; set; }
+
+        [UIHint(nameof(Format), "", LoadFormat.Serialized)]
+        public LoadSerializedParameters Serialized { get; set; }
 
         [UIHint(nameof(Format), "", LoadFormat.Custom)]
         public LoadCustomParameters Custom { get; set; }
@@ -215,6 +225,32 @@ namespace Pori.Frends.Data
         public IEnumerable<string> Columns { get; set; }
     }
 
+    /// <summary>
+    /// Parameters for loading a table that was serialized using the Serialize task.
+    /// </summary>
+    public class LoadSerializedParameters
+    {
+        /// <summary>
+        /// Whether to deserialize the table from a file or from a string value.
+        /// </summary>
+        [DefaultValue(SerializationType.File)]
+        public SerializationType Source { get; set; }
+
+        /// <summary>
+        /// File path to deserialize a table from. The contents of the file
+        /// should have been produced using the Serialize task.
+        /// </summary>
+        [UIHint(nameof(Source), "", SerializationType.File)]
+        public string Path { get; set; }
+
+        /// <summary>
+        /// The table data to deserialize as a table. Should have been
+        /// produced by the Serialize task.
+        /// </summary>
+        [UIHint(nameof(Source), "", SerializationType.String)]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public string Data { get; set; }
+    }
 
     public class LoadCustomParameters
     {
@@ -266,12 +302,8 @@ namespace Pori.Frends.Data
 
 
                 case LoadFormat.JSON:
-                    var rows = input.Json.Data as JArray;
+                    return LoadJson(input.Json, options);
 
-                    return TableBuilder
-                            .Load(input.Json.Columns, rows, row => (row as JObject).ToObject<ExpandoObject>())
-                            .OnError(options.ErrorHandling)
-                            .CreateTable();
 
                 case LoadFormat.XML:
                     return LoadXml(input.Xml, options.ErrorHandling);
@@ -284,6 +316,10 @@ namespace Pori.Frends.Data
                                 .CreateTable();
 
 
+                case LoadFormat.Serialized:
+                    return LoadSerialized(input.Serialized, options);
+
+
                 case LoadFormat.Custom:
                     return LoadCustom(input.Custom, options.ErrorHandling);
 
@@ -291,6 +327,22 @@ namespace Pori.Frends.Data
                 default:
                     throw new InvalidEnumArgumentException();
             }
+        }
+
+        /// <summary>
+        /// Load JSON data (must be a JArray of JObjects) as a table.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="options"></param>
+        /// <returns>The new table with the loaded data.</returns>
+        private static Table LoadJson(LoadJsonParameters input, CommonOptions options)
+        {
+            var rows = input.Data as JArray;
+
+            return TableBuilder
+                    .Load(input.Columns, rows, row => (row as JObject).ToObject<ExpandoObject>())
+                    .OnError(options.ErrorHandling)
+                    .CreateTable();
         }
 
         /// <summary>
@@ -421,6 +473,51 @@ namespace Pori.Frends.Data
                 return values.ToList();
             else
                 return values.DefaultIfEmpty(null).First();
+        }
+
+        /// <summary>
+        /// Load serialized table data as a new Table.
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="options"></param>
+        /// <returns>The new table with the loaded data.</returns>
+        private static Table LoadSerialized(LoadSerializedParameters input, CommonOptions options)
+        {
+            JToken data;
+
+            using(var source = DeserializationSourceFor(input))
+            {
+                JsonReader reader = new JsonTextReader(source)
+                {
+                    DateParseHandling = DateParseHandling.None
+                };
+
+                data = JToken.ReadFrom(reader);
+            }
+
+            string[] columns = data["Columns"].ToObject<string[]>();
+            JArray   rows    = data["Rows"] as JArray;
+
+            var loadJsonParameters = new LoadJsonParameters
+            {
+                Columns = columns,
+                Data    = rows
+            };
+
+            return LoadJson(loadJsonParameters, options);
+        }
+
+        /// <summary>
+        /// Initialize an appropriate TextReader for deserializing a table.
+        /// </summary>
+        /// <param name="input">Deserialization parameters.</param>
+        /// <returns>An instance of TextReader.</returns>
+        private static TextReader DeserializationSourceFor(LoadSerializedParameters input)
+        {
+            if(input.Source == SerializationType.File)
+                return new StreamReader(input.Path, encoding: Encoding.UTF8);
+            else
+                return new StringReader(input.Data);
         }
 
         /// <summary>

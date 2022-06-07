@@ -37,6 +37,9 @@
 			"TaskMethod": "Pori.Frends.Data.TableTasks.SelectColumns"
 		},
 		{
+			"TaskMethod": "Pori.Frends.Data.TableTasks.Serialize"
+		},
+		{
 			"TaskMethod": "Pori.Frends.Data.TableTasks.Sort"
 		},
 		{

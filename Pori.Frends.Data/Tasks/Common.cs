@@ -35,6 +35,22 @@ namespace Pori.Frends.Data
     }
 
     /// <summary>
+    /// Whether to (de)serialize a table from/to a file or a string value.
+    /// </summary>
+    public enum SerializationType
+    {
+        /// <summary>
+        /// (De)serialize the table to/from a file.
+        /// </summary>
+        File,
+
+        /// <summary>
+        /// (De)serialize the table to/from a string.
+        /// </summary>
+        String
+    }
+
+    /// <summary>
     /// Common options for multiple tasks.
     /// </summary>
     [DisplayName("Options")]

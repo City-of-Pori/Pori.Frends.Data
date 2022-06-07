@@ -62,6 +62,10 @@ Reorder columns of a table into a new table.
 
 Keep or discard specific columns of a table into a new table.
 
+## Serialize
+
+Serialize a single table to a file or string so that it can be easily loaded later.
+
 ## Sort
 
 Sort the rows of a table by one or more columns.

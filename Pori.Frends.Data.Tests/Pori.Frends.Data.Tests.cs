@@ -64,6 +64,76 @@ namespace Pori.Frends.Data.Tests
             { "18",  "true", "T", "07.06.2026",   "Oscar",     "27.6",  "-592",  "0",         null, "2007-10-25T23:44:31Z" },
             { "19",  "true", "W", "18.03.2000", "Uniform",   "-60.79",  "-130",  "1",         null, "2001-03-09T11:05:58Z" },
         };
+
+        public class JoinRows
+        {
+            public List<string>   columns;
+            public string[]       key;
+            public List<object>[] matched;
+            public List<object>[] duplicateMatches;
+            public List<object>[] unmatched;
+        };
+
+        public static readonly JoinRows left = new JoinRows
+        {
+            columns = new List<string> { "A", "B", "V1", "V2", "V3" },
+            key     = new [] { "A", "B" },
+            matched = new []
+            {
+                new List<object> {    "India",   "Delta", false, 85,    "Yellow" },
+                new List<object> {   "Quebec",    "Lima", false,  5, "Turquoise" },
+                new List<object> {  "Foxtrot",    "Zulu", false, 16,    "Fuscia" },
+                new List<object> {  "Foxtrot", "Juliett", false, 99, "Turquoise" },
+                new List<object> {    "India",    "Mike",  true, 72,      "Blue" },
+                new List<object> {  "Charlie", "Juliett", false, 83,     "Khaki" },
+                new List<object> {    "Romeo",    "Golf",  true, 93,    "Yellow" },
+                new List<object> {     "Mike",   "Delta", false, 55,    "Fuscia" },
+                new List<object> {    "Delta",   "Bravo",  true, 31,    "Violet" },
+                new List<object> { "November",  "Victor",  true,  3,    "Maroon" },
+            },
+            duplicateMatches = new []
+            {
+                new List<object> {    "India",   "Delta", true, 0,     "Brown" },
+                new List<object> {     "Mike",   "Delta", true, 123,   "Olive" },
+            },
+            unmatched = new []
+            {
+                new List<object> {    "Kilo", "Oscar",  true,  7, "Mauv" },
+                new List<object> { "Juliett",  "Echo",  true, 57,  "Red" },
+                new List<object> {   "Hotel", "Bravo", false, 16, "Mauv" },
+            }
+        };
+
+        public static readonly JoinRows right = new JoinRows
+        {
+            columns = new List<string> { "X", "Y", "V4", "V5" },
+            key     = new [] { "X", "Y" },
+            matched = new []
+            {
+                new List<object> {    "India",   "Delta", 0.85, "#ff8387" },
+                new List<object> {   "Quebec",    "Lima", 0.35, "#d1e48e" },
+                new List<object> {  "Foxtrot",    "Zulu", 0.14, "#23d265" },
+                new List<object> {  "Foxtrot", "Juliett", 0.87, "#83870b" },
+                new List<object> {    "India",    "Mike", 0.23, "#25c28f" },
+                new List<object> {  "Charlie", "Juliett",  0.2, "#88f146" },
+                new List<object> {    "Romeo",    "Golf", 0.24, "#5dc8c6" },
+                new List<object> {     "Mike",   "Delta", 0.65, "#7caca6" },
+                new List<object> {    "Delta",   "Bravo", 0.34, "#781c91" },
+                new List<object> { "November",  "Victor", 0.12, "#2b0113" }
+            },
+            duplicateMatches = new []
+            {
+                new List<object> {    "Mike",   "Delta", 0.48, "#b93587" },
+                new List<object> {  "Quebec",    "Lima",  0.3, "#4bf785" },
+                new List<object> { "Foxtrot", "Juliett", 0.18, "#ae3c3c" }
+            },
+            unmatched = new []
+            {
+                new List<object> { "Hotel", "Victor", 0.23, "#f1a51e" },
+                new List<object> { "Romeo",   "Alfa", 0.47, "#808a8f" },
+                new List<object> {  "Zulu",   "Papa", 0.42, "#5b528f" }
+            }
+        };
     }
 
     public class CsvInputData
@@ -2621,81 +2691,11 @@ namespace Pori.Frends.Data.Tests
     [TestFixture]
     public class JoinTaskTests
     {
-        private class JoinRows
-        {
-            public List<string>       columns;
-            public string[]           key;
-            public List<object>[] matched;
-            public List<object>[] duplicateMatches;
-            public List<object>[] unmatched;
-        };
-
-        private static readonly JoinRows left = new JoinRows
-        {
-            columns = new List<string> { "A", "B", "V1", "V2", "V3" },
-            key     = new [] { "A", "B" },
-            matched = new []
-            {
-                new List<object> {    "India",   "Delta", false, 85,    "Yellow" },
-                new List<object> {   "Quebec",    "Lima", false,  5, "Turquoise" },
-                new List<object> {  "Foxtrot",    "Zulu", false, 16,    "Fuscia" },
-                new List<object> {  "Foxtrot", "Juliett", false, 99, "Turquoise" },
-                new List<object> {    "India",    "Mike",  true, 72,      "Blue" },
-                new List<object> {  "Charlie", "Juliett", false, 83,     "Khaki" },
-                new List<object> {    "Romeo",    "Golf",  true, 93,    "Yellow" },
-                new List<object> {     "Mike",   "Delta", false, 55,    "Fuscia" },
-                new List<object> {    "Delta",   "Bravo",  true, 31,    "Violet" },
-                new List<object> { "November",  "Victor",  true,  3,    "Maroon" },
-            },
-            duplicateMatches = new []
-            {
-                new List<object> {    "India",   "Delta", true, 0,     "Brown" },
-                new List<object> {     "Mike",   "Delta", true, 123,   "Olive" },
-            },
-            unmatched = new []
-            {
-                new List<object> {    "Kilo", "Oscar",  true,  7, "Mauv" },
-                new List<object> { "Juliett",  "Echo",  true, 57,  "Red" },
-                new List<object> {   "Hotel", "Bravo", false, 16, "Mauv" },
-            }
-        };
-
-        private static readonly JoinRows right = new JoinRows
-        {
-            columns = new List<string> { "X", "Y", "V4", "V5" },
-            key     = new [] { "X", "Y" },
-            matched = new []
-            {
-                new List<object> {    "India",   "Delta", 0.85, "#ff8387" },
-                new List<object> {   "Quebec",    "Lima", 0.35, "#d1e48e" },
-                new List<object> {  "Foxtrot",    "Zulu", 0.14, "#23d265" },
-                new List<object> {  "Foxtrot", "Juliett", 0.87, "#83870b" },
-                new List<object> {    "India",    "Mike", 0.23, "#25c28f" },
-                new List<object> {  "Charlie", "Juliett",  0.2, "#88f146" },
-                new List<object> {    "Romeo",    "Golf", 0.24, "#5dc8c6" },
-                new List<object> {     "Mike",   "Delta", 0.65, "#7caca6" },
-                new List<object> {    "Delta",   "Bravo", 0.34, "#781c91" },
-                new List<object> { "November",  "Victor", 0.12, "#2b0113" }
-            },
-            duplicateMatches = new []
-            {
-                new List<object> {    "Mike",   "Delta", 0.48, "#b93587" },
-                new List<object> {  "Quebec",    "Lima",  0.3, "#4bf785" },
-                new List<object> { "Foxtrot", "Juliett", 0.18, "#ae3c3c" }
-            },
-            unmatched = new []
-            {
-                new List<object> { "Hotel", "Victor", 0.23, "#f1a51e" },
-                new List<object> { "Romeo",   "Alfa", 0.47, "#808a8f" },
-                new List<object> {  "Zulu",   "Papa", 0.42, "#5b528f" }
-            }
-        };
-
         [Test]
         public void JoinReturnsANewTable()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -2703,14 +2703,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data         = leftTable,
-                    KeyColumns   = left.key,
+                    KeyColumns   = TestData.left.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "left"
                 },
                 Right = new JoinTable
                 {
                     Data         = rightTable,
-                    KeyColumns   = right.key,
+                    KeyColumns   = TestData.right.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "right"
                 }
@@ -2726,18 +2726,18 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinsWork()
         {
-            Table leftMatched    = Table.From(left.columns, left.matched);
-            Table leftUnmatched  = Table.From(left.columns, left.unmatched);
-            Table leftDuplicates = Table.From(left.columns, left.duplicateMatches);
+            Table leftMatched    = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched  = Table.From(TestData.left.columns, TestData.left.unmatched);
+            Table leftDuplicates = Table.From(TestData.left.columns, TestData.left.duplicateMatches);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
                                 .Concatenate(new []{ leftUnmatched, leftDuplicates })
                                 .CreateTable();
 
-            Table rightMatched   = Table.From(right.columns, right.matched);
-            Table rightUnmatched = Table.From(right.columns, right.unmatched);
-            Table rightDuplicates = Table.From(right.columns, right.duplicateMatches);
+            Table rightMatched   = Table.From(TestData.right.columns, TestData.right.matched);
+            Table rightUnmatched = Table.From(TestData.right.columns, TestData.right.unmatched);
+            Table rightDuplicates = Table.From(TestData.right.columns, TestData.right.duplicateMatches);
 
             Table rightTable = TableBuilder
                                 .From(rightMatched)
@@ -2774,14 +2774,14 @@ namespace Pori.Frends.Data.Tests
                     Left = new JoinTable
                     {
                         Data         = leftTable,
-                        KeyColumns   = left.key,
+                        KeyColumns   = TestData.left.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "left"
                     },
                     Right = new JoinTable
                     {
                         Data         = rightTable,
-                        KeyColumns   = right.key,
+                        KeyColumns   = TestData.right.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "right"
                     }
@@ -2815,8 +2815,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinWorksWhenAllLeftRowsHaveASingleMatch()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter, JoinType.FullOuter };
 
@@ -2828,14 +2828,14 @@ namespace Pori.Frends.Data.Tests
                     Left = new JoinTable
                     {
                         Data         = leftTable,
-                        KeyColumns   = left.key,
+                        KeyColumns   = TestData.left.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "left"
                     },
                     Right = new JoinTable
                     {
                         Data         = rightTable,
-                        KeyColumns   = right.key,
+                        KeyColumns   = TestData.right.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "right"
                     }
@@ -2863,10 +2863,10 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinWorksWhenAllLeftRowsHaveMatches()
         {
-            var rightRows = right.matched.Concat(right.duplicateMatches);
+            var rightRows = TestData.right.matched.Concat(TestData.right.duplicateMatches);
 
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, rightRows);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, rightRows);
 
             JoinType[] joins = { JoinType.Inner, JoinType.LeftOuter, JoinType.FullOuter };
 
@@ -2878,14 +2878,14 @@ namespace Pori.Frends.Data.Tests
                     Left = new JoinTable
                     {
                         Data         = leftTable,
-                        KeyColumns   = left.key,
+                        KeyColumns   = TestData.left.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "left"
                     },
                     Right = new JoinTable
                     {
                         Data         = rightTable,
-                        KeyColumns   = right.key,
+                        KeyColumns   = TestData.right.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "right"
                     }
@@ -2919,16 +2919,16 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FullOuterJoinProducesAllRowsFromBothTables()
         {
-            Table leftMatched   = Table.From(left.columns, left.matched);
-            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+            Table leftMatched   = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched = Table.From(TestData.left.columns, TestData.left.unmatched);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
                                 .Concatenate(new []{ leftUnmatched })
                                 .CreateTable();
 
-            Table rightMatched   = Table.From(right.columns, right.matched);
-            Table rightUnmatched = Table.From(right.columns, right.unmatched);
+            Table rightMatched   = Table.From(TestData.right.columns, TestData.right.matched);
+            Table rightUnmatched = Table.From(TestData.right.columns, TestData.right.unmatched);
 
             Table rightTable = TableBuilder
                                 .From(rightMatched)
@@ -2941,14 +2941,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data         = leftTable,
-                    KeyColumns   = left.key,
+                    KeyColumns   = TestData.left.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "left"
                 },
                 Right = new JoinTable
                 {
                     Data         = rightTable,
-                    KeyColumns   = right.key,
+                    KeyColumns   = TestData.right.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "right"
                 }
@@ -2971,18 +2971,18 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void FullOuterJoinProducesAllRowsFromBothTablesWhenThereAreDuplicateMatches()
         {
-            Table leftMatched    = Table.From(left.columns, left.matched);
-            Table leftUnmatched  = Table.From(left.columns, left.unmatched);
-            Table leftDuplicates = Table.From(left.columns, left.duplicateMatches);
+            Table leftMatched    = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched  = Table.From(TestData.left.columns, TestData.left.unmatched);
+            Table leftDuplicates = Table.From(TestData.left.columns, TestData.left.duplicateMatches);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
                                 .Concatenate(new []{ leftUnmatched, leftDuplicates })
                                 .CreateTable();
 
-            Table rightMatched   = Table.From(right.columns, right.matched);
-            Table rightUnmatched = Table.From(right.columns, right.unmatched);
-            Table rightDuplicates = Table.From(right.columns, right.duplicateMatches);
+            Table rightMatched   = Table.From(TestData.right.columns, TestData.right.matched);
+            Table rightUnmatched = Table.From(TestData.right.columns, TestData.right.unmatched);
+            Table rightDuplicates = Table.From(TestData.right.columns, TestData.right.duplicateMatches);
 
             Table rightTable = TableBuilder
                                 .From(rightMatched)
@@ -2995,14 +2995,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data         = leftTable,
-                    KeyColumns   = left.key,
+                    KeyColumns   = TestData.left.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "left"
                 },
                 Right = new JoinTable
                 {
                     Data         = rightTable,
-                    KeyColumns   = right.key,
+                    KeyColumns   = TestData.right.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "right"
                 }
@@ -3027,15 +3027,15 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void InnerJoinDoesNotProduceLeftRowsThatHaveNoMatch()
         {
-            Table leftMatched   = Table.From(left.columns, left.matched);
-            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+            Table leftMatched   = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched = Table.From(TestData.left.columns, TestData.left.unmatched);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
                                 .Concatenate(new []{ leftUnmatched })
                                 .CreateTable();
 
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3043,14 +3043,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data         = leftTable,
-                    KeyColumns   = left.key,
+                    KeyColumns   = TestData.left.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "left"
                 },
                 Right = new JoinTable
                 {
                     Data         = rightTable,
-                    KeyColumns   = right.key,
+                    KeyColumns   = TestData.right.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "right"
                 }
@@ -3064,15 +3064,15 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void OuterJoinHasAllTheRowsFromTheLeftTable()
         {
-            Table leftMatched   = Table.From(left.columns, left.matched);
-            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+            Table leftMatched   = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched = Table.From(TestData.left.columns, TestData.left.unmatched);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
                                 .Concatenate(new []{ leftUnmatched })
                                 .CreateTable();
 
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3080,14 +3080,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data         = leftTable,
-                    KeyColumns   = left.key,
+                    KeyColumns   = TestData.left.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "left"
                 },
                 Right = new JoinTable
                 {
                     Data         = rightTable,
-                    KeyColumns   = right.key,
+                    KeyColumns   = TestData.right.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "right"
                 }
@@ -3116,16 +3116,16 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void OuterJoinHasOnlyMatchingRowsFromTheRightTable()
         {
-            Table leftMatched   = Table.From(left.columns, left.matched);
-            Table leftUnmatched = Table.From(left.columns, left.unmatched);
+            Table leftMatched   = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched = Table.From(TestData.left.columns, TestData.left.unmatched);
 
             Table leftTable = TableBuilder
                                 .From(leftMatched)
                                 .Concatenate(new []{ leftUnmatched })
                                 .CreateTable();
 
-            Table rightMatched   = Table.From(right.columns, right.matched);
-            Table rightUnmatched = Table.From(right.columns, right.unmatched);
+            Table rightMatched   = Table.From(TestData.right.columns, TestData.right.matched);
+            Table rightUnmatched = Table.From(TestData.right.columns, TestData.right.unmatched);
 
             Table rightTable = TableBuilder
                                 .From(rightMatched)
@@ -3138,14 +3138,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data         = leftTable,
-                    KeyColumns   = left.key,
+                    KeyColumns   = TestData.left.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "left"
                 },
                 Right = new JoinTable
                 {
                     Data         = rightTable,
-                    KeyColumns   = right.key,
+                    KeyColumns   = TestData.right.key,
                     ResultType   = JoinResult.Row,
                     ResultColumn = "right"
                 }
@@ -3161,8 +3161,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void LeftRowColumnsCanBeExpanded()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             var testCases = new [] {
                 new
@@ -3193,14 +3193,14 @@ namespace Pori.Frends.Data.Tests
                     Left = new JoinTable
                     {
                         Data          = leftTable,
-                        KeyColumns    = left.key,
+                        KeyColumns    = TestData.left.key,
                         ResultType    = testCase.ResultType,
                         ResultColumns = testCase.ResultColumns
                     },
                     Right = new JoinTable
                     {
                         Data         = rightTable,
-                        KeyColumns   = right.key,
+                        KeyColumns   = TestData.right.key,
                         ResultType   = JoinResult.Row,
                         ResultColumn = "right"
                     }
@@ -3223,8 +3223,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void ConditionalParametersAreIgnoredWhenTheyAreNotUsed()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3232,14 +3232,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data          = leftTable,
-                    KeyColumns    = left.key,
+                    KeyColumns    = TestData.left.key,
                     ResultType    = JoinResult.AllColumns,
                     ResultColumn  = ""
                 },
                 Right = new JoinTable
                 {
                     Data          = rightTable,
-                    KeyColumns    = right.key,
+                    KeyColumns    = TestData.right.key,
                     ResultType    = JoinResult.SelectColumns,
                     ResultColumns = new [] { "V4" },
                     ResultColumn  = ""
@@ -3254,8 +3254,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void RightRowColumnsCanBeExpanded()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             var testCases = new [] {
                 new
@@ -3286,14 +3286,14 @@ namespace Pori.Frends.Data.Tests
                     Left = new JoinTable
                     {
                         Data          = leftTable,
-                        KeyColumns    = left.key,
+                        KeyColumns    = TestData.left.key,
                         ResultType    = JoinResult.Row,
                         ResultColumn  = "left"
                     },
                     Right = new JoinTable
                     {
                         Data          = rightTable,
-                        KeyColumns    = right.key,
+                        KeyColumns    = TestData.right.key,
                         ResultType    = testCase.ResultType,
                         ResultColumns = testCase.ResultColumns
                     }
@@ -3316,9 +3316,9 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void RightRowColumnsCanBeExpandedWithLeftOuterJoin()
         {
-            Table leftTable = Table.From(left.columns, left.unmatched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.unmatched);
 
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             var testCases = new [] {
                 new
@@ -3349,14 +3349,14 @@ namespace Pori.Frends.Data.Tests
                     Left = new JoinTable
                     {
                         Data          = leftTable,
-                        KeyColumns    = left.key,
+                        KeyColumns    = TestData.left.key,
                         ResultType    = JoinResult.Row,
                         ResultColumn  = "left"
                     },
                     Right = new JoinTable
                     {
                         Data          = rightTable,
-                        KeyColumns    = right.key,
+                        KeyColumns    = TestData.right.key,
                         ResultType    = testCase.ResultType,
                         ResultColumns = testCase.ResultColumns
                     }
@@ -3380,8 +3380,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void BothLeftAndRightRowsCanBeExpandedAtTheSameTime()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3389,13 +3389,13 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data          = leftTable,
-                    KeyColumns    = left.key,
+                    KeyColumns    = TestData.left.key,
                     ResultType    = JoinResult.AllColumns
                 },
                 Right = new JoinTable
                 {
                     Data          = rightTable,
-                    KeyColumns    = right.key,
+                    KeyColumns    = TestData.right.key,
                     ResultType    = JoinResult.DiscardKey
                 }
             };
@@ -3418,8 +3418,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinThrowsWhenResultColumnIsMissing()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3427,13 +3427,13 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data          = leftTable,
-                    KeyColumns    = left.key,
+                    KeyColumns    = TestData.left.key,
                     ResultType    = JoinResult.Row
                 },
                 Right = new JoinTable
                 {
                     Data          = rightTable,
-                    KeyColumns    = right.key,
+                    KeyColumns    = TestData.right.key,
                     ResultType    = JoinResult.DiscardKey
                 }
             };
@@ -3446,8 +3446,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinThrowsWhenResultColumnsIsEmpty()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3455,14 +3455,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data          = leftTable,
-                    KeyColumns    = left.key,
+                    KeyColumns    = TestData.left.key,
                     ResultType    = JoinResult.SelectColumns,
                     ResultColumns = new string[] { }
                 },
                 Right = new JoinTable
                 {
                     Data          = rightTable,
-                    KeyColumns    = right.key,
+                    KeyColumns    = TestData.right.key,
                     ResultType    = JoinResult.DiscardKey
                 }
             };
@@ -3475,8 +3475,8 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinThrowsWhenResultColumnsContainsAnInvalidColumnName()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
-            Table rightTable = Table.From(right.columns, right.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
+            Table rightTable = Table.From(TestData.right.columns, TestData.right.matched);
 
             JoinParameters input = new JoinParameters
             {
@@ -3484,14 +3484,14 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data          = leftTable,
-                    KeyColumns    = left.key,
+                    KeyColumns    = TestData.left.key,
                     ResultType    = JoinResult.SelectColumns,
                     ResultColumns = new string[] { "A", "B", "I" }
                 },
                 Right = new JoinTable
                 {
                     Data          = rightTable,
-                    KeyColumns    = right.key,
+                    KeyColumns    = TestData.right.key,
                     ResultType    = JoinResult.DiscardKey
                 }
             };
@@ -3504,10 +3504,10 @@ namespace Pori.Frends.Data.Tests
         [Test]
         public void JoinThrowsWhenExpandingAColumnWithTheSameNameFromBothTables()
         {
-            Table leftTable = Table.From(left.columns, left.matched);
+            Table leftTable = Table.From(TestData.left.columns, TestData.left.matched);
 
             Table rightTable = TableBuilder
-                                .From(Table.From(right.columns, right.matched))
+                                .From(Table.From(TestData.right.columns, TestData.right.matched))
                                 .RenameColumns(new Dictionary<string, string> { { "V4", "V1" } })
                                 .CreateTable();
 
@@ -3517,13 +3517,13 @@ namespace Pori.Frends.Data.Tests
                 Left = new JoinTable
                 {
                     Data          = leftTable,
-                    KeyColumns    = left.key,
+                    KeyColumns    = TestData.left.key,
                     ResultType    = JoinResult.AllColumns,
                 },
                 Right = new JoinTable
                 {
                     Data          = rightTable,
-                    KeyColumns    = right.key,
+                    KeyColumns    = TestData.right.key,
                     ResultType    = JoinResult.DiscardKey
                 }
             };
@@ -4077,6 +4077,134 @@ namespace Pori.Frends.Data.Tests
             Action executeTask = () => TableTasks.SelectColumns(input, new CancellationToken());
 
             Assert.That(executeTask, Throws.Exception);
+        }
+    }
+
+    [TestFixture]
+    class SerializationTasksTests
+    {
+        [Test]
+        public void RoundtripFileSerializationWorks()
+        {
+            Table original = TestData.Typed;
+            string tempPath = System.IO.Path.GetTempFileName();
+
+            var serializationInput = new SerializeParameters
+            {
+                Data   = original,
+                Target = SerializationType.File,
+                Path   = tempPath
+            };
+
+            TableTasks.Serialize(serializationInput, new CancellationToken());
+
+            var deserializationInput = new LoadParameters
+            {
+                Format = LoadFormat.Serialized,
+                Serialized = new LoadSerializedParameters
+                {
+                    Source = SerializationType.File,
+                    Path   = tempPath
+                }
+            };
+
+            Table result = TableTasks.Load(deserializationInput, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(original.Columns));
+            Assert.That(result.Rows,    Is.EqualTo(original.Rows));
+        }
+
+        [Test]
+        public void RoundtripStringSerializationWorks()
+        {
+            Table original = TestData.Typed;
+
+            var serializationInput = new SerializeParameters
+            {
+                Data   = original,
+                Target = SerializationType.String
+            };
+
+            string data = TableTasks.Serialize(serializationInput, new CancellationToken());
+
+            var deserializationInput = new LoadParameters
+            {
+                Format     = LoadFormat.Serialized,
+                Serialized = new LoadSerializedParameters
+                {
+                    Source = SerializationType.String,
+                    Data   = data
+                }
+            };
+
+            Table result = TableTasks.Load(deserializationInput, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(original.Columns));
+            Assert.That(result.Rows,    Is.EqualTo(original.Rows));
+        }
+
+        [Test]
+        public void RoundtripSerializationWorksWithNestedDataInRows()
+        {
+            Table leftMatched   = Table.From(TestData.left.columns, TestData.left.matched);
+            Table leftUnmatched = Table.From(TestData.left.columns, TestData.left.unmatched);
+
+            Table leftTable = TableBuilder
+                                .From(leftMatched)
+                                .Concatenate(new []{ leftUnmatched })
+                                .CreateTable();
+
+            Table rightMatched   = Table.From(TestData.right.columns, TestData.right.matched);
+            Table rightUnmatched = Table.From(TestData.right.columns, TestData.right.unmatched);
+
+            Table rightTable = TableBuilder
+                                .From(rightMatched)
+                                .Concatenate(new []{ rightUnmatched })
+                                .CreateTable();
+
+            JoinParameters input = new JoinParameters
+            {
+                JoinType = JoinType.FullOuter,
+                Left = new JoinTable
+                {
+                    Data         = leftTable,
+                    KeyColumns   = TestData.left.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "left"
+                },
+                Right = new JoinTable
+                {
+                    Data         = rightTable,
+                    KeyColumns   = TestData.right.key,
+                    ResultType   = JoinResult.Row,
+                    ResultColumn = "right"
+                }
+            };
+
+            Table original = TableTasks.Join(input, new CancellationToken());
+
+            var serializationInput = new SerializeParameters
+            {
+                Data   = original,
+                Target = SerializationType.String
+            };
+
+            string data = TableTasks.Serialize(serializationInput, new CancellationToken());
+
+            var deserializationInput = new LoadParameters
+            {
+                Format     = LoadFormat.Serialized,
+                Serialized = new LoadSerializedParameters
+                {
+                    Source = SerializationType.String,
+                    Data   = data
+                }
+            };
+
+            Table result = TableTasks.Load(deserializationInput, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Columns, Is.EqualTo(original.Columns));
+            Assert.That(result.Rows, Is.EqualTo(original.Rows));
         }
     }
 

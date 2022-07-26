@@ -137,7 +137,53 @@ namespace Pori.Frends.Data
     /// A source definition for a table column.
     /// </summary>
     /// <typeparam name="TPath">Type for XPath expressions. Should be either 'string' or 'XPathExpression'. </typeparam>
-    public class XmlColumnSource<TPath>
+    internal class XmlColumnSource<TPath>
+        where TPath : XPathExpression
+    {
+        /// <summary>
+        /// Whether to define a source for a single column or multiple columns.
+        /// </summary>
+        public XmlColumnSourceType Type { get; set; }
+
+        /// <summary>
+        /// Whether the column has a single value or multiple values.
+        /// </summary>
+        public XmlColumnValueType ValueType { get; set; }
+
+        /// <summary>
+        /// Name of the column to extract (when extracting a single column).
+        /// </summary>
+        public string ColumnName { get; set; }
+
+        /// <summary>
+        /// XPath expression to extract a column for a single row.
+        /// The expression should be relative to a single row inside the data.
+        /// The result of the expression should contain the column's name and value.
+        /// </summary>
+        public TPath ColumnPath { get; set; } = default;
+
+        /// <summary>
+        /// XPath expression to extract the name of the column.
+        /// The expression should be relative to the element extracted using ColumnPath.
+        /// </summary>
+        public TPath ColumnNamePath { get; set; } = default;
+
+        /// <summary>
+        /// XPath expression for extracting the value(s) for the column.
+        /// The expression should be relative to the element extracted using ColumnPath.
+        /// </summary>
+        public TPath ValuePath { get; set; } = default;
+    }
+
+    /// <summary>
+    /// Column source definition for loading XML data as a table.
+    /// </summary>
+    /// <remarks>
+    /// Basically a redefinition of the generic XmlColumnSource type above,
+    /// but because the Frends UI doesn't handle the generic type properly,
+    /// we have to do this.
+    /// </remarks>
+    public class XmlColumnSource
     {
         /// <summary>
         /// Whether to define a source for a single column or multiple columns.
@@ -163,26 +209,21 @@ namespace Pori.Frends.Data
         /// The result of the expression should contain the column's name and value.
         /// </summary>
         [UIHint(nameof(Type), "", XmlColumnSourceType.MultipleColumns)]
-        public TPath ColumnPath { get; set; } = default;
+        public string ColumnPath { get; set; } = default;
 
         /// <summary>
         /// XPath expression to extract the name of the column.
         /// The expression should be relative to the element extracted using ColumnPath.
         /// </summary>
         [UIHint(nameof(Type), "", XmlColumnSourceType.MultipleColumns)]
-        public TPath ColumnNamePath { get; set; } = default;
+        public string ColumnNamePath { get; set; } = default;
 
         /// <summary>
         /// XPath expression for extracting the value(s) for the column.
         /// The expression should be relative to the element extracted using ColumnPath.
         /// </summary>
-        public TPath ValuePath { get; set; } = default;
+        public string ValuePath { get; set; } = default;
     }
-
-    /// <summary>
-    /// Column source definition for loading XML data as a table.
-    /// </summary>
-    public class XmlColumnSource : XmlColumnSource<string> { };
 
     /// <summary>
     /// XML specific parameters for the Load task.

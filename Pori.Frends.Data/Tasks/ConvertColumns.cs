@@ -4,6 +4,7 @@ using System.Threading;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using Microsoft.CSharp; // You can remove this if you don't need dynamic type in .NET Standard frends Tasks
 using Pori.Frends.Data.Linq;
 
@@ -168,12 +169,12 @@ namespace Pori.Frends.Data
         /// </summary>
         private static readonly Dictionary<ColumnType, TableFunc> columnConverters = new Dictionary<ColumnType, TableFunc>
         {
-            { ColumnType.Boolean,  x => Convert.ToBoolean(x) },
-            { ColumnType.Decimal,  x => Convert.ToDecimal(x) },
-            { ColumnType.Double,   x => Convert.ToDouble(x)  },
-            { ColumnType.Float,    x => Convert.ToSingle(x)  },
-            { ColumnType.Long,     x => Convert.ToInt64(x)   },
-            { ColumnType.Int,      x => Convert.ToInt32(x)   },
+            { ColumnType.Boolean,  x => Convert.ToBoolean(x, CultureInfo.InvariantCulture) },
+            { ColumnType.Decimal,  x => Convert.ToDecimal(x, CultureInfo.InvariantCulture) },
+            { ColumnType.Double,   x => Convert.ToDouble(x, CultureInfo.InvariantCulture)  },
+            { ColumnType.Float,    x => Convert.ToSingle(x, CultureInfo.InvariantCulture)  },
+            { ColumnType.Long,     x => Convert.ToInt64(x, CultureInfo.InvariantCulture)   },
+            { ColumnType.Int,      x => Convert.ToInt32(x, CultureInfo.InvariantCulture)   },
         };
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace Pori.Frends.Data.Tests
 {
@@ -1951,7 +1952,7 @@ namespace Pori.Frends.Data.Tests
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is decimal));
             Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.F == decimal.Parse(orig.F)),
+                original.Rows.Zip(result.Rows, (orig, res) => res.F == decimal.Parse(orig.F, CultureInfo.InvariantCulture)),
                 Has.All.EqualTo(true)
             );
         }
@@ -1974,7 +1975,7 @@ namespace Pori.Frends.Data.Tests
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is double));
             Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.F == double.Parse(orig.F)),
+                original.Rows.Zip(result.Rows, (orig, res) => res.F == double.Parse(orig.F, CultureInfo.InvariantCulture)),
                 Has.All.EqualTo(true)
             );
         }
@@ -1997,7 +1998,7 @@ namespace Pori.Frends.Data.Tests
 
             Assert.That(result.Rows, Has.All.Matches<dynamic>(row => row.F is float));
             Assert.That(
-                original.Rows.Zip(result.Rows, (orig, res) => res.F == float.Parse(orig.F)),
+                original.Rows.Zip(result.Rows, (orig, res) => res.F == float.Parse(orig.F, CultureInfo.InvariantCulture)),
                 Has.All.EqualTo(true)
             );
         }

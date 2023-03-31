@@ -407,16 +407,16 @@ namespace Pori.Frends.Data
             {
                 return new XmlColumnSource<XPathExpression>
                 {
-                    Type           = src.Type,
-                    ValueType      = src.ValueType,
-                    ColumnName     = src.ColumnName,
-                    ColumnPath     = XPathExpression.Compile(
+                    Type = src.Type,
+                    ValueType = src.ValueType,
+                    ColumnName = src.ColumnName,
+                    ColumnPath = XPathExpression.Compile(
                                         string.IsNullOrEmpty(src.ColumnPath) ? "." : src.ColumnPath
                                      ),
                     ColumnNamePath = XPathExpression.Compile(
-                                        string.IsNullOrEmpty(src.ColumnNamePath) ? "." : src.ColumnNamePath
+                                        string.IsNullOrEmpty(src.ColumnNamePath) ? "." : $"string({src.ColumnNamePath})"
                                      ),
-                    ValuePath      = XPathExpression.Compile(
+                    ValuePath = XPathExpression.Compile(
                                         string.IsNullOrEmpty(src.ValuePath) ? "." : src.ValuePath
                                      )
                 };
@@ -476,12 +476,17 @@ namespace Pori.Frends.Data
 
                     foreach(XPathNavigator column in columns)
                     {
+                        columnName = (string)column.Evaluate(source.ColumnNamePath);
+
+                        if(String.IsNullOrEmpty(columnName))
+                            throw new XPathException("The result of the column name path expression is empty.");
+                        /*
                         columnName = column
                                         .Select(source.ColumnNamePath)
                                         .Cast<dynamic>()
                                         .First()
                                         .Value as string;
-
+                        */
                         value = LoadXmlValue(column, source);
 
                         yield return (columnName, value);

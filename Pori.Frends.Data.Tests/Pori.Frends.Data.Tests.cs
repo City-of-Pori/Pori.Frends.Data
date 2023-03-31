@@ -1050,7 +1050,7 @@ namespace Pori.Frends.Data.Tests
                         <reference id='9840398' name='D:'/>
                         <reference id='9840393' name='G:'/>
                     </attribute>
-                    <attribute id='2318' name='Näytönohjain' cod='display_adapter'>
+                    <attribute id='2318' name='Näytönohjain' cod='display_adapter'> <!-- Mistyped attribute 'cod' instead of 'code' -->
                         <value>Citrix Indirect Display Adapter</value>
                         <value>Intel(R) UHD Graphics 620</value>
                     </attribute>
@@ -1082,6 +1082,20 @@ namespace Pori.Frends.Data.Tests
                 </entity>
             </entityset>
         ";
+
+        private static string XmlDataAlternate =
+            @"<hierarchy>
+               <row r=""16"">
+                  <orgLevel1Id>101</orgLevel1Id>
+                  <orgLevel1Name>HR</orgLevel1Name>
+               </row>
+               <row r=""22"">
+                  <orgLevel1Id>102</orgLevel1Id>
+                  <orgLevel1Name>IT</orgLevel1Name>
+               </row>
+            </hierarchy>
+        ";
+
 
         [Test]
         public void XmlDataLoadingWorks()
@@ -1151,6 +1165,55 @@ namespace Pori.Frends.Data.Tests
                 Assert.That(resultRow.device_name, Is.EqualTo(expectedRow.device_name));
                 Assert.That(resultRow.serial_number, Is.EqualTo(expectedRow.serial_number));
                 Assert.That(resultRow.display_adapter, Is.EqualTo(expectedRow.display_adapter));
+            }
+        }
+
+        [Test]
+        public void XmlDataLoadingWorksWhenDataIsInTextNodesOrElementNames()
+        {
+            var expectedXmlResult = new []
+            {
+                new
+                {
+                    orgLevel1Id   = "101",
+                    orgLevel1Name = "HR"
+                },
+                new
+                {
+                    orgLevel1Id   = "102",
+                    orgLevel1Name = "IT"
+                }
+            };
+
+            var input = new LoadParameters
+            {
+                Format = LoadFormat.XML,
+                Xml = new LoadXmlParameters
+                {
+                    Columns  = new [] { "orgLevel1Id", "orgLevel1Name" },
+                    Data     = XmlDataAlternate,
+                    RowsPath = "/hierarchy/row",
+                    ColumnSources = new XmlColumnSource[]
+                    {
+                        new XmlColumnSource
+                        {
+                            Type            = XmlColumnSourceType.MultipleColumns,
+                            ColumnPath      = "*",
+                            ColumnNamePath  = "name()",
+                            ValuePath       = "text()"
+                        }
+                    }
+                }
+            };
+
+            Table result = TableTasks.Load(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(result.Count, Is.EqualTo(expectedXmlResult.Count()));
+
+            foreach(var (resultRow, expectedRow) in result.Rows.Zip(expectedXmlResult, (r, e) => (r, e)))
+            {
+                Assert.That(resultRow.orgLevel1Id, Is.EqualTo(expectedRow.orgLevel1Id));
+                Assert.That(resultRow.orgLevel1Name, Is.EqualTo(expectedRow.orgLevel1Name));
             }
         }
 

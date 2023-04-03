@@ -59,6 +59,21 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Add a new column to each row.
+        /// </summary>
+        /// <param name="column">The name of the column to add.</param>
+        /// <param name="generator">A function to generate a value for each row.</param>
+        public void AddColumn(string column, Func<dynamic, int, dynamic> generator)
+        {
+            // As we modify rows in-place, make a copy of the source rows
+            // (if not already made)
+            if(!copied)
+                Copy();
+
+            rows = ApplyColumnTransform(rows, column, generator);
+        }
+
+        /// <summary>
         /// Concatenate the rows of one or more tables to the current rows.
         /// </summary>
         /// <param name="tables">
@@ -145,6 +160,30 @@ namespace Pori.Frends.Data
                 try
                 {
                     return filter(row);
+                }
+                catch(Exception e)
+                {
+                    HandleError(row, i, e);
+
+                    // Filter out rows which cause an error
+                    return false;
+                }
+            }
+
+            rows = rows.Where(ApplyFilter);
+        }
+
+        /// <summary>
+        /// Filter the rows using the given filter function.
+        /// </summary>
+        /// <param name="filter">The function to use to filter the rows</param>
+        public void Filter(Func<dynamic, int, bool> filter)
+        {
+            bool ApplyFilter(dynamic row, int i)
+            {
+                try
+                {
+                    return filter(row, i);
                 }
                 catch(Exception e)
                 {
@@ -488,6 +527,21 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Transform the values of a given column using a transformation function.
+        /// </summary>
+        /// <param name="column">The column to transform.</param>
+        /// <param name="transform">The function used to calculate the new value for the column</param>
+        public void TransformColumn(string column, Func<dynamic, int, dynamic> transform)
+        {
+            // As we modify rows in-place, make a copy of the source rows
+            // (if not already made)
+            if(!copied)
+                Copy();
+
+            rows = ApplyColumnTransform(rows, column, transform);
+        }
+
+        /// <summary>
         /// Apply a transformation function to a specific column of each row.
         /// </summary>
         /// <param name="theRows"></param>
@@ -508,6 +562,42 @@ namespace Pori.Frends.Data
                 try
                 {
                     value = transform(row);
+                }
+                catch(Exception e)
+                {
+                    // Skip this row if we want to discard erroneus rows from the result
+                    if(HandleError(row, index, e) == Table.ErrorHandling.Discard)
+                        continue;
+                }
+
+                (row as RowDict)[column] = value;
+
+                yield return row;
+            };
+        }
+
+        /// <summary>
+        /// Apply a transformation function to a specific column of each row.
+        /// </summary>
+        /// <param name="theRows"></param>
+        /// <param name="column">The column whose values are to be transformed.</param>
+        /// <param name="transform">
+        /// The transformation function to apply. Receives the entire row and
+        /// its index as its input and should return the new value for the 
+        /// specified column.
+        /// </param>
+        /// <returns>The rows after applying the transformation</returns>
+        private IEnumerable<dynamic> ApplyColumnTransform(IEnumerable<dynamic> theRows, string column, Func<dynamic, int, dynamic> transform)
+        {
+            var enumerated = theRows.Select((row, i) => (row, i));
+
+            foreach(var (row, index) in enumerated)
+            {
+                dynamic value = null;
+
+                try
+                {
+                    value = transform(row, index);
                 }
                 catch(Exception e)
                 {

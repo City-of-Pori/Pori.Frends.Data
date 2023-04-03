@@ -36,6 +36,15 @@ namespace Pori.Frends.Data
         /// </summary>
         [DisplayFormat(DataFormatString = "Expression")]
         public Func<dynamic, dynamic> Transform { get; set; }
+
+        /// <summary>
+        /// The transform function. Receives either the entire row or the
+        /// current value of the column as its argument (based on the value
+        /// of TransformType) as well as the index of the row being processed.
+        /// Should return a value for the column.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Func<dynamic, int, dynamic> IndexedTransform { get; set; }
     }
 
     /// <summary>
@@ -80,12 +89,41 @@ namespace Pori.Frends.Data
             // Transform the columns one at a time
             foreach(var transform in input.Transforms)
             {
-                Func<dynamic, dynamic> fn = transform.Transform;
+                Func<dynamic, int, dynamic> fn;
 
-                // If a constant value was specified as the new value for the
-                // column, wrap it as a function returning the constant value.
-                if(transform.TransformType == ProcessingType.Column)
-                    fn = TableBuilder.ColumnFunction(transform.Column, fn);
+                switch(transform.TransformType)
+                {
+                    case ProcessingType.Row:
+                        if(transform.Transform == null)
+                            throw new ArgumentException("Transform function cannot be null");
+
+                        fn = (row, i) => transform.Transform(row);
+                        break;
+
+                    case ProcessingType.Column:
+                        if(transform.Transform == null)
+                            throw new ArgumentException("Transform function cannot be null");
+
+                        fn = TableBuilder.IndexedColumnFunction(transform.Column, transform.Transform);
+                        break;
+
+                    case ProcessingType.RowWithIndex:
+                        if(transform.IndexedTransform == null)
+                            throw new ArgumentException("Transform function cannot be null");
+
+                        fn = transform.IndexedTransform;
+                        break;
+
+                    case ProcessingType.ColumnWithIndex:
+                        if(transform.IndexedTransform == null)
+                            throw new ArgumentException("Transform function cannot be null");
+
+                        fn = TableBuilder.IndexedColumnFunction(transform.Column, transform.IndexedTransform);
+                        break;
+
+                    default:
+                        throw new InvalidOperationException();
+                }
 
                 // Transform the values of the column using the transform
                 // function.

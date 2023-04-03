@@ -23,7 +23,13 @@ namespace Pori.Frends.Data
         /// Compute a value for each row using a function that receives
         /// the row as its input.
         /// </summary>
-        Computed
+        Computed,
+
+        /// <summary>
+        /// Compute a value for each row using a function that receives
+        /// the row and its index as its input.
+        /// </summary>
+        ComputedWithIndex
     }
 
     /// <summary>
@@ -60,6 +66,15 @@ namespace Pori.Frends.Data
         [UIHint(nameof(ValueSource), "", NewColumnValueSource.Computed)]
         [DisplayFormat(DataFormatString = "Expression")]
         public Func<dynamic, dynamic> ValueGenerator { get; set; }
+
+        /// <summary>
+        /// A function for generating the value of the new column.
+        /// Receives a single row as its argument and should return
+        /// the value for the new column.
+        /// </summary>
+        [UIHint(nameof(ValueSource), "", NewColumnValueSource.ComputedWithIndex)]
+        [DisplayFormat(DataFormatString = "Expression")]
+        public Func<dynamic, int, dynamic> IndexedValueGenerator { get; set; }
     }
 
     /// <summary>
@@ -106,17 +121,23 @@ namespace Pori.Frends.Data
             // Add the new columns one by one
             foreach(var column in input.Columns)
             {
-                Func<dynamic, dynamic> generator;
+                // Add the column to the result based on the type of source
+                // to use for the value
+                switch(column.ValueSource)
+                {
+                    case NewColumnValueSource.Constant:
+                        // Wrap the provided value as a function
+                        builder.AddColumn(column.Name, row => column.Value);
+                        break;
 
-                // If a constant value was specified as the new value for the
-                // column, wrap it as a function returning the constant value.
-                if(column.ValueSource == NewColumnValueSource.Constant)
-                    generator = row => column.Value;
-                else
-                    generator = column.ValueGenerator;
+                    case NewColumnValueSource.Computed:
+                        builder.AddColumn(column.Name, column.ValueGenerator);
+                        break;
 
-                // Add the column to the result
-                builder.AddColumn(column.Name, generator);
+                    case NewColumnValueSource.ComputedWithIndex:
+                        builder.AddColumn(column.Name, column.IndexedValueGenerator);
+                        break;
+                }
             }
 
             return builder

@@ -15,7 +15,18 @@ namespace Pori.Frends.Data
         /// <summary>
         /// Process rows using the value of single column.
         /// </summary>
-        Column
+        Column,
+
+        /// <summary>
+        /// Process rows using the entire row and its index in the table.
+        /// </summary>
+        RowWithIndex,
+
+        /// <summary>
+        /// Process rows using the value of a single column and the index of
+        /// the row in the table.
+        /// </summary>
+        ColumnWithIndex
     }
 
     /// <summary>

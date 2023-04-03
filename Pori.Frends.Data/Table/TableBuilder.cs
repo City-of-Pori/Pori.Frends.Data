@@ -82,6 +82,25 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Add a new column to the result.
+        /// </summary>
+        /// <param name="column">The name of the column to add to the result</param>
+        /// <param name="generator">
+        /// A function to generate a values for the new column. Receives a
+        /// row and its index as it parameters and should produce values for
+        /// the new column.
+        /// </param>
+        /// <returns></returns>
+        public TableBuilder AddColumn(string column, Func<dynamic, int, dynamic> generator)
+        {
+            columns.Add(column);
+
+            rows.AddColumn(column, generator);
+
+            return this;
+        }
+
+        /// <summary>
         /// Add the rows of one or more tables in to the result table.
         /// </summary>
         /// <param name="tables">The tables whose rows are to be added to the result table.</param>
@@ -140,6 +159,18 @@ namespace Pori.Frends.Data
         /// <param name="filter">The funtion to use for filtering the rows.</param>
         /// <returns>The table builder itself (for method chaining).</returns>
         public TableBuilder Filter(Func<dynamic, bool> filter)
+        {
+            rows.Filter(filter);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
+        /// Filter the rows using the given filter function.
+        /// </summary>
+        /// <param name="filter">The funtion to use for filtering the rows.</param>
+        /// <returns>The table builder itself (for method chaining).</returns>
+        public TableBuilder Filter(Func<dynamic, int, bool> filter)
         {
             rows.Filter(filter);
 
@@ -342,6 +373,23 @@ namespace Pori.Frends.Data
         }
 
         /// <summary>
+        /// Transform the values of a given column using a transformation function.
+        /// </summary>
+        /// <param name="column">The column whose values are transformed.</param>
+        /// <param name="transform">
+        /// The function to produce new values for the column. Receives the
+        /// row and its index as a parameter and should produce a value for
+        /// the specified column.
+        /// </param>
+        /// <returns>The table builder itself (for method chaining).</returns>
+        public TableBuilder TransformColumn(string column, Func<dynamic, int, dynamic> transform)
+        {
+            rows.TransformColumn(column, transform);
+
+            return this; // Enable method chaining
+        }
+
+        /// <summary>
         /// Create a wrapped function that when called with a table row,
         /// calls the original function with the value of a specific column.
         /// </summary>
@@ -352,6 +400,34 @@ namespace Pori.Frends.Data
         public static Func<dynamic, TResult> ColumnFunction<TResult>(string column, Func<dynamic, TResult> function)
         {
             return row => function((row as RowDict)[column]);
+        }
+
+        /// <summary>
+        /// Create a wrapped function that when called with a table row and
+        /// its index, calls the original function with the value of a 
+        /// specific column.
+        /// </summary>
+        /// <typeparam name="TResult">The result of the function</typeparam>
+        /// <param name="column">The column whose values are fed to the given function</param>
+        /// <param name="function">The function to wrap.</param>
+        /// <returns>The wrapped function.</returns>
+        public static Func<dynamic, int, TResult> IndexedColumnFunction<TResult>(string column, Func<dynamic, TResult> function)
+        {
+            return (row, index) => function((row as RowDict)[column]);
+        }
+
+        /// <summary>
+        /// Create a wrapped function that when called with a table row and
+        /// its index, calls the original function with the value of a 
+        /// specific column.
+        /// </summary>
+        /// <typeparam name="TResult">The result of the function</typeparam>
+        /// <param name="column">The column whose values are fed to the given function</param>
+        /// <param name="function">The function to wrap.</param>
+        /// <returns>The wrapped function.</returns>
+        public static Func<dynamic, int, TResult> IndexedColumnFunction<TResult>(string column, Func<dynamic, int, TResult> function)
+        {
+            return (row, index) => function((row as RowDict)[column], index);
         }
 
         /// <summary>

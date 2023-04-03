@@ -828,8 +828,6 @@ namespace Pori.Frends.Data.Tests
 
             foreach(var (origRow, resRow) in rows.Zip(result.Rows, (o, r) => (o, r)))
             {
-                Console.WriteLine(resRow.A);
-                Console.WriteLine(origRow.A);
                 Assert.That(origRow.A == resRow.A);
                 Assert.That(origRow.B == resRow.B);
             }
@@ -1546,6 +1544,30 @@ namespace Pori.Frends.Data.Tests
             {
                 Assert.That(row.copyOfA, Is.EqualTo(row.A));
                 Assert.That(row.copyOfB, Is.EqualTo(row.B));
+            }
+        }
+
+        [Test]
+        public void AddColumnsWorksWhenGeneratingValuesUsingRowIndices()
+        {
+            Table original = TestData.Typed;
+
+            AddColumnsParameters input = new AddColumnsParameters
+            {
+                Data    = original,
+                Columns = new NewColumn[]
+                {
+                    new NewColumn { Name = "index", ValueSource = NewColumnValueSource.ComputedWithIndex, IndexedValueGenerator = (row, i) => i },
+                }
+            };
+
+            Table result = TableTasks.AddColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+
+            // Check each row contains the correct values in the new columns
+            foreach(var (row, index) in result.Rows.Select((r,i) => (r,i)))
+            {
+                Assert.That(row.index, Is.EqualTo(index));
             }
         }
 
@@ -2631,6 +2653,21 @@ namespace Pori.Frends.Data.Tests
         }
 
         [Test]
+        public void FilterUsingIndexedRowFilterProducesCorrectRows()
+        {
+            FilterParameters input = new FilterParameters
+            {
+                Data          = TestData.Typed,
+                FilterType    = ProcessingType.RowWithIndex,
+                IndexedFilter = (row, i) => i < 10
+            };
+
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.A < 10));
+        }
+
+        [Test]
         public void FilterUsingColumnFilterProducesCorrectRows()
         {
             FilterParameters input = new FilterParameters
@@ -2644,6 +2681,22 @@ namespace Pori.Frends.Data.Tests
             Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
 
             Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.B == true));
+        }
+
+        [Test]
+        public void FilterUsingIndexedColumnFilterProducesCorrectRows()
+        {
+            FilterParameters input = new FilterParameters
+            {
+                Data          = TestData.Typed,
+                FilterType    = ProcessingType.ColumnWithIndex,
+                FilterColumn  = "A",
+                IndexedFilter = (A, i) => i < 10
+            };
+
+            Table filtered = TableTasks.Filter(input, CommonOptions.Defaults, new CancellationToken());
+
+            Assert.That(filtered.Rows, Has.All.Matches<dynamic>(row => row.A < 10));
         }
 
         [Test]
@@ -4447,6 +4500,54 @@ namespace Pori.Frends.Data.Tests
                 original.Rows.Zip(result.Rows, (orig, res) => res.A == orig.A * 10),
                 Has.All.EqualTo(true)
             );
+        }
+
+        [Test]
+        public void TransformCanBeDoneUsingColumnValuesAndRowIndices()
+        {
+            Table original = TestData.Typed;
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "A", TransformType = ProcessingType.ColumnWithIndex, IndexedTransform = (A,i) => A * i },
+                }
+            };
+
+            Table result = TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+            var indexedPairs = original.Rows
+                                .Zip(result.Rows, (orig, res) => new { O = orig, R = res })
+                                .Zip(Enumerable.Range(0, original.Count), (pair, i) => (pair.O, pair.R, i));
+
+            foreach(var (orig, res, i) in indexedPairs)
+                Assert.That(res.A == orig.A * i);
+        }
+
+        [Test]
+        public void TransformCanBeDoneUsingRowValuesAndIndices()
+        {
+            Table original = TestData.Typed;
+
+            TransformColumnsParameters input = new TransformColumnsParameters
+            {
+                Data       = original,
+                Transforms = new ColumnTransform[]
+                {
+                    new ColumnTransform { Column = "A", TransformType = ProcessingType.RowWithIndex, IndexedTransform = (row, i) => row.A * i },
+                }
+            };
+
+            Table result = TableTasks.TransformColumns(input, CommonOptions.Defaults, new CancellationToken());
+
+            var indexedPairs = original.Rows
+                                .Zip(result.Rows, (orig, res) => new { O = orig, R = res })
+                                .Zip(Enumerable.Range(0, original.Count), (pair, i) => (pair.O, pair.R, i));
+
+            foreach(var (orig, res, i) in indexedPairs)
+                Assert.That(res.A == orig.A * i);
         }
 
         [Test]

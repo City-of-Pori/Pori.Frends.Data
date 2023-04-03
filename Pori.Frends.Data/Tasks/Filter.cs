@@ -12,6 +12,7 @@ using Pori.Frends.Data.Linq;
 namespace Pori.Frends.Data
 {
     using FilterFunc = Func<dynamic, bool>;
+    using IndexedFilterFunc = Func<dynamic, int, bool>;
 
     /// <summary>
     /// Parameters for filtering rows from a Pori.Frends.Data.Table
@@ -42,7 +43,16 @@ namespace Pori.Frends.Data
         /// Only rows for which the function returns 'true' are included in the result.
         /// </summary>
         [DisplayFormat(DataFormatString = "Expression")]
+        [UIHint(nameof(FilterType), "", ProcessingType.Column, ProcessingType.Row)]
         public FilterFunc Filter { get; set; }
+
+        /// <summary>
+        /// Filter function to select the rows to include in the result.
+        /// Only rows for which the function returns 'true' are included in the result.
+        /// </summary>
+        [DisplayFormat(DataFormatString = "Expression")]
+        [UIHint(nameof(FilterType), "", ProcessingType.ColumnWithIndex, ProcessingType.RowWithIndex)]
+        public IndexedFilterFunc IndexedFilter { get; set; }
     }
 
 
@@ -57,14 +67,31 @@ namespace Pori.Frends.Data
         /// <returns>Filtered data as a Pori.Frends.Data.Table</returns>
         public static Table Filter([PropertyTab] FilterParameters input, [PropertyTab] CommonOptions options, CancellationToken cancellationToken)
         {
-            FilterFunc filter;
+            IndexedFilterFunc filter;
 
-            // Wrap the filter function if the filter is to be applied to
-            // values of a single column.
-            if(input.FilterType == ProcessingType.Column)
-                filter = TableBuilder.ColumnFunction(input.FilterColumn, input.Filter);
-            else
-                filter = input.Filter;
+            // Select / create an appropriate filter function
+            switch(input.FilterType)
+            {
+                case ProcessingType.Row:
+                    filter = (row, index) => input.Filter(row);
+                    break;
+
+                case ProcessingType.Column:
+                    filter = TableBuilder.IndexedColumnFunction(input.FilterColumn, input.Filter);
+                    break;
+
+                case ProcessingType.RowWithIndex:
+                    filter = input.IndexedFilter;
+                    break;
+
+                case ProcessingType.ColumnWithIndex:
+                    filter = TableBuilder.IndexedColumnFunction(input.FilterColumn, input.IndexedFilter);
+                    break;
+
+                default:
+                    filter = default;
+                    break;
+            }
 
             return TableBuilder
                     .From(input.Data)   // Use the input table as the source

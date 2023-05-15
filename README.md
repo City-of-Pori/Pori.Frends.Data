@@ -583,5 +583,6 @@ Create a NuGet package
 
 | Version | Changes                                        |
 | ------- | ---------------------------------------------- |
+| 0.99.0  | Add .NET 6 support                             |
 | 0.90.0  | Development version with all tasks implemented |
 | 0.0.1   | Initial version                                |

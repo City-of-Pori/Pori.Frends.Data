@@ -34,6 +34,7 @@ namespace Pori.Frends.Data
         /// current value of the column as its argument (based on the value 
         /// of TransformType). Should return a value for the column.
         /// </summary>
+        [UIHint(nameof(TransformType), "", ProcessingType.Column, ProcessingType.Row)]
         [DisplayFormat(DataFormatString = "Expression")]
         public Func<dynamic, dynamic> Transform { get; set; }
 
@@ -43,6 +44,7 @@ namespace Pori.Frends.Data
         /// of TransformType) as well as the index of the row being processed.
         /// Should return a value for the column.
         /// </summary>
+        [UIHint(nameof(TransformType), "", ProcessingType.ColumnWithIndex, ProcessingType.RowWithIndex)]
         [DisplayFormat(DataFormatString = "Expression")]
         public Func<dynamic, int, dynamic> IndexedTransform { get; set; }
     }

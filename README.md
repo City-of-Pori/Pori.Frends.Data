@@ -583,6 +583,7 @@ Create a NuGet package
 
 | Version | Changes                                        |
 | ------- | ---------------------------------------------- |
+| 2.0.0   | Removed support for .NET Framework 4.7.1       |
 | 1.0.0   | First public version                           |
 | 0.99.0  | Add .NET 6 support                             |
 | 0.90.0  | Development version with all tasks implemented |

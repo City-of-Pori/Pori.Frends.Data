@@ -37,6 +37,7 @@ namespace Pori.Frends.Data
         /// The table whose columns are to be reordered.
         /// </summary>
         [DisplayFormat(DataFormatString = "Expression")]
+        [DefaultValue("#result")]
         public Table Data { get; set; }
 
         /// <summary>

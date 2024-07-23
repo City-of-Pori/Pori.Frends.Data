@@ -19,6 +19,7 @@ namespace Pori.Frends.Data
         /// The table to serialize.
         /// </summary>
         [DisplayFormat(DataFormatString = "Expression")]
+        [DefaultValue("#result")]
         public Table Data { get; set; }
 
         /// <summary>

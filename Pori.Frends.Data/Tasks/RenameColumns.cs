@@ -57,6 +57,7 @@ namespace Pori.Frends.Data
         /// The table whose columns are to be renamed.
         /// </summary>
         [DisplayFormat(DataFormatString = "Expression")]
+        [DefaultValue("#result")]
         public Table Data { get; set; }
 
         /// <summary>
